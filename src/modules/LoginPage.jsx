@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Header from '../components/Header'
-import Footer from '../components/footer'
+import Footer from '../components/Footer'
 import backgroundImage from '../assets/shared/vista_background.png'
 import vistaLogo from '../assets/shared/vista_logo.png'
 
@@ -13,8 +13,7 @@ export default function LoginPage() {
 
   function handleSubmit(e) {
     e.preventDefault()
-    // TODO: wire up real auth
-    navigate('/')
+    navigate('/admin/dashboard')
   }
 
   return (

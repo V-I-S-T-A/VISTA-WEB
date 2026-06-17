@@ -1,6 +1,6 @@
 import { ShieldCheck, RefreshCw } from 'lucide-react'
 import Header from '../components/Header'
-import Footer from '../components/footer'
+import Footer from '../components/Footer'
 import backgroundImage from '../assets/shared/vista_background.png'
 
 const FEATURES = [
