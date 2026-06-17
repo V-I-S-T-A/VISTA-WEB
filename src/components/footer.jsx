@@ -50,8 +50,10 @@ export default function Footer() {
         <div className="footer-top">
           <div className="footer-left">
             <div className="footer-brand">
-              <img src={vistaLogo} alt="" className="footer-logo" aria-hidden="true" />
-              <span className="footer-title">V.I.S.T.A.</span>
+              <img src={vistaLogo} alt="" className="footer-logo!w-[66px] !h-[66px]" aria-hidden="true" />
+              <span className="text-[34px] font-dm-sans font-black text-lg leading-none whitespace-nowrap">
+                V.I.S.T.A.
+              </span>
             </div>
             <p className="footer-description">
               A centralized system for a secure, transparent, and efficient document flow.
