@@ -1,8 +1,8 @@
 import Header from '../../components/Header'
 import Sidebar from '../../components/Sidebar'
-import UserManagementHeader from './components/dashboard/UserManagementHeader'
-import UserSummaryCards from './components/dashboard/UserSummaryCards'
-import RecentSubmissionsTable from './components/dashboard/RecentSubmissionsTable'
+import UserManagementHeader from './dashboard/components/UserManagementHeader'
+import UserSummaryCards from './dashboard/components/UserSummaryCards'
+import RecentSubmissionsTable from './dashboard/components/RecentSubmissionsTable'
 import systemScopeBanner from '../../assets/shared/systemscope.png'
 
 export default function Dashboard() {
@@ -18,11 +18,7 @@ export default function Dashboard() {
             <UserManagementHeader />
             <UserSummaryCards />
             <RecentSubmissionsTable />
-            <div
-              style={{
-                paddingTop: '48px',
-              }}
-            >
+            <div style={{ paddingTop: '48px' }}>
               <img
                 src={systemScopeBanner}
                 alt="System Scope"
