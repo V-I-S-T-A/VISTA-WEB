@@ -1,113 +1,588 @@
+import { useState, useRef, useEffect, useMemo } from "react";
+import {
+  Search,
+  Download,
+  ChevronDown,
+  Check,
+  SlidersHorizontal,
+} from "lucide-react";
+
+// Mock audit log data
+const MOCK_AUDIT_LOGS = [
+  {
+    id: 1,
+    timestamp: "Oct 24, 2023",
+    user: "Admin_User",
+    userType: "Admin",
+    action: "USER_CREATION",
+    reference: "VISTA-88291-X",
+  },
+  {
+    id: 2,
+    timestamp: "Oct 24, 2023",
+    user: "Jeon Wonwoo",
+    userType: "OSA Staff",
+    action: "SUBMISSION_APPROVED",
+    reference: "VISTA-88291-X",
+  },
+  {
+    id: 3,
+    timestamp: "Oct 24, 2023",
+    user: "SITE: Society of I...",
+    userType: "Student Organization",
+    action: "REVISION",
+    reference: "VISTA-88291-X",
+  },
+  {
+    id: 4,
+    timestamp: "Oct 24, 2023",
+    user: "Google Dev.",
+    userType: "Student Organization",
+    action: "PENDING",
+    reference: "VISTA-88291-X",
+  },
+  {
+    id: 5,
+    timestamp: "Oct 24, 2023",
+    user: "Student User",
+    userType: "Student",
+    action: "SUBMISSION_APPROVED",
+    reference: "VISTA-88291-X",
+  },
+  {
+    id: 6,
+    timestamp: "Oct 23, 2023",
+    user: "Admin_User",
+    userType: "Admin",
+    action: "USER_DELETION",
+    reference: "VISTA-88290-X",
+  },
+  {
+    id: 7,
+    timestamp: "Oct 23, 2023",
+    user: "Jane Smith",
+    userType: "Faculty",
+    action: "DOCUMENT_UPLOADED",
+    reference: "VISTA-88289-X",
+  },
+  {
+    id: 8,
+    timestamp: "Oct 23, 2023",
+    user: "Tech Support",
+    userType: "Staff",
+    action: "SYSTEM_CONFIG_CHANGED",
+    reference: "VISTA-88288-X",
+  },
+  {
+    id: 9,
+    timestamp: "Oct 22, 2023",
+    user: "Maria Santos",
+    userType: "Student",
+    action: "LOGIN",
+    reference: "VISTA-88287-X",
+  },
+  {
+    id: 10,
+    timestamp: "Oct 22, 2023",
+    user: "System Admin",
+    userType: "Admin",
+    action: "BACKUP_COMPLETED",
+    reference: "VISTA-88286-X",
+  },
+];
+
+const PAGE_SIZE = 5;
+const CONTENT_PADDING = "30px";
+
+const ACTION_COLORS = {
+  USER_CREATION: { bg: "#dbeafe", text: "#0369a1" },
+  USER_DELETION: { bg: "#fee2e2", text: "#991b1b" },
+  SUBMISSION_APPROVED: { bg: "#dcfce7", text: "#166534" },
+  REVISION: { bg: "#fef3c7", text: "#92400e" },
+  PENDING: { bg: "#fecaca", text: "#7c2d12" },
+  DOCUMENT_UPLOADED: { bg: "#e9d5ff", text: "#6b21a8" },
+  SYSTEM_CONFIG_CHANGED: { bg: "#d1d5db", text: "#374151" },
+  LOGIN: { bg: "#cffafe", text: "#164e63" },
+  BACKUP_COMPLETED: { bg: "#f3e8ff", text: "#5b21b6" },
+};
+
+function FilterDropdown({ label, options, value, onChange }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function handleClickOutside(event) {
+      if (containerRef.current && !containerRef.current.contains(event.target))
+        setIsOpen(false);
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="relative" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
+        aria-label={label}
+        className="appearance-none bg-white font-inter font-semibold text-gray-700 outline-none cursor-pointer inline-flex items-center gap-6 hover:bg-gray-50 transition-colors whitespace-nowrap"
+        style={{
+          border: "1.5px solid #d1d5db",
+          borderRadius: "7px",
+          padding: "7px 11px",
+          fontSize: "12px",
+        }}
+      >
+        {value}
+        <ChevronDown
+          className="pointer-events-none h-4 w-4 flex-shrink-0 text-gray-500 transition-transform"
+          style={{ transform: isOpen ? "rotate(180deg)" : "none" }}
+          aria-hidden="true"
+        />
+      </button>
+
+      {isOpen && (
+        <div
+          role="listbox"
+          className="absolute left-0 top-full z-10 mt-1.5 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg"
+        >
+          {options.map((option) => {
+            const isSelected = option === value;
+            return (
+              <button
+                key={option}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                onClick={() => {
+                  onChange(option);
+                  setIsOpen(false);
+                }}
+                className={[
+                  "flex w-full items-center justify-between gap-2 px-3 py-2 text-left font-inter font-semibold transition-colors",
+                  isSelected
+                    ? "bg-[#eef2ff] text-[#1f5cae]"
+                    : "text-gray-700 hover:bg-gray-50",
+                ].join(" ")}
+                style={{ fontSize: "12px" }}
+              >
+                {option}
+                {isSelected && (
+                  <Check
+                    className="h-3.5 w-3.5 flex-shrink-0"
+                    aria-hidden="true"
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function AuditLogHistory() {
-    return (
-        <>
-            {/* Page heading — mirrors UserManagementHeader */}
-            <div className="flex items-start justify-between w-full" style={{ marginBottom: '14px' }}>
-                <div>
-                    <h2 className="font-inter font-bold text-[#142d55]" style={{ fontSize: '26px', lineHeight: 1.15 }}>
-                        Audit Log History
-                    </h2>
-                    <p className="font-inter text-gray-500 mt-0.5" style={{ fontSize: '13px' }}>
-                        System-wide transparency of activities.
-                    </p>
-                </div>
+  const [searchTerm, setSearchTerm] = useState("");
+  const [actionFilter, setActionFilter] = useState("All Actions");
+  const [userTypeFilter, setUserTypeFilter] = useState("All Types");
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const ACTION_OPTIONS = [
+    "All Actions",
+    "USER_CREATION",
+    "USER_DELETION",
+    "SUBMISSION_APPROVED",
+    "REVISION",
+    "PENDING",
+    "DOCUMENT_UPLOADED",
+    "SYSTEM_CONFIG_CHANGED",
+    "LOGIN",
+    "BACKUP_COMPLETED",
+  ];
+
+  const USER_TYPE_OPTIONS = [
+    "All Types",
+    "Admin",
+    "Staff",
+    "Student",
+    "Faculty",
+    "OSA Staff",
+    "Student Organization",
+  ];
+
+  // Filter and search logic
+  const filteredLogs = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    return MOCK_AUDIT_LOGS.filter((log) => {
+      const matchesSearch =
+        !query ||
+        log.user.toLowerCase().includes(query) ||
+        log.action.toLowerCase().includes(query) ||
+        log.reference.toLowerCase().includes(query);
+      const matchesAction =
+        actionFilter === "All Actions" || log.action === actionFilter;
+      const matchesUserType =
+        userTypeFilter === "All Types" || log.userType === userTypeFilter;
+      return matchesSearch && matchesAction && matchesUserType;
+    });
+  }, [searchTerm, actionFilter, userTypeFilter]);
+
+  // Pagination logic
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const paginatedLogs = useMemo(() => {
+    const start = (safeCurrentPage - 1) * PAGE_SIZE;
+    return filteredLogs.slice(start, start + PAGE_SIZE);
+  }, [filteredLogs, safeCurrentPage]);
+
+  const showPagination = filteredLogs.length > PAGE_SIZE;
+
+  function goToPage(page) {
+    setCurrentPage(Math.min(Math.max(page, 1), totalPages));
+  }
+
+  // Export handler
+  const handleExport = () => {
+    const headers = ["TIMESTAMP", "USER/ENTITY", "ACTION", "ID/REFERENCE"];
+    const csvContent = [
+      headers.join(","),
+      ...filteredLogs.map((log) =>
+        [log.timestamp, log.user, log.action, log.reference].join(","),
+      ),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 5)
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const half = 2;
+    let start = Math.max(1, safeCurrentPage - half);
+    let end = Math.min(totalPages, safeCurrentPage + half);
+    if (end - start < 4) {
+      if (start === 1) end = Math.min(totalPages, 5);
+      else start = Math.max(1, end - 4);
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [totalPages, safeCurrentPage]);
+
+  return (
+    <>
+      {/* Page heading */}
+      <div
+        className="flex items-start justify-between w-full"
+        style={{ marginBottom: "14px" }}
+      >
+        <div>
+          <h2
+            className="font-inter font-bold text-[#142d55]"
+            style={{ fontSize: "26px", lineHeight: 1.15 }}
+          >
+            Audit Log History
+          </h2>
+          <p
+            className="font-inter text-gray-500 mt-0.5"
+            style={{ fontSize: "13px" }}
+          >
+            System-wide transparency of activities.
+          </p>
+        </div>
+      </div>
+
+      {/* Table shell */}
+      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
+        {/* Section header with controls */}
+        <div
+          className="bg-[#1f5cae] flex items-center justify-between px-4 py-3"
+          style={{ minHeight: "64px" }}
+        >
+          <h3
+            className="font-inter text-[18px] font-bold text-white"
+            style={{ paddingLeft: CONTENT_PADDING }}
+          >
+            Live Activity Stream
+          </h3>
+
+          <div
+            className="flex items-center gap-3"
+            style={{ paddingRight: "20px" }}
+          >
+            {/* Search bar */}
+            <div className="relative" style={{ width: "300px" }}>
+              <Search
+                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"
+                style={{ width: "16px", height: "16px" }}
+              />
+              <input
+                type="search"
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  setCurrentPage(1);
+                }}
+                placeholder="Search user/ activity..."
+                className="w-full bg-white font-inter text-gray-600 placeholder:text-gray-400 outline-none"
+                style={{
+                  height: "36px",
+                  border: "1.5px solid #d1d5db",
+                  borderRadius: "8px",
+                  padding: "0 12px 0 40px",
+                  fontSize: "13px",
+                }}
+              />
             </div>
 
-            {/* Table shell */}
-            <section className="overflow-hidden rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
+            {/* Action filter dropdown */}
+            <FilterDropdown
+              label="Filter by action"
+              options={ACTION_OPTIONS}
+              value={actionFilter}
+              onChange={(v) => {
+                setActionFilter(v);
+                setCurrentPage(1);
+              }}
+            />
 
-                {/* Blue section header */}
-                <div className="bg-[#1f5cae] h-16 flex items-center" style={{ paddingLeft: '30px' }}>
-                    <h3 className="font-inter text-[18px] font-bold text-white">Audit Logs</h3>
-                </div>
+            {/* User type filter dropdown */}
+            <FilterDropdown
+              label="Filter by user type"
+              options={USER_TYPE_OPTIONS}
+              value={userTypeFilter}
+              onChange={(v) => {
+                setUserTypeFilter(v);
+                setCurrentPage(1);
+              }}
+            />
 
-                {/* Empty state body */}
-                <div
-                    style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        minHeight: '420px',
-                        padding: '40px 24px',
-                        textAlign: 'center',
-                        background: '#fff',
-                    }}
-                >
-                    <div
+            {/* More Filters button */}
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 bg-white font-inter font-semibold text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+              style={{
+                border: "1.5px solid #d1d5db",
+                borderRadius: "7px",
+                padding: "7px 13px",
+                fontSize: "12px",
+              }}
+            >
+              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+              More Filters
+            </button>
+
+            {/* Export button */}
+            <button
+              onClick={handleExport}
+              type="button"
+              className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap"
+              style={{
+                borderRadius: "6px",
+                padding: "6px 12px",
+                fontSize: "12px",
+              }}
+            >
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Export
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse">
+            <thead>
+              <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
+                {["TIMESTAMP", "USER/ENTITY", "ACTION", "ID/REFERENCE"].map(
+                  (heading) => (
+                    <th
+                      key={heading}
+                      className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
+                      style={
+                        heading === "TIMESTAMP"
+                          ? { paddingLeft: CONTENT_PADDING }
+                          : undefined
+                      }
+                    >
+                      {heading}
+                    </th>
+                  ),
+                )}
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedLogs.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-5 py-10 text-center font-inter text-sm text-gray-500"
+                  >
+                    No audit logs match your search.
+                  </td>
+                </tr>
+              ) : (
+                paginatedLogs.map((log) => {
+                  const actionColor =
+                    ACTION_COLORS[log.action] ||
+                    ACTION_COLORS.SYSTEM_CONFIG_CHANGED;
+                  return (
+                    <tr
+                      key={log.id}
+                      className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
+                    >
+                      <td
+                        className="px-5 py-2.5 font-inter font-medium text-gray-700"
                         style={{
-                            width: '64px',
-                            height: '64px',
-                            borderRadius: '16px',
-                            background: '#dfe7fb',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            marginBottom: '16px',
+                          paddingLeft: CONTENT_PADDING,
+                          fontSize: "13px",
                         }}
-                    >
-                        <svg
-                            width="30"
-                            height="30"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="#1f5cae"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                            <line x1="9" y1="12" x2="15" y2="12" />
-                            <line x1="9" y1="16" x2="13" y2="16" />
-                        </svg>
-                    </div>
-
-                    <h3
-                        className="font-inter font-bold text-[#142d55]"
-                        style={{ fontSize: '18px', marginBottom: '8px' }}
-                    >
-                        No audit logs yet
-                    </h3>
-
-                    <p
-                        className="font-inter text-gray-500"
-                        style={{ fontSize: '13px', maxWidth: '360px', lineHeight: 1.6 }}
-                    >
-                        System actions such as user account changes, document submissions,
-                        and access updates will appear here once they occur.
-                    </p>
-
-                    <div
-                        style={{
-                            marginTop: '28px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            background: '#eef1f7',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '8px',
-                            padding: '8px 16px',
-                        }}
-                    >
+                      >
+                        {log.timestamp}
+                      </td>
+                      <td className="px-5 py-2.5">
+                        <div className="min-w-0">
+                          <p
+                            className="font-inter font-bold text-gray-900 leading-tight"
+                            style={{ fontSize: "15px" }}
+                          >
+                            {log.user}
+                          </p>
+                          <p
+                            className="font-inter font-medium text-gray-400 mt-0.5"
+                            style={{ fontSize: "12px" }}
+                          >
+                            {log.userType}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="px-5 py-2.5">
                         <span
-                            style={{
-                                width: '8px',
-                                height: '8px',
-                                borderRadius: '50%',
-                                background: '#9ca3af',
-                                display: 'inline-block',
-                                flexShrink: 0,
-                            }}
-                        />
-                        <span className="font-inter font-medium text-gray-500" style={{ fontSize: '12px' }}>
-                            Logs are recorded automatically — no setup required.
+                          className="inline-flex items-center justify-center rounded-full px-8 py-3 font-inter font-semibold whitespace-nowrap"
+                          style={{
+                            fontSize: "13px",
+                            backgroundColor: actionColor.bg,
+                            color: actionColor.text,
+                            minWidth: "200px",
+                            minHeight: "23px",
+                          }}
+                        >
+                          {log.action}
                         </span>
-                    </div>
-                </div>
+                      </td>
+                      <td
+                        className="px-5 py-2.5 font-inter font-semibold text-gray-700"
+                        style={{ fontSize: "13px" }}
+                      >
+                        {log.reference}
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
 
-            </section>
-        </>
-    )
+        {/* Footer */}
+        <div
+          className="flex items-center justify-between border-t border-gray-200 bg-white"
+          style={{
+            paddingLeft: CONTENT_PADDING,
+            paddingRight: CONTENT_PADDING,
+            paddingTop: "12px",
+            paddingBottom: "12px",
+          }}
+        >
+          <p className="font-inter text-[14px] font-medium text-gray-500">
+            Showing{" "}
+            <span className="font-semibold text-gray-700">
+              {paginatedLogs.length}
+            </span>{" "}
+            of{" "}
+            <span className="font-semibold text-gray-700">
+              {filteredLogs.length}
+            </span>{" "}
+            entries
+          </p>
+
+          {showPagination && (
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => goToPage(safeCurrentPage - 1)}
+                disabled={safeCurrentPage === 1}
+                className="font-inter font-semibold border rounded-md transition"
+                style={{
+                  height: "30px",
+                  padding: "0 14px",
+                  fontSize: "13px",
+                  borderColor: "#d1d5db",
+                  backgroundColor: "#f9fafb",
+                  color: safeCurrentPage === 1 ? "#9ca3af" : "#374151",
+                  cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
+                }}
+              >
+                Previous
+              </button>
+              {pageNumbers.map((page) => (
+                <button
+                  key={page}
+                  type="button"
+                  onClick={() => goToPage(page)}
+                  className="font-inter font-semibold border rounded-md transition"
+                  style={{
+                    width: "34px",
+                    height: "30px",
+                    fontSize: "13px",
+                    borderColor:
+                      page === safeCurrentPage ? "#002b5c" : "#d1d5db",
+                    backgroundColor:
+                      page === safeCurrentPage ? "#002b5c" : "#ffffff",
+                    color: page === safeCurrentPage ? "#ffffff" : "#374151",
+                  }}
+                >
+                  {page}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => goToPage(safeCurrentPage + 1)}
+                disabled={safeCurrentPage >= totalPages}
+                className="font-inter font-semibold border rounded-md transition"
+                style={{
+                  height: "30px",
+                  padding: "0 14px",
+                  fontSize: "13px",
+                  borderColor: "#d1d5db",
+                  backgroundColor: "#ffffff",
+                  color: safeCurrentPage >= totalPages ? "#9ca3af" : "#374151",
+                  cursor:
+                    safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
+                }}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </div>
+      </section>
+    </>
+  );
 }
