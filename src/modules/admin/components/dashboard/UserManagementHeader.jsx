@@ -2,19 +2,22 @@ import { Plus } from 'lucide-react'
 
 export default function UserManagementHeader() {
   return (
-    <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between w-full">
+    <div className="flex items-start justify-between w-full" style={{ marginBottom: '14px' }}>
       <div>
-        <h2 className="font-inter text-[28px] lg:text-[32px] font-bold text-[#142d55]">User Management</h2>
-        <p className="font-inter text-[15px] lg:text-[16px] text-gray-600 mt-1">
+        <h2 className="font-inter font-bold text-[#142d55]" style={{ fontSize: '26px', lineHeight: 1.15 }}>
+          User Management
+        </h2>
+        <p className="font-inter text-gray-500 mt-0.5" style={{ fontSize: '13px' }}>
           Manage institutional access, roles, and security permissions.
         </p>
       </div>
 
       <button
         type="button"
-        className="inline-flex items-center gap-2 self-start rounded border border-gray-800 bg-[#ffe100] px-6 py-2.5 font-inter text-[14px] lg:text-[15px] font-bold text-[#000000] transition-colors hover:bg-[#e6c900]"
+        className="inline-flex items-center gap-1.5 rounded border border-gray-800 bg-[#ffe100] font-inter font-bold text-black transition-colors hover:bg-[#e6c900]"
+        style={{ fontSize: '12px', padding: '8px 14px', marginTop: '2px' }}
       >
-        <Plus className="h-4 w-4 lg:h-5 lg:w-5" strokeWidth={2} aria-hidden="true" />
+        <Plus style={{ width: '13px', height: '13px' }} strokeWidth={2.5} aria-hidden="true" />
         Add User
       </button>
     </div>
