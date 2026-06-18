@@ -10,6 +10,11 @@ export const headerConfig = {
     title: 'Admin Dashboard',
     avatar: defaultUser,
   },
+  auditlog: {
+    type: 'dashboard',
+    title: 'Audit Log',
+    avatar: defaultUser,
+  },
   staff: {
     type: 'dashboard',
     title: 'Staff Dashboard',
