@@ -10,16 +10,24 @@ export default function Dashboard() {
     <div className="flex min-h-screen bg-white">
       <Sidebar role="admin" />
 
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col overflow-hidden">
         <Header layout="admin" />
 
-        <main className="flex justify-center p-8 lg:p-12">
-          <div className="w-full max-w-[1200px]">
-            <div className="w-full">
-              <UserManagementHeader />
-              <UserSummaryCards />
-              <RecentSubmissionsTable />
-              <img src={systemScopeBanner} alt="System Scope" className="w-full h-auto" />
+        <main className="flex-1 overflow-y-auto" style={{ padding: '20px 24px' }}>
+          <div className="w-full">
+            <UserManagementHeader />
+            <UserSummaryCards />
+            <RecentSubmissionsTable />
+            <div
+              style={{
+                paddingTop: '48px',
+              }}
+            >
+              <img
+                src={systemScopeBanner}
+                alt="System Scope"
+                className="w-3/4 h-auto"
+              />
             </div>
           </div>
         </main>
