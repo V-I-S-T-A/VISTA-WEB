@@ -1,56 +1,38 @@
 import { Users, ShieldCheck, GraduationCap, FileClock } from 'lucide-react'
 
 const CARDS = [
-  {
-    label: 'Total Users',
-    value: '42',
-    icon: Users,
-    bg: 'bg-[#1a51a5]',
-  },
-  {
-    label: 'Staffs',
-    value: '08',
-    icon: ShieldCheck,
-    bg: 'bg-[#2d9f6f]',
-  },
-  {
-    label: 'Students',
-    value: '08',
-    icon: GraduationCap,
-    bg: 'bg-[#3cb8a0]',
-  },
-  {
-    label: 'Pending Access',
-    value: '24',
-    icon: FileClock,
-    bg: 'bg-[#f7941d]',
-  },
+  { label: 'Total Users', value: '42', icon: Users, bg: 'bg-[#1a51a5]' },
+  { label: 'Staffs', value: '08', icon: ShieldCheck, bg: 'bg-[#2d9f6f]' },
+  { label: 'Students', value: '08', icon: GraduationCap, bg: 'bg-[#3cb8a0]' },
+  { label: 'Pending Access', value: '24', icon: FileClock, bg: 'bg-[#f7941d]' },
 ]
 
 export default function UserSummaryCards() {
   return (
-    <div className="w-full">
-      <div className="mb-8 grid grid-cols-5 gap-6">
+    <div className="w-full" style={{ marginBottom: '12px' }}>
+      <div className="grid grid-cols-5" style={{ gap: '10px' }}>
         {CARDS.map(({ label, value, icon: Icon, bg }, index) => (
           <div
             key={label}
-            className={`
-              relative overflow-hidden rounded-2xl ${bg}
-              px-6 py-6 lg:px-8 lg:py-8 text-white shadow-sm
-              flex flex-col justify-between
-              h-[160px] lg:h-[180px]
-              ${index === 0 ? 'col-span-2' : 'col-span-1'}
-            `}
+            className={`relative overflow-hidden rounded-xl ${bg} text-white flex flex-col justify-between ${index === 0 ? 'col-span-2' : 'col-span-1'}`}
+            style={{ padding: '16px 20px', height: '150px' }}
           >
-            <p className="relative z-10 font-inter text-[16px] lg:text-[18px] font-semibold text-white/90">
+            <p className="relative z-10 font-inter font-semibold text-white/90" style={{ fontSize: '13px' }}>
               {label}
             </p>
-            <p className="relative z-10 font-inter text-[56px] lg:text-[64px] font-bold leading-none tracking-tight">
+            <p className="relative z-10 font-inter font-bold leading-none"
+              style={{ fontSize: index === 0 ? '72px' : '62px' }}>
               {value}
             </p>
-
             <Icon
-              className="absolute right-6 top-1/2 -translate-y-1/2 h-[72px] w-[72px] lg:h-[84px] lg:w-[84px] text-white/20"
+              className="absolute text-white/20"
+              style={{
+                right: '14px',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                width: index === 0 ? '88px' : '72px',
+                height: index === 0 ? '88px' : '72px',
+              }}
               strokeWidth={1.5}
               aria-hidden="true"
             />
