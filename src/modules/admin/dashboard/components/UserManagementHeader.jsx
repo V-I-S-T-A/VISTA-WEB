@@ -1,13 +1,26 @@
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import AddUserModal from '../modals/AddUserModal'
+import { useCreateUser } from '../../../../hooks/useUserMutations'
 
 export default function UserManagementHeader() {
   const [showAddModal, setShowAddModal] = useState(false)
+  const createUserMutation = useCreateUser()
 
   async function handleAddUser(data) {
-    console.log('New user payload:', data)
-    // await supabase.from('tbl_Users').insert({ ...data })
+    try {
+      await createUserMutation.mutateAsync({
+        full_name: data.full_name || data.fullName,
+        email: data.email,
+        password: data.password,
+        password_confirm: data.password_confirm || data.confirmPassword,
+        role: data.role,
+        is_active: data.is_active !== undefined ? data.is_active : data.isActive,
+      })
+      setShowAddModal(false)
+    } catch (error) {
+      console.error('Error creating user:', error)
+    }
   }
 
   return (
@@ -37,6 +50,8 @@ export default function UserManagementHeader() {
         isOpen={showAddModal}
         onClose={() => setShowAddModal(false)}
         onSave={handleAddUser}
+        isLoading={createUserMutation.isPending}
+        error={createUserMutation.error}
       />
     </>
   )

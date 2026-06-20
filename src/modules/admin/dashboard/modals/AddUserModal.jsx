@@ -1,20 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { X, UserPlus, Eye, EyeOff } from 'lucide-react'
 
-const DEPARTMENTS = [
-    'OSA Secretary',
-    'Site Officer',
-    'College of Engineering',
-    'Information Technology',
-    'Human Resources',
-    "Registrar's Office",
-    'Finance Office',
-    'College of Education',
-    'College of Business',
-    'Library Services',
-]
-
-const ROLES = ['Staff', 'Student']
+const ROLES = ['staff', 'student']
 
 const FIELD_STYLES = {
     label: {
@@ -124,11 +111,10 @@ const EMPTY_FORM = {
     password: '',
     confirmPassword: '',
     role: '',
-    department: '',
     isActive: true,
 }
 
-export default function AddUserModal({ isOpen, onClose, onSave }) {
+export default function AddUserModal({ isOpen, onClose, onSave, isLoading = false, error }) {
     const [form, setForm] = useState(EMPTY_FORM)
     const [errors, setErrors] = useState({})
     const [showPassword, setShowPassword] = useState(false)
@@ -180,7 +166,6 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
             errs.confirmPassword = 'Passwords do not match.'
         }
         if (!form.role) errs.role = 'Role is required.'
-        if (!form.department) errs.department = 'Department is required.'
         return errs
     }
 
@@ -196,8 +181,8 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                 full_name: form.fullName.trim(),
                 email: form.email.trim(),
                 password: form.password,
+                password_confirm: form.confirmPassword,
                 role: form.role,
-                department: form.department,
                 is_active: form.isActive,
             })
             onClose()
@@ -292,17 +277,19 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                     <button
                         type="button"
                         onClick={onClose}
+                        disabled={saving || isLoading}
                         style={{
                             background: 'rgba(255,255,255,0.15)',
                             border: 'none',
                             borderRadius: '7px',
                             width: '30px',
                             height: '30px',
-                            cursor: 'pointer',
+                            cursor: saving || isLoading ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             color: '#fff',
+                            opacity: saving || isLoading ? 0.5 : 1,
                         }}
                         aria-label="Close modal"
                     >
@@ -312,6 +299,19 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
 
                 {/* Body */}
                 <div style={{ padding: '24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    
+                    {error && (
+                        <div style={{
+                            background: '#fee2e2',
+                            border: '1px solid #fecaca',
+                            borderRadius: '8px',
+                            padding: '12px',
+                            fontSize: '13px',
+                            color: '#991b1b',
+                        }}>
+                            {error.message || 'Failed to create user. Please try again.'}
+                        </div>
+                    )}
 
                     {/* Full Name */}
                     <Field label="Full Name *" error={errors.fullName}>
@@ -321,6 +321,7 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                             placeholder="e.g. Maria Santos"
                             value={form.fullName}
                             onChange={(e) => set('fullName', e.target.value)}
+                            disabled={saving || isLoading}
                         />
                     </Field>
 
@@ -331,6 +332,7 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                             placeholder="e.g. maria.santos@gmail.com"
                             value={form.email}
                             onChange={(e) => set('email', e.target.value)}
+                            disabled={saving || isLoading}
                         />
                     </Field>
 
@@ -344,6 +346,7 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                                     value={form.password}
                                     onChange={(e) => set('password', e.target.value)}
                                     style={{ paddingRight: '38px' }}
+                                    disabled={saving || isLoading}
                                 />
                                 <button
                                     type="button"
@@ -376,6 +379,7 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                                     value={form.confirmPassword}
                                     onChange={(e) => set('confirmPassword', e.target.value)}
                                     style={{ paddingRight: '38px' }}
+                                    disabled={saving || isLoading}
                                 />
                                 <button
                                     type="button"
@@ -401,22 +405,13 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                         </Field>
                     </div>
 
-                    {/* Role + Department row */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                        <Field label="Role *" error={errors.role}>
-                            <FocusSelect value={form.role} onChange={(e) => set('role', e.target.value)}>
-                                <option value="">Select role</option>
-                                {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-                            </FocusSelect>
-                        </Field>
-
-                        <Field label="Department *" error={errors.department}>
-                            <FocusSelect value={form.department} onChange={(e) => set('department', e.target.value)}>
-                                <option value="">Select department</option>
-                                {DEPARTMENTS.map((d) => <option key={d} value={d}>{d}</option>)}
-                            </FocusSelect>
-                        </Field>
-                    </div>
+                    {/* Role */}
+                    <Field label="Role *" error={errors.role}>
+                        <FocusSelect value={form.role} onChange={(e) => set('role', e.target.value)} disabled={saving || isLoading}>
+                            <option value="">Select role</option>
+                            {ROLES.map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
+                        </FocusSelect>
+                    </Field>
 
                     {/* Status toggle */}
                     <div
@@ -443,16 +438,18 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                             role="switch"
                             aria-checked={form.isActive}
                             onClick={() => set('isActive', !form.isActive)}
+                            disabled={saving || isLoading}
                             style={{
                                 width: '42px',
                                 height: '24px',
                                 borderRadius: '999px',
                                 border: 'none',
                                 background: form.isActive ? '#1f5cae' : '#d1d5db',
-                                cursor: 'pointer',
+                                cursor: saving || isLoading ? 'not-allowed' : 'pointer',
                                 position: 'relative',
                                 transition: 'background 0.2s',
                                 flexShrink: 0,
+                                opacity: saving || isLoading ? 0.5 : 1,
                             }}
                         >
                             <span
@@ -487,6 +484,7 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                     <button
                         type="button"
                         onClick={onClose}
+                        disabled={saving || isLoading}
                         style={{
                             fontFamily: 'Inter, sans-serif',
                             fontSize: '13px',
@@ -496,8 +494,9 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                             border: '1.5px solid #d1d5db',
                             borderRadius: '8px',
                             padding: '8px 18px',
-                            cursor: 'pointer',
+                            cursor: saving || isLoading ? 'not-allowed' : 'pointer',
                             transition: 'background 0.15s',
+                            opacity: saving || isLoading ? 0.5 : 1,
                         }}
                     >
                         Cancel
@@ -505,17 +504,17 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                     <button
                         type="button"
                         onClick={handleSave}
-                        disabled={saving}
+                        disabled={saving || isLoading}
                         style={{
                             fontFamily: 'Inter, sans-serif',
                             fontSize: '13px',
                             fontWeight: '700',
                             color: '#111827',
-                            background: saving ? '#e6c900' : '#ffe100',
+                            background: saving || isLoading ? '#e6c900' : '#ffe100',
                             border: '1.5px solid #d4a000',
                             borderRadius: '8px',
                             padding: '8px 20px',
-                            cursor: saving ? 'not-allowed' : 'pointer',
+                            cursor: saving || isLoading ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             gap: '6px',
@@ -523,7 +522,7 @@ export default function AddUserModal({ isOpen, onClose, onSave }) {
                         }}
                     >
                         <UserPlus style={{ width: '13px', height: '13px' }} />
-                        {saving ? 'Saving...' : 'Add User'}
+                        {saving || isLoading ? 'Saving...' : 'Add User'}
                     </button>
                 </div>
             </div>

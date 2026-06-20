@@ -1,13 +1,25 @@
 import { Users, ShieldCheck, GraduationCap, FileClock } from 'lucide-react'
-
-const CARDS = [
-  { label: 'Total Users', value: '42', icon: Users, bg: 'bg-[#1a51a5]' },
-  { label: 'Staffs', value: '08', icon: ShieldCheck, bg: 'bg-[#2d9f6f]' },
-  { label: 'Students', value: '08', icon: GraduationCap, bg: 'bg-[#3cb8a0]' },
-  { label: 'Pending Access', value: '24', icon: FileClock, bg: 'bg-[#f7941d]' },
-]
+import { useUsers } from '../../../../hooks/useUsers'
 
 export default function UserSummaryCards() {
+  // Fetch all users to calculate stats
+  const { data: usersData = [] } = useUsers({ pageSize: 1000 })
+
+  const users = Array.isArray(usersData) ? usersData : (usersData.results || [])
+
+  // Calculate statistics
+  const totalUsers = users.length
+  const staffCount = users.filter((u) => u.role === 'staff').length
+  const studentCount = users.filter((u) => u.role === 'student').length
+  const inactiveCount = users.filter((u) => !u.is_active).length
+
+  const CARDS = [
+    { label: 'Total Users', value: totalUsers.toString(), icon: Users, bg: 'bg-[#1a51a5]' },
+    { label: 'Staffs', value: staffCount.toString(), icon: ShieldCheck, bg: 'bg-[#2d9f6f]' },
+    { label: 'Students', value: studentCount.toString(), icon: GraduationCap, bg: 'bg-[#3cb8a0]' },
+    { label: 'Inactive', value: inactiveCount.toString(), icon: FileClock, bg: 'bg-[#f7941d]' },
+  ]
+
   return (
     <div className="w-full" style={{ marginBottom: '12px' }}>
       <div className="grid grid-cols-5" style={{ gap: '10px' }}>
