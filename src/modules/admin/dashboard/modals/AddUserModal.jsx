@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { X, UserPlus, Eye, EyeOff } from 'lucide-react'
+import { useOrganizations } from '../../../../hooks/useOrganizations'
 
 const ROLES = ['staff', 'student']
 
@@ -111,6 +112,7 @@ const EMPTY_FORM = {
     password: '',
     confirmPassword: '',
     role: '',
+    orgId: '',
     isActive: true,
 }
 
@@ -122,6 +124,9 @@ export default function AddUserModal({ isOpen, onClose, onSave, isLoading = fals
     const [saving, setSaving] = useState(false)
     const overlayRef = useRef(null)
     const firstInputRef = useRef(null)
+
+    const { data: orgData } = useOrganizations()
+    const organizations = Array.isArray(orgData) ? orgData : (orgData?.results || [])
 
     useEffect(() => {
         if (isOpen) {
@@ -166,6 +171,7 @@ export default function AddUserModal({ isOpen, onClose, onSave, isLoading = fals
             errs.confirmPassword = 'Passwords do not match.'
         }
         if (!form.role) errs.role = 'Role is required.'
+        if (form.role === 'student' && !form.orgId) errs.orgId = 'Organization is required for students.'
         return errs
     }
 
@@ -183,6 +189,7 @@ export default function AddUserModal({ isOpen, onClose, onSave, isLoading = fals
                 password: form.password,
                 password_confirm: form.confirmPassword,
                 role: form.role,
+                org_id: form.role === 'student' ? form.orgId : null,
                 is_active: form.isActive,
             })
             onClose()
@@ -407,11 +414,28 @@ export default function AddUserModal({ isOpen, onClose, onSave, isLoading = fals
 
                     {/* Role */}
                     <Field label="Role *" error={errors.role}>
-                        <FocusSelect value={form.role} onChange={(e) => set('role', e.target.value)} disabled={saving || isLoading}>
+                        <FocusSelect value={form.role} onChange={(e) => {
+                            set('role', e.target.value)
+                            if (e.target.value !== 'student') set('orgId', '')
+                        }} disabled={saving || isLoading}>
                             <option value="">Select role</option>
                             {ROLES.map((r) => <option key={r} value={r}>{r.charAt(0).toUpperCase() + r.slice(1)}</option>)}
                         </FocusSelect>
                     </Field>
+
+                    {/* Organization (Dynamic) */}
+                    {form.role === 'student' && (
+                        <Field label="Organization *" error={errors.orgId}>
+                            <FocusSelect value={form.orgId} onChange={(e) => set('orgId', e.target.value)} disabled={saving || isLoading}>
+                                <option value="">Select organization</option>
+                                {organizations.map((org) => (
+                                    <option key={org.org_id} value={org.org_id}>
+                                        {org.acronym} - {org.name}
+                                    </option>
+                                ))}
+                            </FocusSelect>
+                        </Field>
+                    )}
 
                     {/* Status toggle */}
                     <div
