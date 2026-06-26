@@ -381,16 +381,16 @@ export default function RecentSubmissionsTable() {
                       // Navigate to review panel (placeholder)
                       console.log("View & Review:", submission.submission_id);
                     }}
-                    className="inline-flex items-center gap-1.5 rounded font-inter font-bold text-white transition hover:opacity-90 active:scale-95"
+                    className="inline-flex items-center gap-1.5 rounded font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95"
                     style={{
                       fontSize: "12px",
                       padding: "5px 14px",
-                      background: "linear-gradient(135deg, #1f5cae 0%, #142d55 100%)",
-                      border: "none",
+                      backgroundColor: "#ffe100",
+                      border: "1px solid #d4a000",
                     }}
                   >
                     <Eye style={{ width: "13px", height: "13px" }} aria-hidden="true" />
-                    View &amp; Review
+                    VIEW &amp; REVIEW
                   </button>
                 </td>
               </tr>
@@ -419,37 +419,43 @@ export default function RecentSubmissionsTable() {
           submissions
         </p>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <button
             type="button"
             onClick={() => goToPage(safeCurrentPage - 1)}
             disabled={safeCurrentPage === 1}
-            className="font-inter font-semibold border rounded-md transition"
+            className="font-inter font-semibold border rounded-full transition"
             style={{
-              height: "30px",
-              padding: "0 14px",
-              fontSize: "13px",
+              width: "34px",
+              height: "34px",
+              fontSize: "14px",
               borderColor: "#d1d5db",
-              backgroundColor: "#f9fafb",
+              backgroundColor: "#ffffff",
               color: safeCurrentPage === 1 ? "#9ca3af" : "#374151",
               cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            Previous
+            &lt;
           </button>
           {pageNumbers.map((page) => (
             <button
               key={page}
               type="button"
               onClick={() => goToPage(page)}
-              className="font-inter font-semibold border rounded-md transition"
+              className="font-inter font-semibold border rounded-full transition"
               style={{
                 width: "34px",
-                height: "30px",
+                height: "34px",
                 fontSize: "13px",
                 borderColor: page === safeCurrentPage ? "#002b5c" : "#d1d5db",
                 backgroundColor: page === safeCurrentPage ? "#002b5c" : "#ffffff",
                 color: page === safeCurrentPage ? "#ffffff" : "#374151",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
               {page}
@@ -459,18 +465,21 @@ export default function RecentSubmissionsTable() {
             type="button"
             onClick={() => goToPage(safeCurrentPage + 1)}
             disabled={safeCurrentPage >= totalPages}
-            className="font-inter font-semibold border rounded-md transition"
+            className="font-inter font-semibold border rounded-full transition"
             style={{
-              height: "30px",
-              padding: "0 14px",
-              fontSize: "13px",
+              width: "34px",
+              height: "34px",
+              fontSize: "14px",
               borderColor: "#d1d5db",
               backgroundColor: "#ffffff",
               color: safeCurrentPage >= totalPages ? "#9ca3af" : "#374151",
               cursor: safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
             }}
           >
-            Next
+            &gt;
           </button>
         </div>
       </div>
