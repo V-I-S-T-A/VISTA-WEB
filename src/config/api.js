@@ -6,6 +6,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     USERS: "/users",
     AUTH: "/auth",
+    ORGANIZATIONS: "/organizations",
   },
 };
 
@@ -23,5 +24,12 @@ export const API_ENDPOINTS = {
     ME: `${API_CONFIG.ENDPOINTS.AUTH}/me/`,
     REFRESH: `${API_CONFIG.ENDPOINTS.AUTH}/token/refresh/`,
     CHANGE_PASSWORD: `${API_CONFIG.ENDPOINTS.AUTH}/change-password/`,
+  },
+  ORGANIZATIONS: {
+    LIST: `${API_CONFIG.ENDPOINTS.ORGANIZATIONS}/`,
+    CREATE: `${API_CONFIG.ENDPOINTS.ORGANIZATIONS}/`,
+    DETAIL: (orgId) => `${API_CONFIG.ENDPOINTS.ORGANIZATIONS}/${orgId}/`,
+    UPDATE: (orgId) => `${API_CONFIG.ENDPOINTS.ORGANIZATIONS}/${orgId}/`,
+    DELETE: (orgId) => `${API_CONFIG.ENDPOINTS.ORGANIZATIONS}/${orgId}/`,
   },
 };
