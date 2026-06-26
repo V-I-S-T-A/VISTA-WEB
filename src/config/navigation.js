@@ -20,6 +20,11 @@ export const headerConfig = {
     title: 'Staff Dashboard',
     avatar: defaultUser,
   },
+  registration: {
+    type: 'dashboard',
+    title: 'Registration',
+    avatar: defaultUser,
+  },
   student: {
     type: 'dashboard',
     title: 'Student Dashboard',

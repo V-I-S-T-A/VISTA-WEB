@@ -6,6 +6,7 @@ import SubmissionManagementHeader from "./dashboard/components/SubmissionManagem
 import SubmissionSummaryCards from "./dashboard/components/UserSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
 import { useCurrentUser } from "../../hooks/useAuth";
+import systemScopeBanner from "../../assets/shared/systemscope.png";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -39,6 +40,13 @@ export default function Dashboard() {
             <SubmissionManagementHeader />
             <SubmissionSummaryCards />
             <RecentSubmissionsTable />
+            <div style={{ paddingTop: "48px" }}>
+              <img
+                src={systemScopeBanner}
+                alt="System Scope"
+                className="w-3/4 h-auto"
+              />
+            </div>
           </div>
         </main>
       </div>

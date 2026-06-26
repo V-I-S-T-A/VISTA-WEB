@@ -94,7 +94,7 @@ export default function Sidebar({ role = "admin" }) {
         >
           {config.navItems.map((item) => {
             const Icon = ICON_MAP[item.icon];
-            const isActive = location.pathname === item.path;
+            const isActive = location.pathname.startsWith(item.path);
 
             return (
               <button
