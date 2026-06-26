@@ -1,8 +1,9 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import LandingPage from './modules/LandingPage'
 import LoginPage from './modules/LoginPage'
-import Dashboard from './modules/admin/Dashboard'
-import AuditLogs from './modules/admin/AuditLogs'
+import AdminDashboard from './modules/admin/Dashboard'
+import AdminAuditLogs from './modules/admin/AuditLogs'
+import StaffDashboard from './modules/staff/Dashboard'
 
 function App() {
   return (
@@ -10,8 +11,9 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/audit-logs" element={<AuditLogs />} />
+        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
+        <Route path="/staff/dashboard" element={<StaffDashboard />} />
       </Routes>
     </BrowserRouter>
   )

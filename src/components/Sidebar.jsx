@@ -1,11 +1,15 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Users, FileText, LogOut } from "lucide-react";
+import { Users, FileText, LogOut, LayoutDashboard, ClipboardList, ClipboardCheck, CloudUpload } from "lucide-react";
 import { getSidebarConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
 
 const ICON_MAP = {
   Users,
   FileText,
+  LayoutDashboard,
+  ClipboardList,
+  ClipboardCheck,
+  CloudUpload,
 };
 
 export default function Sidebar({ role = "admin" }) {

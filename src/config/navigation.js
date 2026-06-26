@@ -65,7 +65,38 @@ export const sidebarConfig = {
       id: '2021-00832',
       avatar: defaultUser,
     },
-    navItems: [],
+    navItems: [
+      {
+        label: 'Dashboard',
+        icon: 'LayoutDashboard',
+        path: '/staff/dashboard',
+        active: true,
+      },
+      {
+        label: 'Registration',
+        icon: 'ClipboardList',
+        path: '/staff/registration',
+        active: false,
+      },
+      {
+        label: 'Review Panel',
+        icon: 'ClipboardCheck',
+        path: '/staff/review-panel',
+        active: false,
+      },
+      {
+        label: 'Audit Logs',
+        icon: 'FileText',
+        path: '/staff/audit-logs',
+        active: false,
+      },
+      {
+        label: 'GDrive Sync',
+        icon: 'CloudUpload',
+        path: '/staff/gdrive-sync',
+        active: false,
+      },
+    ],
     logout: {
       label: 'LOGOUT',
       path: '/login',

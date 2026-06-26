@@ -17,8 +17,16 @@ export default function LoginPage() {
     e.preventDefault();
     try {
       const res = await loginMutation.mutateAsync({ email, password });
-      // Successful login
-      navigate("/admin/dashboard");
+      // Role-based redirect
+      const role = res?.user?.role;
+      if (role === "admin") {
+        navigate("/admin/dashboard");
+      } else if (role === "staff") {
+        navigate("/staff/dashboard");
+      } else {
+        // Fallback for unknown roles
+        navigate("/login");
+      }
     } catch (err) {
       console.error("Login failed", err);
       alert("Login failed. Check credentials.");
