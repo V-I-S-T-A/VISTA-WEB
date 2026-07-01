@@ -1,5 +1,13 @@
 import { useNavigate, useLocation } from "react-router-dom";
-import { Users, FileText, LogOut, LayoutDashboard, ClipboardList, ClipboardCheck, CloudUpload } from "lucide-react";
+import {
+  Users,
+  FileText,
+  LogOut,
+  LayoutDashboard,
+  ClipboardList,
+  ClipboardCheck,
+  CloudUpload,
+} from "lucide-react";
 import { getSidebarConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
 
@@ -55,13 +63,19 @@ export default function Sidebar({ role = "admin" }) {
             </p>
           </div>
 
-          <div
-            className="flex items-center gap-3.5"
+          {/* Profile shortcut — click avatar/name to go to the profile page */}
+          <button
+            type="button"
+            onClick={() => navigate(`/${role}/profile`)}
+            className="flex items-center gap-3.5 w-full rounded-md text-left transition-colors hover:bg-white/10"
             style={{
               paddingLeft: "12px",
               paddingRight: "12px",
-              marginTop: "14px",
+              paddingTop: "6px",
+              paddingBottom: "6px",
+              marginTop: "10px",
             }}
+            aria-label="View profile"
           >
             <img
               src={currentUser?.avatar ?? config.user.avatar}
@@ -80,7 +94,7 @@ export default function Sidebar({ role = "admin" }) {
                   : (currentUser?.full_name ?? config.user.name)}
               </p>
             </div>
-          </div>
+          </button>
         </div>
 
         {/* Navigation */}
