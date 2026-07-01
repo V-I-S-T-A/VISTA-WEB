@@ -5,6 +5,7 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import AuditLogTable from "./auditlogs/components/AuditLogTable";
 import AuditLogDetails from "./auditlogs/components/AuditLogDetails";
+import AuditLogHeader from "./auditlogs/components/AuditLogHeader";
 import { useCurrentUser } from "../../hooks/useAuth";
 import systemScopeBanner from "../../assets/shared/systemscope.png";
 
@@ -26,13 +27,14 @@ export default function AuditLogs() {
       <Sidebar role="staff" />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="staffAuditLog" />
+        <Header layout="staff" />
 
         <main
           className="flex-1 overflow-y-auto"
           style={{ padding: "20px 24px" }}
         >
           <div className="w-full">
+            <AuditLogHeader />
             {selectedLog ? (
               <AuditLogDetails
                 log={selectedLog}

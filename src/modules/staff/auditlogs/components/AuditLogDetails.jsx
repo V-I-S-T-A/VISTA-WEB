@@ -24,22 +24,6 @@ export default function AuditLogDetails({ log, onBack }) {
         Log History
       </p>
 
-      {/* Page heading */}
-      <div style={{ marginBottom: "14px" }}>
-        <h2
-          className="font-inter font-bold text-[#142d55]"
-          style={{ fontSize: "26px", lineHeight: 1.15 }}
-        >
-          Audit Log History Details
-        </h2>
-        <p
-          className="font-inter text-gray-500 mt-0.5"
-          style={{ fontSize: "13px" }}
-        >
-          System-wide transparency of activities.
-        </p>
-      </div>
-
       {/* Back button */}
       <div className="flex items-center gap-3 mb-5">
         <button
