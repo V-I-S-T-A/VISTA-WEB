@@ -30,7 +30,7 @@ export default function Dashboard() {
       <Sidebar role="staff" />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="staff" />
+        <Header layout="staff" profilePath="/staff/profile" />
 
         <main
           className="flex-1 overflow-y-auto"

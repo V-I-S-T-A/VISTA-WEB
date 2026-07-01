@@ -7,6 +7,7 @@ import StaffDashboard from "./modules/staff/Dashboard";
 import StaffRegistration from "./modules/staff/Registration";
 import StaffAnalysisResults from "./modules/staff/registration/AnalysisResults";
 import StaffAuditLogs from "./modules/staff/AuditLogs";
+import StaffProfile from "./modules/staff/Profile";
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
           element={<StaffAnalysisResults />}
         />
         <Route path="/staff/audit-logs" element={<StaffAuditLogs />} />
+        <Route path="/staff/profile" element={<StaffProfile />} />
       </Routes>
     </BrowserRouter>
   );

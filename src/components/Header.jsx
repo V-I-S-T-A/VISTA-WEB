@@ -1,46 +1,61 @@
-import { useNavigate } from 'react-router-dom'
-import { ArrowRight, Download } from 'lucide-react'
-import vistaLogo from '../assets/shared/vista_logo.png'
-import { getHeaderConfig } from '../config/navigation'
+import { useNavigate } from "react-router-dom";
+import { ArrowRight, Download } from "lucide-react";
+import vistaLogo from "../assets/shared/vista_logo.png";
+import { getHeaderConfig } from "../config/navigation";
 
-export default function Header({ layout = 'public' }) {
-  const navigate = useNavigate()
-  const config = getHeaderConfig(layout)
+export default function Header({ layout = "public", profilePath }) {
+  const navigate = useNavigate();
+  const config = getHeaderConfig(layout);
 
-  if (config.type === 'dashboard') {
+  if (config.type === "dashboard") {
     return (
       <header
         className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white"
         style={{
-          paddingLeft: '24px',
-          paddingRight: '24px',
+          paddingLeft: "24px",
+          paddingRight: "24px",
         }}
       >
         <h1 className="font-inter text-sm font-medium text-[#1a51a5]">
           {config.title}
         </h1>
 
-        <img
-          src={config.avatar}
-          alt="Profile"
-          className="h-10 w-10 rounded-full object-cover flex-shrink-0"
-        />
+        {profilePath ? (
+          <button
+            type="button"
+            onClick={() => navigate(profilePath)}
+            className="flex-shrink-0 rounded-full transition hover:opacity-80"
+            aria-label="View profile"
+          >
+            <img
+              src={config.avatar}
+              alt="Profile"
+              className="h-10 w-10 rounded-full object-cover"
+            />
+          </button>
+        ) : (
+          <img
+            src={config.avatar}
+            alt="Profile"
+            className="h-10 w-10 rounded-full object-cover flex-shrink-0"
+          />
+        )}
       </header>
-    )
+    );
   }
 
   return (
     <header
       className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white"
       style={{
-        paddingLeft: '24px',
-        paddingRight: '24px',
+        paddingLeft: "24px",
+        paddingRight: "24px",
       }}
     >
       <div className="header-left">
         <button
           type="button"
-          onClick={() => navigate('/')}
+          onClick={() => navigate("/")}
           className="header-brand-link cursor-pointer border-none bg-transparent p-0"
         >
           <h1 className="font-inter text-2xl font-black text-[#1A51A5]">
@@ -52,7 +67,7 @@ export default function Header({ layout = 'public' }) {
       <div className="header-right flex items-center gap-3">
         <button
           type="button"
-          onClick={() => navigate('/login')}
+          onClick={() => navigate("/login")}
           className="btn btn-primary"
         >
           Login
@@ -72,5 +87,5 @@ export default function Header({ layout = 'public' }) {
         />
       </div>
     </header>
-  )
+  );
 }
