@@ -205,27 +205,6 @@ export default function AuditLogHistory() {
   // ---- List view ----
   return (
     <>
-      {/* Page heading */}
-      <div
-        className="flex items-start justify-between w-full"
-        style={{ marginBottom: "14px" }}
-      >
-        <div>
-          <h2
-            className="font-inter font-bold text-[#142d55]"
-            style={{ fontSize: "26px", lineHeight: 1.15 }}
-          >
-            Audit Log History
-          </h2>
-          <p
-            className="font-inter text-gray-500 mt-0.5"
-            style={{ fontSize: "13px" }}
-          >
-            System-wide transparency of activities.
-          </p>
-        </div>
-      </div>
-
       {/* Table shell */}
       <section className="overflow-hidden rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
         {/* Section header with controls */}
