@@ -34,7 +34,6 @@ export default function AuditLogs() {
           style={{ padding: "20px 24px" }}
         >
           <div className="w-full">
-            <AuditLogHeader />
             {selectedLog ? (
               <AuditLogDetails
                 log={selectedLog}
