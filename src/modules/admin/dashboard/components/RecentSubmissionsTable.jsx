@@ -132,10 +132,38 @@ export default function RecentSubmissionsTable() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState("All Roles");
+
+  // New States for "More Filters"
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [dateFilter, setDateFilter] = useState("");
+  const moreFiltersRef = useRef(null);
+
   const [currentPage, setCurrentPage] = useState(1);
   const [editUser, setEditUser] = useState(null);
 
-  // Fetch users from API
+  // Handle click outside for More Filters Dropdown
+  useEffect(() => {
+    if (!showMoreFilters) return;
+    function handleClickOutside(event) {
+      if (
+        moreFiltersRef.current &&
+        !moreFiltersRef.current.contains(event.target)
+      ) {
+        setShowMoreFilters(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setShowMoreFilters(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showMoreFilters]);
+
+  // Fetch users from API (now passing dateFilter)
   const {
     data: usersData = [],
     isLoading,
@@ -145,6 +173,7 @@ export default function RecentSubmissionsTable() {
     pageSize: PAGE_SIZE,
     search: searchQuery.trim(),
     role: roleFilter === "All Roles" ? "" : roleFilter,
+    date: dateFilter, // Let the backend handle the date filtering
   });
 
   // Setup mutations
@@ -287,19 +316,82 @@ export default function RecentSubmissionsTable() {
                 setSearchInput("");
               }}
             />
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 bg-white font-inter font-semibold text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
-              style={{
-                border: "1.5px solid #d1d5db",
-                borderRadius: "7px",
-                padding: "7px 13px",
-                fontSize: "12px",
-              }}
-            >
-              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              More Filters
-            </button>
+
+            {/* More Filters Popover with Calendar */}
+            <div className="relative" ref={moreFiltersRef}>
+              <button
+                type="button"
+                onClick={() => setShowMoreFilters((prev) => !prev)}
+                className={`inline-flex items-center gap-1.5 font-inter font-semibold transition-colors whitespace-nowrap ${
+                  showMoreFilters || dateFilter
+                    ? "bg-[#eef2ff] text-[#1f5cae] border-[#1f5cae]"
+                    : "bg-white text-gray-700 hover:bg-gray-50 border-[#d1d5db]"
+                }`}
+                style={{
+                  borderWidth: "1.5px",
+                  borderStyle: "solid",
+                  borderRadius: "7px",
+                  padding: "7px 13px",
+                  fontSize: "12px",
+                }}
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                More Filters
+                {dateFilter && (
+                  <div className="w-2 h-2 rounded-full bg-blue-500 ml-1"></div>
+                )}
+              </button>
+
+              {showMoreFilters && (
+                <div className="absolute right-0 top-full z-10 mt-1.5 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg p-4">
+                  <h4 className="font-inter text-[13px] font-bold text-gray-800 mb-3">
+                    Additional Filters
+                  </h4>
+
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                      Filter by Date Created
+                    </label>
+                    <input
+                      type="date"
+                      value={dateFilter}
+                      onChange={(e) => {
+                        setDateFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="w-full bg-white font-inter text-gray-700 outline-none cursor-pointer"
+                      style={{
+                        height: "34px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        padding: "0 10px",
+                        fontSize: "13px",
+                      }}
+                    />
+                  </div>
+
+                  <div className="flex justify-between items-center mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDateFilter("");
+                        setCurrentPage(1);
+                      }}
+                      className="text-xs font-inter font-semibold text-red-600 hover:text-red-700 hover:underline"
+                    >
+                      Clear Filters
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreFilters(false)}
+                      className="bg-[#1f5cae] text-white px-3 py-1.5 rounded-md text-xs font-inter font-semibold hover:bg-[#154685] transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

@@ -104,6 +104,7 @@ const ACTION_COLORS = {
   SYSTEM_CONFIG_CHANGED: { bg: "#d1d5db", text: "#374151" },
   LOGIN: { bg: "#cffafe", text: "#164e63" },
   BACKUP_COMPLETED: { bg: "#f3e8ff", text: "#5b21b6" },
+  DEFAULT: { bg: "#f3f4f6", text: "#4b5563" },
 };
 
 function FilterDropdown({ label, options, value, onChange }) {
@@ -196,6 +197,12 @@ export default function AuditLogHistory() {
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("All Actions");
   const [userTypeFilter, setUserTypeFilter] = useState("All Types");
+
+  // States for "More Filters" (Date/Calendar)
+  const [showMoreFilters, setShowMoreFilters] = useState(false);
+  const [dateFilter, setDateFilter] = useState("");
+  const moreFiltersRef = useRef(null);
+
   const [currentPage, setCurrentPage] = useState(1);
 
   const ACTION_OPTIONS = [
@@ -221,22 +228,60 @@ export default function AuditLogHistory() {
     "Student Organization",
   ];
 
+  // Handle click outside for More Filters
+  useEffect(() => {
+    if (!showMoreFilters) return;
+    function handleClickOutside(event) {
+      if (
+        moreFiltersRef.current &&
+        !moreFiltersRef.current.contains(event.target)
+      ) {
+        setShowMoreFilters(false);
+      }
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setShowMoreFilters(false);
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showMoreFilters]);
+
   // Filter and search logic
   const filteredLogs = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
+
     return MOCK_AUDIT_LOGS.filter((log) => {
       const matchesSearch =
         !query ||
         log.user.toLowerCase().includes(query) ||
         log.action.toLowerCase().includes(query) ||
         log.reference.toLowerCase().includes(query);
+
       const matchesAction =
         actionFilter === "All Actions" || log.action === actionFilter;
+
       const matchesUserType =
         userTypeFilter === "All Types" || log.userType === userTypeFilter;
-      return matchesSearch && matchesAction && matchesUserType;
+
+      // Date Picker matching logic tailored for mock data format ("Oct 24, 2023")
+      let matchesDate = true;
+      if (dateFilter && log.timestamp) {
+        const logDateObj = new Date(log.timestamp);
+        const year = logDateObj.getFullYear();
+        const month = String(logDateObj.getMonth() + 1).padStart(2, "0");
+        const day = String(logDateObj.getDate()).padStart(2, "0");
+        const formattedLogDate = `${year}-${month}-${day}`;
+
+        matchesDate = formattedLogDate === dateFilter;
+      }
+
+      return matchesSearch && matchesAction && matchesUserType && matchesDate;
     });
-  }, [searchTerm, actionFilter, userTypeFilter]);
+  }, [searchTerm, actionFilter, userTypeFilter, dateFilter]);
 
   // Pagination logic
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
@@ -373,20 +418,85 @@ export default function AuditLogHistory() {
               }}
             />
 
-            {/* More Filters button */}
-            <button
-              type="button"
-              className="inline-flex items-center gap-1.5 bg-white font-inter font-semibold text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
-              style={{
-                border: "1.5px solid #d1d5db",
-                borderRadius: "7px",
-                padding: "7px 13px",
-                fontSize: "12px",
-              }}
-            >
-              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              More Filters
-            </button>
+            {/* More Filters button & Popover with Calendar */}
+            <div className="relative" ref={moreFiltersRef}>
+              <button
+                type="button"
+                onClick={() => setShowMoreFilters((prev) => !prev)}
+                className={`inline-flex items-center gap-1.5 font-inter font-semibold transition-colors whitespace-nowrap ${
+                  showMoreFilters || dateFilter
+                    ? "bg-[#eef2ff] text-[#1f5cae] border-[#1f5cae]"
+                    : "bg-white text-gray-700 hover:bg-gray-50 border-[#d1d5db]"
+                }`}
+                style={{
+                  borderWidth: "1.5px",
+                  borderStyle: "solid",
+                  borderRadius: "7px",
+                  padding: "7px 13px",
+                  fontSize: "12px",
+                }}
+              >
+                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+                More Filters
+                {/* Optional indicator if filter is active */}
+                {dateFilter && (
+                  <div className="w-2 h-2 rounded-full bg-blue-500 ml-1"></div>
+                )}
+              </button>
+
+              {/* More Filters Dropdown Panel */}
+              {showMoreFilters && (
+                <div className="absolute right-0 top-full z-10 mt-1.5 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg p-4">
+                  <h4 className="font-inter text-[13px] font-bold text-gray-800 mb-3">
+                    Additional Filters
+                  </h4>
+
+                  {/* Calendar/Date Filter */}
+                  <div className="mb-4">
+                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
+                      Filter by Date
+                    </label>
+                    <input
+                      type="date"
+                      value={dateFilter}
+                      onChange={(e) => {
+                        setDateFilter(e.target.value);
+                        setCurrentPage(1); // Reset to page 1 on filter
+                      }}
+                      className="w-full bg-white font-inter text-gray-700 outline-none cursor-pointer"
+                      style={{
+                        height: "34px",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "6px",
+                        padding: "0 10px",
+                        fontSize: "13px",
+                      }}
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex justify-between items-center mt-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDateFilter("");
+                        setCurrentPage(1);
+                      }}
+                      className="text-xs font-inter font-semibold text-red-600 hover:text-red-700 hover:underline"
+                    >
+                      Clear Filters
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowMoreFilters(false)}
+                      className="bg-[#1f5cae] text-white px-3 py-1.5 rounded-md text-xs font-inter font-semibold hover:bg-[#154685] transition-colors"
+                    >
+                      Done
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Export button */}
             <button
@@ -440,8 +550,7 @@ export default function AuditLogHistory() {
               ) : (
                 paginatedLogs.map((log) => {
                   const actionColor =
-                    ACTION_COLORS[log.action] ||
-                    ACTION_COLORS.SYSTEM_CONFIG_CHANGED;
+                    ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
                   return (
                     <tr
                       key={log.id}
