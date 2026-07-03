@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import {
   Search,
   SlidersHorizontal,
@@ -17,6 +17,7 @@ import {
 
 const PAGE_SIZE = 50;
 const CONTENT_PADDING = "30px";
+const SEARCH_DEBOUNCE_MS = 600;
 
 const ROLE_OPTIONS = ["All Roles", "staff", "student"];
 const STATUS_OPTIONS = ["All Status"];
@@ -26,7 +27,8 @@ const STATUS_CONFIG = {
   false: { dot: "#9ca3af", text: "#6b7280", label: "Inactive" },
 };
 
-function StatusBadge({ isActive }) {
+// Memoized StatusBadge to prevent re-renders
+const StatusBadge = memo(function StatusBadge({ isActive }) {
   const config = STATUS_CONFIG[isActive] || STATUS_CONFIG.false;
   return (
     <span
@@ -40,28 +42,50 @@ function StatusBadge({ isActive }) {
       {config.label}
     </span>
   );
-}
+});
 
-function FilterDropdown({ label, options, value, onChange }) {
+// Memoized FilterDropdown
+const FilterDropdown = memo(function FilterDropdown({
+  label,
+  options,
+  value,
+  onChange,
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
   useEffect(() => {
     if (!isOpen) return;
+
     function handleClickOutside(event) {
-      if (containerRef.current && !containerRef.current.contains(event.target))
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target)
+      ) {
         setIsOpen(false);
+      }
     }
+
     function handleKeyDown(event) {
       if (event.key === "Escape") setIsOpen(false);
     }
+
     document.addEventListener("mousedown", handleClickOutside);
     document.addEventListener("keydown", handleKeyDown);
+
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
+
+  const handleSelect = useCallback(
+    (option) => {
+      onChange(option);
+      setIsOpen(false);
+    },
+    [onChange],
+  );
 
   return (
     <div className="relative" ref={containerRef}>
@@ -100,10 +124,7 @@ function FilterDropdown({ label, options, value, onChange }) {
                 type="button"
                 role="option"
                 aria-selected={isSelected}
-                onClick={() => {
-                  onChange(option);
-                  setIsOpen(false);
-                }}
+                onClick={() => handleSelect(option)}
                 className={[
                   "flex w-full items-center justify-between gap-2 px-3 py-2 text-left font-inter font-semibold transition-colors",
                   isSelected
@@ -126,11 +147,97 @@ function FilterDropdown({ label, options, value, onChange }) {
       )}
     </div>
   );
-}
+});
+
+// Memoized UserRow component to prevent re-renders of unchanged rows
+const UserRow = memo(function UserRow({
+  user,
+  onEdit,
+  onDelete,
+  isUpdating,
+  isDeleting,
+}) {
+  const handleEdit = useCallback(() => onEdit(user), [user, onEdit]);
+  const handleDelete = useCallback(
+    () => onDelete(user.user_id),
+    [user.user_id, onDelete],
+  );
+
+  return (
+    <tr className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]">
+      <td className="px-5 py-2.5" style={{ paddingLeft: CONTENT_PADDING }}>
+        <div className="flex items-center gap-3">
+          <img
+            src={defaultUser}
+            alt=""
+            className="flex-shrink-0 rounded-full object-cover"
+            style={{ width: "45px", height: "45px" }}
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <p
+              className="font-inter font-bold text-gray-900 leading-tight"
+              style={{ fontSize: "15px" }}
+            >
+              {user.full_name}
+            </p>
+            <p
+              className="max-w-[200px] truncate font-inter font-medium text-gray-400 mt-0.5"
+              style={{ fontSize: "12px" }}
+            >
+              {user.email}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="px-5 py-2.5">
+        <span
+          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${
+            user.role === "staff"
+              ? "bg-[#dfe7fb] text-[#12345b]"
+              : "bg-[#e8e3ff] text-[#4a3f99]"
+          }`}
+          style={{ fontSize: "13px", minWidth: "80px" }}
+        >
+          {user.role}
+        </span>
+      </td>
+      <td className="px-5 py-2.5">
+        <StatusBadge isActive={user.is_active} />
+      </td>
+      <td
+        className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
+        style={{ fontSize: "13px" }}
+      >
+        {new Date(user.created_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })}
+      </td>
+      <td className="px-5 py-2.5">
+        <button
+          type="button"
+          onClick={handleEdit}
+          disabled={isUpdating || isDeleting}
+          className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50 disabled:opacity-50"
+          style={{ fontSize: "12px", padding: "4px 12px" }}
+        >
+          <SquarePen
+            style={{ width: "12px", height: "12px" }}
+            aria-hidden="true"
+          />
+          EDIT
+        </button>
+      </td>
+    </tr>
+  );
+});
 
 export default function RecentSubmissionsTable() {
-  const [searchInput, setSearchInput] = useState("");
-  const [searchQuery, setSearchQuery] = useState("");
+  // State
+  const [searchInput, setSearchInput] = useState(""); // For input control
+  const [searchQuery, setSearchQuery] = useState(""); // For API calls
   const [roleFilter, setRoleFilter] = useState("All Roles");
 
   // New States for "More Filters"
@@ -141,29 +248,10 @@ export default function RecentSubmissionsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [editUser, setEditUser] = useState(null);
 
-  // Handle click outside for More Filters Dropdown
-  useEffect(() => {
-    if (!showMoreFilters) return;
-    function handleClickOutside(event) {
-      if (
-        moreFiltersRef.current &&
-        !moreFiltersRef.current.contains(event.target)
-      ) {
-        setShowMoreFilters(false);
-      }
-    }
-    function handleKeyDown(event) {
-      if (event.key === "Escape") setShowMoreFilters(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [showMoreFilters]);
+  // Refs
+  const debounceTimerRef = useRef(null);
 
-  // Fetch users from API (now passing dateFilter)
+  // Fetch users from API
   const {
     data: usersData = [],
     isLoading,
@@ -180,33 +268,110 @@ export default function RecentSubmissionsTable() {
   const updateUserMutation = useUpdateUser();
   const deleteUserMutation = useDeleteUser();
 
-  // Transform API response to component format
-  const users = Array.isArray(usersData) ? usersData : usersData.results || [];
-  const totalCount = usersData.count || users.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
+  // Transform API response
+  const users = useMemo(
+    () => (Array.isArray(usersData) ? usersData : usersData.results || []),
+    [usersData],
+  );
 
-  const showPagination = totalCount >= 50;
+  const totalCount = useMemo(
+    () => usersData.count || users.length,
+    [usersData, users.length],
+  );
 
-  function goToPage(page) {
-    setCurrentPage(Math.min(Math.max(page, 1), totalPages));
-  }
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(totalCount / PAGE_SIZE)),
+    [totalCount],
+  );
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      setSearchQuery(searchInput);
-      setCurrentPage(1);
+  const safeCurrentPage = useMemo(
+    () => Math.min(currentPage, totalPages),
+    [currentPage, totalPages],
+  );
+
+  const showPagination = useMemo(() => totalCount >= 50, [totalCount]);
+
+  // Handle search with debounce
+  const handleSearchInputChange = useCallback(
+    (value) => {
+      setSearchInput(value);
+
+      // Clear existing timer
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+
+      // Set new timer
+      debounceTimerRef.current = setTimeout(() => {
+        setSearchQuery(value);
+        setCurrentPage(1); // Reset to first page on new search
+        // Reset role filter when searching
+        if (value.trim() !== "" && roleFilter !== "All Roles") {
+          setRoleFilter("All Roles");
+        }
+      }, SEARCH_DEBOUNCE_MS);
+    },
+    [roleFilter],
+  );
+
+  // Clean up debounce on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  // Handle search button click (immediate search)
+  const handleSearchClick = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
-  };
-
-  const handleSearch = () => {
     setSearchQuery(searchInput);
     setCurrentPage(1);
-  };
+    if (searchInput.trim() !== "" && roleFilter !== "All Roles") {
+      setRoleFilter("All Roles");
+    }
+  }, [searchInput, roleFilter]);
 
-  async function handleSaveEdit(data) {
-    try {
-      if (editUser?.user_id) {
+  // Handle Enter key
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleSearchClick();
+      }
+    },
+    [handleSearchClick],
+  );
+
+  // Handle role filter change
+  const handleRoleFilterChange = useCallback((value) => {
+    setRoleFilter(value);
+    setCurrentPage(1);
+    // Clear search when changing role filter
+    setSearchInput("");
+    setSearchQuery("");
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+  }, []);
+
+  // Navigation functions
+  const goToPage = useCallback(
+    (page) => {
+      setCurrentPage(Math.min(Math.max(page, 1), totalPages));
+    },
+    [totalPages],
+  );
+
+  // Save edit handler
+  const handleSaveEdit = useCallback(
+    async (data) => {
+      if (!editUser?.user_id) return;
+
+      try {
         await updateUserMutation.mutateAsync({
           userId: editUser.user_id,
           userData: {
@@ -217,34 +382,52 @@ export default function RecentSubmissionsTable() {
           },
         });
         setEditUser(null);
+      } catch (err) {
+        console.error("Error updating user:", err);
       }
-    } catch (err) {
-      console.error("Error updating user:", err);
-    }
-  }
+    },
+    [editUser, updateUserMutation],
+  );
 
-  async function handleDeleteUser(userId) {
-    if (confirm("Are you sure you want to delete this user?")) {
+  // Delete handler
+  const handleDeleteUser = useCallback(
+    async (userId) => {
+      if (!confirm("Are you sure you want to delete this user?")) return;
+
       try {
         await deleteUserMutation.mutateAsync(userId);
       } catch (err) {
         console.error("Error deleting user:", err);
       }
-    }
-  }
+    },
+    [deleteUserMutation],
+  );
 
+  // Pagination numbers
   const pageNumbers = useMemo(() => {
-    if (totalPages <= 5)
+    if (totalPages <= 5) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
+    }
+
     const half = 2;
     let start = Math.max(1, safeCurrentPage - half);
     let end = Math.min(totalPages, safeCurrentPage + half);
+
     if (end - start < 4) {
-      if (start === 1) end = Math.min(totalPages, 5);
-      else start = Math.max(1, end - 4);
+      if (start === 1) {
+        end = Math.min(totalPages, 5);
+      } else {
+        start = Math.max(1, end - 4);
+      }
     }
+
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
   }, [totalPages, safeCurrentPage]);
+
+  // Close edit modal
+  const handleCloseEditModal = useCallback(() => {
+    setEditUser(null);
+  }, []);
 
   return (
     <section>
@@ -268,9 +451,7 @@ export default function RecentSubmissionsTable() {
               <input
                 type="search"
                 value={searchInput}
-                onChange={(e) => {
-                  setSearchInput(e.target.value);
-                }}
+                onChange={(e) => handleSearchInputChange(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder="Search by name, email"
                 disabled={isLoading}
@@ -285,7 +466,7 @@ export default function RecentSubmissionsTable() {
               />
             </div>
             <button
-              onClick={handleSearch}
+              onClick={handleSearchClick}
               disabled={isLoading}
               className="inline-flex items-center gap-1.5 bg-[#1f5cae] text-white font-inter font-semibold hover:bg-[#164a8a] transition-colors whitespace-nowrap disabled:opacity-50"
               style={{
@@ -309,89 +490,21 @@ export default function RecentSubmissionsTable() {
               label="Filter by role"
               options={ROLE_OPTIONS}
               value={roleFilter}
-              onChange={(v) => {
-                setRoleFilter(v);
-                setCurrentPage(1);
-                setSearchQuery("");
-                setSearchInput("");
-              }}
+              onChange={handleRoleFilterChange}
             />
-
-            {/* More Filters Popover with Calendar */}
-            <div className="relative" ref={moreFiltersRef}>
-              <button
-                type="button"
-                onClick={() => setShowMoreFilters((prev) => !prev)}
-                className={`inline-flex items-center gap-1.5 font-inter font-semibold transition-colors whitespace-nowrap ${
-                  showMoreFilters || dateFilter
-                    ? "bg-[#eef2ff] text-[#1f5cae] border-[#1f5cae]"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border-[#d1d5db]"
-                }`}
-                style={{
-                  borderWidth: "1.5px",
-                  borderStyle: "solid",
-                  borderRadius: "7px",
-                  padding: "7px 13px",
-                  fontSize: "12px",
-                }}
-              >
-                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                More Filters
-                {dateFilter && (
-                  <div className="w-2 h-2 rounded-full bg-blue-500 ml-1"></div>
-                )}
-              </button>
-
-              {showMoreFilters && (
-                <div className="absolute right-0 top-full z-10 mt-1.5 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg p-4">
-                  <h4 className="font-inter text-[13px] font-bold text-gray-800 mb-3">
-                    Additional Filters
-                  </h4>
-
-                  <div className="mb-4">
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                      Filter by Date Created
-                    </label>
-                    <input
-                      type="date"
-                      value={dateFilter}
-                      onChange={(e) => {
-                        setDateFilter(e.target.value);
-                        setCurrentPage(1);
-                      }}
-                      className="w-full bg-white font-inter text-gray-700 outline-none cursor-pointer"
-                      style={{
-                        height: "34px",
-                        border: "1px solid #d1d5db",
-                        borderRadius: "6px",
-                        padding: "0 10px",
-                        fontSize: "13px",
-                      }}
-                    />
-                  </div>
-
-                  <div className="flex justify-between items-center mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDateFilter("");
-                        setCurrentPage(1);
-                      }}
-                      className="text-xs font-inter font-semibold text-red-600 hover:text-red-700 hover:underline"
-                    >
-                      Clear Filters
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowMoreFilters(false)}
-                      className="bg-[#1f5cae] text-white px-3 py-1.5 rounded-md text-xs font-inter font-semibold hover:bg-[#154685] transition-colors"
-                    >
-                      Done
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <button
+              type="button"
+              className="inline-flex items-center gap-1.5 bg-white font-inter font-semibold text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+              style={{
+                border: "1.5px solid #d1d5db",
+                borderRadius: "7px",
+                padding: "7px 13px",
+                fontSize: "12px",
+              }}
+            >
+              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+              More Filters
+            </button>
           </div>
         </div>
       </div>
@@ -466,74 +579,14 @@ export default function RecentSubmissionsTable() {
               !error &&
               users.length > 0 &&
               users.map((user) => (
-                <tr
+                <UserRow
                   key={user.user_id}
-                  className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
-                >
-                  <td
-                    className="px-5 py-2.5"
-                    style={{ paddingLeft: CONTENT_PADDING }}
-                  >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={defaultUser}
-                        alt=""
-                        className="flex-shrink-0 rounded-full object-cover"
-                        style={{ width: "45px", height: "45px" }}
-                        aria-hidden="true"
-                      />
-                      <div className="min-w-0">
-                        <p
-                          className="font-inter font-bold text-gray-900 leading-tight"
-                          style={{ fontSize: "15px" }}
-                        >
-                          {user.full_name}
-                        </p>
-                        <p
-                          className="max-w-[200px] truncate font-inter font-medium text-gray-400 mt-0.5"
-                          style={{ fontSize: "12px" }}
-                        >
-                          {user.email}
-                        </p>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-5 py-2.5">
-                    <span
-                      className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${user.role === "staff" ? "bg-[#dfe7fb] text-[#12345b]" : "bg-[#e8e3ff] text-[#4a3f99]"}`}
-                      style={{ fontSize: "13px", minWidth: "80px" }}
-                    >
-                      {user.role}
-                    </span>
-                  </td>
-                  <td className="px-5 py-2.5">
-                    <StatusBadge isActive={user.is_active} />
-                  </td>
-                  <td
-                    className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
-                    style={{ fontSize: "13px" }}
-                  >
-                    {new Date(user.created_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </td>
-                  <td className="px-5 py-2.5">
-                    <button
-                      type="button"
-                      onClick={() => setEditUser(user)}
-                      className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50"
-                      style={{ fontSize: "12px", padding: "4px 12px" }}
-                    >
-                      <SquarePen
-                        style={{ width: "12px", height: "12px" }}
-                        aria-hidden="true"
-                      />
-                      EDIT
-                    </button>
-                  </td>
-                </tr>
+                  user={user}
+                  onEdit={setEditUser}
+                  onDelete={handleDeleteUser}
+                  isUpdating={updateUserMutation.isLoading}
+                  isDeleting={deleteUserMutation.isLoading}
+                />
               ))}
           </tbody>
         </table>
@@ -618,7 +671,7 @@ export default function RecentSubmissionsTable() {
 
       <EditUserModal
         isOpen={editUser !== null}
-        onClose={() => setEditUser(null)}
+        onClose={handleCloseEditModal}
         user={editUser}
         onSave={handleSaveEdit}
       />
