@@ -1,52 +1,95 @@
-import { FileStack, Clock, CheckCircle, RotateCcw } from 'lucide-react'
+import { FolderOpen, Clock, ClipboardCheck } from "lucide-react";
+import { useSubmissions } from "../../../../hooks/useSubmissions";
 
-// Derived from static submissions — same 15 records used in RecentSubmissionsTable
-const PENDING = 4
-const UNDER_REVIEW = 3
-const APPROVED = 5
-const RETURNED = 3
-
-const CARDS = [
-  { label: 'Total Submissions', value: '15', icon: FileStack, bg: 'bg-[#1a51a5]' },
-  { label: 'Pending', value: PENDING.toString(), icon: Clock, bg: 'bg-[#f7941d]' },
-  { label: 'Approved', value: APPROVED.toString(), icon: CheckCircle, bg: 'bg-[#2d9f6f]' },
-  { label: 'Returned', value: RETURNED.toString(), icon: RotateCcw, bg: 'bg-[#e05252]' },
-]
-
+// Server-side counts via the paginated endpoint's `count` field (pageSize: 1,
+// we only need the total) — never filtered client-side. See prior fix notes:
+// submission.status from the API is lowercase snake_case ("pending",
+// "approved", ...), so this must go through submissionService's status
+// mapping rather than comparing raw strings in the browser.
 export default function SubmissionSummaryCards() {
+  const { data: allData, isLoading: isLoadingAll } = useSubmissions({
+    page: 1,
+    pageSize: 1,
+  });
+  const { data: pendingData, isLoading: isLoadingPending } = useSubmissions({
+    page: 1,
+    pageSize: 1,
+    status: "Pending",
+  });
+  const { data: approvedData, isLoading: isLoadingApproved } = useSubmissions({
+    page: 1,
+    pageSize: 1,
+    status: "Approved",
+  });
+
+  const isLoading = isLoadingAll || isLoadingPending || isLoadingApproved;
+
+  const totalSubmissions = allData?.count ?? 0;
+  const pending = pendingData?.count ?? 0;
+  const completed = approvedData?.count ?? 0;
+
+  const cards = [
+    {
+      label: "Total Submissions",
+      value: totalSubmissions,
+      icon: FolderOpen,
+      bg: "bg-[#1a51a5]",
+      badgeBg: "bg-white/15",
+      span: "col-span-2",
+    },
+    {
+      label: "Pending",
+      value: pending,
+      icon: Clock,
+      bg: "bg-[#FDC849]",
+      badgeBg: "bg-black/10",
+      span: "col-span-1",
+    },
+    {
+      label: "Completed",
+      value: completed,
+      icon: ClipboardCheck,
+      bg: "bg-[#2d9f6f]",
+      badgeBg: "bg-black/10",
+      span: "col-span-1",
+    },
+  ];
+
   return (
-    <div className="w-full" style={{ marginBottom: '12px' }}>
-      <div className="grid grid-cols-5" style={{ gap: '10px' }}>
-        {CARDS.map(({ label, value, icon: Icon, bg }, index) => (
+    <div className="w-full" style={{ marginBottom: "16px" }}>
+      <div className="grid grid-cols-4" style={{ gap: "16px" }}>
+        {cards.map(({ label, value, icon: Icon, bg, badgeBg, span }) => (
           <div
             key={label}
-            className={`relative overflow-hidden rounded-xl ${bg} text-white flex flex-col justify-between ${index === 0 ? 'col-span-2' : 'col-span-1'}`}
-            style={{ padding: '16px 20px', height: '150px' }}
+            className={`relative rounded-2xl ${bg} text-white flex flex-col justify-between ${span} shadow-sm hover:shadow-md transition-shadow`}
+            style={{ padding: "20px 22px", height: "130px" }}
           >
-            <p className="relative z-10 font-inter font-semibold text-white/90" style={{ fontSize: '13px' }}>
+            <p
+              className="font-inter font-semibold text-white/90"
+              style={{ fontSize: "14px" }}
+            >
               {label}
             </p>
-            <p
-              className="relative z-10 font-inter font-bold leading-none"
-              style={{ fontSize: index === 0 ? '72px' : '62px' }}
-            >
-              {value}
-            </p>
-            <Icon
-              className="absolute text-white/20"
-              style={{
-                right: '14px',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                width: index === 0 ? '88px' : '72px',
-                height: index === 0 ? '88px' : '72px',
-              }}
-              strokeWidth={1.5}
-              aria-hidden="true"
-            />
+            <div className="flex items-end justify-between">
+              <p
+                className="font-inter font-bold leading-none"
+                style={{ fontSize: "44px" }}
+              >
+                {isLoading ? "—" : value.toString()}
+              </p>
+              <span
+                className={`flex items-center justify-center rounded-xl ${badgeBg}`}
+                style={{ width: "44px", height: "44px" }}
+              >
+                <Icon
+                  style={{ width: "22px", height: "22px" }}
+                  aria-hidden="true"
+                />
+              </span>
+            </div>
           </div>
         ))}
       </div>
     </div>
-  )
+  );
 }

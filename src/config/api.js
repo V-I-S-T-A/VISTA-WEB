@@ -7,6 +7,8 @@ export const API_CONFIG = {
     USERS: "/users",
     AUTH: "/auth",
     ORGANIZATIONS: "/organizations",
+    SUBMISSIONS: "/submissions",
+    AUDIT_LOGS: "/audit-logs",
   },
 };
 
@@ -17,6 +19,15 @@ export const API_ENDPOINTS = {
     DETAIL: (userId) => `${API_CONFIG.ENDPOINTS.USERS}/${userId}/`,
     UPDATE: (userId) => `${API_CONFIG.ENDPOINTS.USERS}/${userId}/`,
     DELETE: (userId) => `${API_CONFIG.ENDPOINTS.USERS}/${userId}/`,
+  },
+  SUBMISSIONS: {
+    LIST: `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/`,
+    STATUS: (submissionId) =>
+      `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/${submissionId}/status/`,
+    EXPORT_LIST: `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/export/list/`,
+  },
+  AUDIT_LOGS: {
+    LIST: `${API_CONFIG.ENDPOINTS.AUDIT_LOGS}/`,
   },
   AUTH: {
     LOGIN: `${API_CONFIG.ENDPOINTS.AUTH}/login/`,
