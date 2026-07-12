@@ -1,5 +1,6 @@
 import apiClient from "../lib/axios";
 import { API_ENDPOINTS } from "../config/api";
+import { toRequestConfig } from "../utils/multipartFormData";
 
 /**
  * User Service
@@ -39,20 +40,31 @@ export const userService = {
   },
 
   /**
-   * Create a new user
+   * Create a new user.
+   * Pass `image` as a File in userData to upload an avatar — the request
+   * automatically switches to multipart/form-data when a file is present.
    */
   async createUser(userData) {
-    const response = await apiClient.post(API_ENDPOINTS.USERS.CREATE, userData);
+    const { data, config } = toRequestConfig(userData);
+    const response = await apiClient.post(
+      API_ENDPOINTS.USERS.CREATE,
+      data,
+      config,
+    );
     return response.data;
   },
 
   /**
-   * Update a user
+   * Update a user.
+   * Pass `image` as a File in userData to replace the avatar — the request
+   * automatically switches to multipart/form-data when a file is present.
    */
   async updateUser(userId, userData) {
+    const { data, config } = toRequestConfig(userData);
     const response = await apiClient.patch(
       API_ENDPOINTS.USERS.UPDATE(userId),
-      userData,
+      data,
+      config,
     );
     return response.data;
   },

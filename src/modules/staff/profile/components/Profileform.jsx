@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ProfileAvatarUpload from "./ProfileAvatarUpload";
 import osaLogo from "../../../../assets/shared/osa_logo.png";
+import { useProfile, useUpdateProfile } from "../../../../hooks/useProfile";
 
 const GENDER_OPTIONS = ["Male", "Female", "Prefer not to say"];
 
@@ -14,15 +15,32 @@ const pillStyle = {
 };
 
 export default function ProfileForm() {
-  const [avatarUrl, setAvatarUrl] = useState(null);
+  const { data: profile, isLoading } = useProfile();
+  const updateProfile = useUpdateProfile();
+
+  const [avatarFile, setAvatarFile] = useState(null);
   const [form, setForm] = useState({
-    firstName: "Jeon",
-    lastName: "Wonwoo",
-    email: "osa.wonujeon.1@gmail.com",
+    firstName: "",
+    lastName: "",
+    email: "",
+    // NOTE: phone/dob/gender aren't fields on the backend User model yet.
+    // They're kept here as local-only UI state and are NOT sent on submit.
+    // Add them to the Django model + UserUpdateSerializer to persist them.
     phone: "",
     dob: "",
     gender: "",
   });
+
+  // Populate the form once the current user's profile has loaded.
+  useEffect(() => {
+    if (!profile) return;
+    setForm((f) => ({
+      ...f,
+      firstName: profile.first_name ?? "",
+      lastName: profile.last_name ?? "",
+      email: profile.email ?? "",
+    }));
+  }, [profile]);
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -30,13 +48,29 @@ export default function ProfileForm() {
 
   function handleSubmit(e) {
     e.preventDefault();
-    // Frontend-only for now — wire this up to your update-profile API call.
-    console.log("Update profile payload:", { ...form, avatarUrl });
+
+    // Only send fields the backend's UserUpdateSerializer actually accepts.
+    // email/role/is_active are not editable through this endpoint.
+    const payload = {
+      first_name: form.firstName,
+      last_name: form.lastName,
+      ...(avatarFile ? { image: avatarFile } : {}),
+    };
+
+    updateProfile.mutate(payload, {
+      onSuccess: () => setAvatarFile(null),
+    });
   }
 
   function handleCancel() {
-    // Frontend-only for now — reset the form / navigate away as needed.
-    console.log("Profile edit cancelled");
+    if (!profile) return;
+    setForm((f) => ({
+      ...f,
+      firstName: profile.first_name ?? "",
+      lastName: profile.last_name ?? "",
+      email: profile.email ?? "",
+    }));
+    setAvatarFile(null);
   }
 
   return (
@@ -50,8 +84,8 @@ export default function ProfileForm() {
         style={{ gap: "36px" }}
       >
         <ProfileAvatarUpload
-          avatarUrl={avatarUrl}
-          onAvatarChange={setAvatarUrl}
+          avatarUrl={profile?.image_url}
+          onAvatarChange={setAvatarFile}
         />
 
         <div
@@ -65,6 +99,7 @@ export default function ProfileForm() {
             placeholder="First Name"
             className={PILL_CLASS}
             style={pillStyle}
+            disabled={isLoading}
           />
           <input
             type="text"
@@ -73,14 +108,17 @@ export default function ProfileForm() {
             placeholder="Last Name"
             className={PILL_CLASS}
             style={pillStyle}
+            disabled={isLoading}
           />
           <input
             type="email"
             value={form.email}
-            onChange={(e) => set("email", e.target.value)}
             placeholder="Email"
             className={PILL_CLASS}
-            style={pillStyle}
+            style={{ ...pillStyle, opacity: 0.7, cursor: "not-allowed" }}
+            disabled
+            readOnly
+            title="Email can't be changed from this form yet"
           />
 
           {/* Phone number with country code */}
@@ -138,6 +176,17 @@ export default function ProfileForm() {
             </select>
           </div>
 
+          {updateProfile.isError && (
+            <p style={{ color: "#ffe1e1", fontSize: "13px", margin: 0 }}>
+              Couldn't update your profile. Please try again.
+            </p>
+          )}
+          {updateProfile.isSuccess && (
+            <p style={{ color: "#e1ffe6", fontSize: "13px", margin: 0 }}>
+              Profile updated.
+            </p>
+          )}
+
           {/* Action buttons */}
           <div
             className="flex items-center"
@@ -145,6 +194,7 @@ export default function ProfileForm() {
           >
             <button
               type="submit"
+              disabled={updateProfile.isPending}
               className="font-inter font-bold rounded-full transition hover:brightness-95 active:scale-95"
               style={{
                 backgroundColor: "#FFC933",
@@ -152,10 +202,11 @@ export default function ProfileForm() {
                 fontSize: "13px",
                 padding: "11px 32px",
                 border: "none",
-                cursor: "pointer",
+                cursor: updateProfile.isPending ? "wait" : "pointer",
+                opacity: updateProfile.isPending ? 0.7 : 1,
               }}
             >
-              Update Profile
+              {updateProfile.isPending ? "Saving..." : "Update Profile"}
             </button>
             <button
               type="button"
