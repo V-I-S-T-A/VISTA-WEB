@@ -8,6 +8,7 @@ import StaffRegistration from "./modules/staff/Registration";
 import StaffAnalysisResults from "./modules/staff/registration/AnalysisResults";
 import StaffAuditLogs from "./modules/staff/AuditLogs";
 import StaffProfile from "./modules/staff/Profile";
+import StaffReviewPanel from "./modules/staff/ReviewPanel";
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         />
         <Route path="/staff/audit-logs" element={<StaffAuditLogs />} />
         <Route path="/staff/profile" element={<StaffProfile />} />
+        <Route path="/staff/review-panel" element={<StaffReviewPanel />} />
       </Routes>
     </BrowserRouter>
   );
