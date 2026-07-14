@@ -10,11 +10,13 @@ import { useCurrentUser } from "../../hooks/useAuth";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { data: currentUser, isLoading, error } = useCurrentUser();
+  const { data: currentUser, isLoading } = useCurrentUser();
 
   useEffect(() => {
-    if (!isLoading && !currentUser) {
-      navigate("/login");
+    if (!isLoading) {
+      if (!currentUser || currentUser.role !== "admin") {
+        navigate("/login");
+      }
     }
   }, [isLoading, currentUser, navigate]);
 

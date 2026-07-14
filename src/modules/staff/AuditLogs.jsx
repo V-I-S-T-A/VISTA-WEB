@@ -15,8 +15,10 @@ export default function AuditLogs() {
   const [selectedLog, setSelectedLog] = useState(null);
 
   useEffect(() => {
-    if (!isLoading && !currentUser) {
-      navigate("/login");
+    if (!isLoading) {
+      if (!currentUser || currentUser.role !== "staff") {
+        navigate("/login");
+      }
     }
   }, [isLoading, currentUser, navigate]);
 

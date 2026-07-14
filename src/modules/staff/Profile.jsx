@@ -3,8 +3,22 @@ import Sidebar from "../../components/Sidebar";
 import ProfileBanner from "./profile/components/ProfileBanner";
 import ProfileForm from "./profile/components/ProfileForm";
 import systemScopeBanner from "../../assets/shared/systemscope.png";
+import {useCurrentUser} from "../../hooks/useAuth";
+import {useNavigate} from "react-router-dom";
+import {useEffect} from "react";
 
 export default function Profile() {
+  const navigate = useNavigate();
+  const { data: currentUser, isLoading } = useCurrentUser();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!currentUser || currentUser.role !== "staff") {
+        navigate("/login");
+      }
+    }
+  }, [isLoading, currentUser, navigate]);
+
   return (
     <div className="flex min-h-screen bg-white">
       <Sidebar role="staff" />
