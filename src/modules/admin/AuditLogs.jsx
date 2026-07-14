@@ -1,8 +1,19 @@
 import Header from '../../components/Header'
 import Sidebar from '../../components/Sidebar'
 import AuditLogHeader from './auditlogs/components/AuditLogHeader'
+import { useCurrentUser } from '../../hooks/useAuth'
+import { useNavigate } from 'react-router-dom'
+import { useEffect } from 'react'
 
 export default function AuditLogs() {
+    const navigate = useNavigate();
+    const { data: currentUser, isLoading } = useCurrentUser();
+
+    useEffect(() => {
+      if (!isLoading && !currentUser && currentUser.role !== "staff") {
+        navigate("/login");
+      }
+    }, [isLoading, currentUser, navigate]);
     return (
         <div className="flex min-h-screen bg-white">
             <Sidebar role="admin" />
