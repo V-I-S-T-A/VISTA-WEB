@@ -1,13 +1,38 @@
+import { useEffect, useState } from "react";
 import { Camera } from "lucide-react";
 import defaultAvatar from "../../../../assets/shared/default_user.jpg";
 
+/**
+ * `avatarUrl` — the existing avatar to show (e.g. profile.image_url from the
+ * server). `onAvatarChange` — called with the raw File the user picked, so
+ * the parent form can include it in the update payload. This component
+ * manages its own local preview so the parent doesn't need to.
+ */
 export default function ProfileAvatarUpload({ avatarUrl, onAvatarChange }) {
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  // Revoke the local object URL on unmount / replacement to avoid leaking
+  // memory across repeated selections.
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
   function handleFileChange(e) {
     const file = e.target.files?.[0];
-    if (file && onAvatarChange) {
-      onAvatarChange(URL.createObjectURL(file));
-    }
+    if (!file) return;
+
+    const nextPreviewUrl = URL.createObjectURL(file);
+    setPreviewUrl((prev) => {
+      if (prev) URL.revokeObjectURL(prev);
+      return nextPreviewUrl;
+    });
+
+    onAvatarChange?.(file);
   }
+
+  const displayUrl = previewUrl || avatarUrl || defaultAvatar;
 
   return (
     <div
@@ -16,7 +41,7 @@ export default function ProfileAvatarUpload({ avatarUrl, onAvatarChange }) {
     >
       <div className="relative">
         <img
-          src={avatarUrl || defaultAvatar}
+          src={displayUrl}
           alt="Profile avatar"
           className="rounded-full object-cover"
           style={{

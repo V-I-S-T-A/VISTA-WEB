@@ -1,5 +1,6 @@
 import apiClient from "../lib/axios";
 import { API_ENDPOINTS } from "../config/api";
+import { toRequestConfig } from "../utils/multipartFormData";
 
 export const authService = {
   async login({ email, password }) {
@@ -22,6 +23,12 @@ export const authService = {
 
   async me() {
     const resp = await apiClient.get(API_ENDPOINTS.AUTH.ME);
+    return resp.data;
+  },
+
+  async updateMe(profileData) {
+    const { data, config } = toRequestConfig(profileData);
+    const resp = await apiClient.patch(API_ENDPOINTS.AUTH.ME, data, config);
     return resp.data;
   },
 };
