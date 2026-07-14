@@ -10,8 +10,10 @@ export default function AuditLogs() {
     const { data: currentUser, isLoading } = useCurrentUser();
 
     useEffect(() => {
-      if (!isLoading && !currentUser && currentUser.role !== "staff") {
-        navigate("/login");
+      if (!isLoading) {
+        if (!currentUser || currentUser.role !== "admin") {
+          navigate("/login");
+        }
       }
     }, [isLoading, currentUser, navigate]);
     return (

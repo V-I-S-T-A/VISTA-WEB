@@ -14,13 +14,10 @@ export default function Dashboard() {
   const { data: currentUser, isLoading } = useCurrentUser();
 
   useEffect(() => {
-    if (!isLoading && !currentUser) {
-      navigate("/login");
-    }
-    // If user is loaded but is NOT staff, redirect appropriately
-    if (!isLoading && currentUser && currentUser.role !== "staff") {
-      if (currentUser.role === "admin") navigate("/admin/dashboard");
-      else navigate("/login");
+    if (!isLoading) {
+      if (!currentUser || currentUser.role !== "staff") {
+        navigate("/login");
+      }
     }
   }, [isLoading, currentUser, navigate]);
 

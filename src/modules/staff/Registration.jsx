@@ -8,8 +8,10 @@ export default function Registration() {
   const { data: currentUser, isLoading } = useCurrentUser();
 
   useEffect(() => {
-    if (!isLoading && !currentUser && currentUser.role !== "staff") {
-      navigate("/login");
+    if (!isLoading) {
+      if (!currentUser || currentUser.role !== "staff") {
+        navigate("/login");
+      }
     }
   }, [isLoading, currentUser, navigate]);
   return <DocumentEntry />
