@@ -20,6 +20,11 @@ export const headerConfig = {
     title: "Staff Dashboard",
     avatar: defaultUser,
   },
+  student: {
+    type: "dashboard",
+    title: "Student Organization Dashboard",
+    avatar: defaultUser,
+  },
   registration: {
     type: "dashboard",
     title: "Registration",
@@ -28,11 +33,6 @@ export const headerConfig = {
   profile: {
     type: "dashboard",
     title: "Student Organization Dashboard",
-    avatar: defaultUser,
-  },
-  student: {
-    type: "dashboard",
-    title: "Student Dashboard",
     avatar: defaultUser,
   },
 };
@@ -115,13 +115,26 @@ export const sidebarConfig = {
   student: {
     logo: vistaLogo,
     brand: "V.I.S.T.A.",
-    accessLabel: "STUDENT ACCESS",
+    accessLabel: "STUDENT ORG. ACCESS",
     user: {
       name: "Student User",
       id: "2021-01204",
       avatar: defaultUser,
     },
-    navItems: [],
+    navItems: [
+      {
+        label: "DASHBOARD",
+        icon: "LayoutDashboard",
+        path: "/student/dashboard",
+        active: true,
+      },
+      {
+        label: "REVIEW TRACKER",
+        icon: "ClipboardList",
+        path: "/student/review-tracker",
+        active: false,
+      },
+    ],
     logout: {
       label: "LOGOUT",
       path: "/login",
