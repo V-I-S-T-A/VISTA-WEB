@@ -23,6 +23,8 @@ export default function LoginPage() {
         navigate("/admin/dashboard");
       } else if (role === "staff") {
         navigate("/staff/dashboard");
+      } else if (role === "student") {
+        navigate("/student/dashboard");
       } else {
         // Fallback for unknown roles
         navigate("/login");
