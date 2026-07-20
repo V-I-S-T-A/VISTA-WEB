@@ -135,14 +135,6 @@ export default function RecentSubmissionsTable({ onView }) {
                     >
                       {submission.submitted_by_name || "Unknown"}
                     </p>
-                    {submission.submitted_by_email && (
-                      <p
-                        className="font-inter text-gray-400 leading-tight"
-                        style={{ fontSize: "12px", marginTop: "2px" }}
-                      >
-                        {submission.submitted_by_email}
-                      </p>
-                    )}
                   </td>
                   <td className="px-5 py-2.5">
                     <span

@@ -12,12 +12,12 @@ export default function SubmissionSummaryCards() {
   const { data: pendingData, isLoading: isLoadingPending } = useSubmissions({
     page: 1,
     pageSize: 1,
-    status: "Pending",
+    status: "pending", // FIXED: Changed to lowercase to match Django
   });
   const { data: approvedData, isLoading: isLoadingApproved } = useSubmissions({
     page: 1,
     pageSize: 1,
-    status: "Approved",
+    status: "approved", // FIXED: Changed to lowercase to match Django
   });
 
   const isLoading = isLoadingAll || isLoadingPending || isLoadingApproved;
