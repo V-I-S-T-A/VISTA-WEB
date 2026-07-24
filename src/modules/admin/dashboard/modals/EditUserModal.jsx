@@ -202,9 +202,6 @@ export default function EditUserModal({
   return (
     <div
       ref={overlayRef}
-      onClick={(e) => {
-        if (e.target === overlayRef.current) onClose();
-      }}
       style={{
         position: "fixed",
         inset: 0,
