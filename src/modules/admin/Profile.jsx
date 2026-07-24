@@ -31,14 +31,7 @@ export default function Profile() {
             <ProfileBanner />
             <ProfileForm />
 
-            {/* System Scope Banner */}
-            <div style={{ paddingTop: "32px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="w-3/4 h-auto"
-              />
-            </div>
+
           </div>
         </main>
       </div>
