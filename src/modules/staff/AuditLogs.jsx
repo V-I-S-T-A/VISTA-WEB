@@ -5,7 +5,6 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import AuditLogTable from "./auditlogs/components/AuditLogTable";
 import AuditLogDetails from "./auditlogs/components/AuditLogDetails";
-import AuditLogHeader from "./auditlogs/components/AuditLogHeader";
 import { useCurrentUser } from "../../hooks/useAuth";
 import systemScopeBanner from "../../assets/shared/systemscope.png";
 
