@@ -25,6 +25,11 @@ export const headerConfig = {
     title: "Student Organization Dashboard",
     avatar: defaultUser,
   },
+  gdrive: {
+    type: "dashboard",
+    title: "GDRIVE Sync",
+    avatar: defaultUser,
+  },
   registration: {
     type: "dashboard",
     title: "Registration",
