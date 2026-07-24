@@ -10,6 +10,7 @@ import StaffAnalysisResults from "./modules/staff/registration/AnalysisResults";
 import StaffAuditLogs from "./modules/staff/AuditLogs";
 import StaffProfile from "./modules/staff/Profile";
 import StaffReviewPanel from "./modules/staff/ReviewPanel";
+import StaffGdrive from "./modules/staff/Gdrive";
 import StudentDashboard from "./modules/student/Dashboard";
 import StudentReviewTracker from "./modules/student/ReviewTracker";
 import StudentProfile from "./modules/student/Profile";
@@ -32,6 +33,7 @@ function App() {
         <Route path="/staff/audit-logs" element={<StaffAuditLogs />} />
         <Route path="/staff/profile" element={<StaffProfile />} />
         <Route path="/staff/review-panel" element={<StaffReviewPanel />} />
+        <Route path="/staff/gdrive-sync" element={<StaffGdrive />} />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route
           path="/student/review-tracker"
