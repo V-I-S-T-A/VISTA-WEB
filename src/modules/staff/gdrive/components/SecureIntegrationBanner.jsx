@@ -6,7 +6,6 @@ export default function SecureIntegrationBanner() {
         borderRadius: "14px",
         padding: "18px 32px",
         textAlign: "center",
-        marginTop: "20px",
         cursor: "pointer",
         transition: "transform 0.15s, box-shadow 0.15s",
         boxShadow: "0 4px 16px rgba(245, 158, 11, 0.25)",
