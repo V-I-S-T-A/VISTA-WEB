@@ -242,50 +242,87 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
             </button>
 
             {filterOpen && (
-              <div className="absolute right-0 top-full z-10 mt-1.5 w-48 rounded-lg border border-gray-200 bg-white p-3 shadow-lg">
-                <label
-                  className="font-inter font-bold uppercase text-gray-400"
-                  style={{ fontSize: "10.5px" }}
-                >
-                  Status
-                </label>
-                <select
-                  value={statusFilter}
-                  onChange={(e) => {
-                    setStatusFilter(e.target.value);
-                    setCurrentPage(1);
-                  }}
-                  className="mb-2 mt-1 w-full rounded-md border border-gray-200 font-inter font-semibold text-gray-700 outline-none"
-                  style={{ fontSize: "12px", padding: "6px 8px" }}
-                >
-                  {STATUS_OPTIONS.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
+              <div className="absolute right-0 top-full z-20" style={{
+                marginTop: "8px",
+                width: "288px",
+                borderRadius: "10px",
+                border: "1px solid #e2e6ee",
+                backgroundColor: "#ffffff",
+                boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
+                padding: "16px",
+              }}>
+                <div style={{ marginBottom: "14px" }}>
+                  <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
+                    Status
+                  </label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full font-inter outline-none"
+                    style={{
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      padding: "8px 10px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {STATUS_OPTIONS.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                <label
-                  className="font-inter font-bold uppercase text-gray-400"
-                  style={{ fontSize: "10.5px" }}
-                >
-                  Category
-                </label>
-                <select
-                  value={categoryFilter}
-                  onChange={(e) => {
-                    setCategoryFilter(e.target.value);
+                <div style={{ marginBottom: "14px" }}>
+                  <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
+                    Category
+                  </label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => {
+                      setCategoryFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                    className="w-full font-inter outline-none"
+                    style={{
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      padding: "8px 10px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {CATEGORY_OPTIONS.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter("All Status");
+                    setCategoryFilter("All Categories");
                     setCurrentPage(1);
                   }}
-                  className="mt-1 w-full rounded-md border border-gray-200 font-inter font-semibold text-gray-700 outline-none"
-                  style={{ fontSize: "12px", padding: "6px 8px" }}
+                  className="w-full font-inter font-bold transition-colors"
+                  style={{
+                    backgroundColor: "#f3f4f6",
+                    color: "#4b5563",
+                    padding: "8px 0",
+                    borderRadius: "8px",
+                    fontSize: "13px",
+                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
                 >
-                  {CATEGORY_OPTIONS.map((o) => (
-                    <option key={o} value={o}>
-                      {o}
-                    </option>
-                  ))}
-                </select>
+                  Clear Filters
+                </button>
               </div>
             )}
           </div>
