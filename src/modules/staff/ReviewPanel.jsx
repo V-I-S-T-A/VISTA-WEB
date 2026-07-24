@@ -39,13 +39,16 @@ export default function ReviewPanel() {
           style={{ padding: "20px 24px" }}
         >
           <div className="w-full">
-            <div style={{ paddingBottom: "20px" }}>
-              <h1 className="font-inter text-[24px] font-bold text-gray-900">
+            <div style={{ marginBottom: '20px' }}>
+              <h2
+                className="font-inter font-bold text-[#142d55]"
+                style={{ fontSize: '26px', lineHeight: 1.15 }}
+              >
                 Review Panel
-              </h1>
+              </h2>
               <p
-                className="font-inter text-[14px] font-medium text-gray-500"
-                style={{ paddingTop: "4px" }}
+                className="font-inter text-gray-500 mt-0.5"
+                style={{ fontSize: '13px' }}
               >
                 Updating of submitted document status.
               </p>
