@@ -45,13 +45,6 @@ export default function AuditLogs() {
               <AuditLogTable onViewLog={(log) => setSelectedLog(log)} />
             )}
 
-            <div style={{ paddingTop: "48px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="w-3/4 h-auto"
-              />
-            </div>
           </div>
         </main>
       </div>
