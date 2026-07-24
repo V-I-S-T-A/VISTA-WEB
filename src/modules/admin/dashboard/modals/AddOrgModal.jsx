@@ -124,7 +124,6 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
     return (
         <div
             ref={overlayRef}
-            onClick={(e) => { if (e.target === overlayRef.current) onClose() }}
             style={{
                 position: 'fixed',
                 inset: 0,
