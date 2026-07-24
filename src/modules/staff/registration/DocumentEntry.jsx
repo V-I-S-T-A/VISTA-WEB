@@ -243,14 +243,7 @@ export default function DocumentEntry() {
               </div>
             </div>
 
-            {/* System Scope Banner */}
-            <div style={{ paddingTop: "48px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="w-3/4 h-auto"
-              />
-            </div>
+
           </div>
         </main>
       </div>
