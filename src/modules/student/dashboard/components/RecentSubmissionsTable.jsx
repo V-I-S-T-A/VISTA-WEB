@@ -171,7 +171,7 @@ export default function RecentSubmissionsTable({ onView }) {
                         fontSize: "12px",
                         padding: "7px 16px",
                         borderRadius: "9999px",
-                        backgroundColor: "#ffc700",
+                        backgroundColor: "#FFE452",
                       }}
                     >
                       <Eye style={{ width: "13px", height: "13px" }} />
