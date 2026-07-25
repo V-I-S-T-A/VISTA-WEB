@@ -13,6 +13,7 @@ import StaffReviewPanel from "./modules/staff/ReviewPanel";
 import StaffGdrive from "./modules/staff/Gdrive";
 import StudentDashboard from "./modules/student/Dashboard";
 import StudentReviewTracker from "./modules/student/ReviewTracker";
+import StudentReviewTrackerDetails from "./modules/student/reviewtracker/ReviewTrackerDetails";
 import StudentProfile from "./modules/student/Profile";
 
 function App() {
@@ -38,6 +39,10 @@ function App() {
         <Route
           path="/student/review-tracker"
           element={<StudentReviewTracker />}
+        />
+        <Route
+          path="/student/review-tracker/:submissionId"
+          element={<StudentReviewTrackerDetails />}
         />
         <Route path="/student/profile" element={<StudentProfile />} />
       </Routes>
