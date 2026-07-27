@@ -1,13 +1,15 @@
 import Header from '../../components/Header'
 import Sidebar from '../../components/Sidebar'
 import AuditLogHeader from './auditlogs/components/AuditLogHeader'
+import AuditLogDetails from './auditlogs/components/AuditLogDetails'
 import { useCurrentUser } from '../../hooks/useAuth'
 import { useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 export default function AuditLogs() {
     const navigate = useNavigate();
     const { data: currentUser, isLoading } = useCurrentUser();
+    const [selectedLog, setSelectedLog] = useState(null);
 
     useEffect(() => {
       if (!isLoading) {
@@ -25,7 +27,11 @@ export default function AuditLogs() {
 
                 <main className="flex-1 overflow-y-auto" style={{ padding: '20px 24px' }}>
                     <div className="w-full">
-                        <AuditLogHeader />
+                        {selectedLog ? (
+                          <AuditLogDetails log={selectedLog} onBack={() => setSelectedLog(null)} />
+                        ) : (
+                          <AuditLogHeader onViewLog={(log) => setSelectedLog(log)} />
+                        )}
                     </div>
                 </main>
             </div>
