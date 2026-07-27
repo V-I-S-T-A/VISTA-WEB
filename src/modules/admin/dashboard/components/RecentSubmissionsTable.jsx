@@ -1,11 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
-import {
-  Search,
-  Filter,
-  SquarePen,
-  Trash2,
-  Loader,
-} from "lucide-react";
+import { Search, Filter, SquarePen, Trash2, Loader, Download } from "lucide-react";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
 import EditUserModal from "../modals/EditUserModal";
 import { useUsers } from "../../../../hooks/useUsers";
@@ -151,7 +145,7 @@ const UserRow = memo(function UserRow({
       <td className="px-5 py-2.5" style={{ paddingLeft: CONTENT_PADDING }}>
         <div className="flex items-center gap-3">
           <img
-            src={defaultUser}
+            src={user.image_url || defaultUser}
             alt=""
             className="flex-shrink-0 rounded-full object-cover"
             style={{ width: "45px", height: "45px" }}
@@ -162,7 +156,7 @@ const UserRow = memo(function UserRow({
               className="font-inter font-bold text-gray-900 leading-tight"
               style={{ fontSize: "15px" }}
             >
-              {user.full_name}
+              {`${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User"}
             </p>
             <p
               className="max-w-[200px] truncate font-inter font-medium text-gray-400 mt-0.5"
@@ -175,28 +169,35 @@ const UserRow = memo(function UserRow({
       </td>
       <td className="px-5 py-2.5">
         <span
-          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${
-            user.role === "staff"
-              ? "bg-[#dfe7fb] text-[#12345b]"
-              : "bg-[#e8e3ff] text-[#4a3f99]"
-          }`}
+          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${user.role === "staff"
+            ? "bg-[#dfe7fb] text-[#12345b]"
+            : "bg-[#e8e3ff] text-[#4a3f99]"
+            }`}
           style={{ fontSize: "13px", minWidth: "80px" }}
         >
           {user.role}
         </span>
       </td>
       <td className="px-5 py-2.5">
-        <StatusBadge isActive={user.is_active} />
+        <span
+          className="font-inter font-medium text-gray-700 whitespace-nowrap uppercase"
+          style={{ fontSize: "13px" }}
+        >
+          {user.department || "N/A"}
+        </span>
       </td>
       <td
         className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
         style={{ fontSize: "13px" }}
       >
-        {new Date(user.created_at).toLocaleDateString("en-US", {
+        {user.last_login ? new Date(user.last_login).toLocaleDateString("en-US", {
           month: "short",
           day: "numeric",
           year: "numeric",
-        })}
+        }) : "Never"}
+      </td>
+      <td className="px-5 py-2.5">
+        <StatusBadge isActive={user.is_active} />
       </td>
       <td className="px-5 py-2.5">
         <div className="flex items-center gap-2">
@@ -217,7 +218,7 @@ const UserRow = memo(function UserRow({
             type="button"
             onClick={handleDelete}
             disabled={isUpdating || isDeleting}
-            className="inline-flex items-center gap-1 rounded bg-[#fee2e2] font-inter font-bold text-red-700 transition hover:bg-[#fecaca] active:scale-95 border border-red-300 disabled:opacity-50"
+            className="inline-flex items-center gap-1 rounded bg-[#ef4444] font-inter font-bold text-white transition hover:bg-[#dc2626] active:scale-95 border border-[#b91c1c]/50 disabled:opacity-50"
             style={{ fontSize: "12px", padding: "4px 12px" }}
           >
             <Trash2
@@ -427,80 +428,75 @@ export default function RecentSubmissionsTable() {
   }, []);
 
   return (
-    <section>
-      {/* Toolbar */}
-      <div className="bg-[#eef1f7] border-b border-gray-200 px-4 py-3">
-        <div className="flex items-center justify-between gap-4 h-auto">
-          <div
-            className="relative flex-shrink-0 flex items-center gap-2"
-            style={{
-              width: "480px",
-              paddingTop: "18px",
-              paddingBottom: "18px",
-              paddingLeft: CONTENT_PADDING,
-            }}
-          >
-            <div className="relative flex-1">
-              <Search
-                className="pointer-events-none absolute left-1 top-1/2 -translate-y-1/2 text-gray-400"
-                style={{ width: "58px", height: "18px" }}
-              />
-              <input
-                type="search"
-                value={searchInput}
-                onChange={(e) => handleSearchInputChange(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Search by name, email"
-                disabled={isLoading}
-                className="w-full bg-white font-inter text-gray-600 placeholder:text-gray-400 outline-none disabled:opacity-50"
-                style={{
-                  height: "40px",
-                  border: "1.5px solid #d1d5db",
-                  borderRadius: "10px",
-                  padding: "0 16px 0 48px",
-                  fontSize: "13px",
-                }}
-              />
-            </div>
-            <button
-              onClick={handleSearchClick}
-              disabled={isLoading}
-              className="inline-flex items-center gap-1.5 bg-[#1f5cae] text-white font-inter font-semibold hover:bg-[#164a8a] transition-colors whitespace-nowrap disabled:opacity-50"
-              style={{
-                border: "none",
-                borderRadius: "10px",
-                padding: "7px 16px",
-                fontSize: "13px",
-                height: "40px",
+    <section
+      style={{
+        borderRadius: "12px",
+        border: "1px solid #e2e6ee",
+        boxShadow: "0 1px 3px rgba(15, 42, 74, 0.06)",
+        marginBottom: "16px",
+      }}
+      className="bg-white"
+    >
+      <div
+        className="flex items-center justify-between px-4 py-3 flex-wrap"
+        style={{
+          backgroundColor: "#1f5cae",
+          minHeight: "64px",
+          borderBottom: "1px solid #e2e6ee",
+          borderTopLeftRadius: "12px",
+          borderTopRightRadius: "12px",
+        }}
+      >
+        <h3
+          className="font-inter font-bold text-white"
+          style={{ fontSize: "18px", paddingLeft: CONTENT_PADDING }}
+        >
+          Users Management
+        </h3>
+
+        <div className="flex items-center gap-3" style={{ paddingRight: "20px" }}>
+          {/* Search */}
+          <div className="relative" style={{ width: "300px" }}>
+            <Search
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"
+              style={{ width: "16px", height: "16px" }}
+              aria-hidden="true"
+            />
+            <input
+              type="search"
+              value={searchInput}
+              onChange={(e) => {
+                handleSearchInputChange(e.target.value);
+                setSearchQuery(e.target.value);
+                setCurrentPage(1);
               }}
-            >
-              <Search className="h-4 w-4" aria-hidden="true" />
-              Search
-            </button>
+              onKeyDown={handleKeyDown}
+              placeholder="Search by name, email"
+              disabled={isLoading}
+              className="w-full bg-white font-inter text-gray-600 placeholder:text-gray-400 outline-none disabled:opacity-50"
+              style={{
+                height: "36px",
+                border: "1.5px solid #d1d5db",
+                borderRadius: "8px",
+                padding: "0 12px 0 40px",
+                fontSize: "13px",
+              }}
+            />
           </div>
 
-          <div
-            className="flex items-center gap-2.5 relative"
-            style={{ paddingRight: "20px" }}
-          >
+          {/* Filter */}
+          <div className="relative">
             <button
               type="button"
               onClick={() => setIsFilterOpen((open) => !open)}
-              className="inline-flex items-center gap-1.5 font-inter font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
               style={{
-                borderRadius: "8px",
-                backgroundColor: "#003370",
-                padding: "9px 16px",
-                fontSize: "14px",
+                fontSize: "12.5px",
+                padding: "7px 14px",
+                backgroundColor: "#12345b",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = "#16385f")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = "#003370")
-              }
             >
-              <Filter className="h-4 w-4" aria-hidden="true" />
+              <Filter style={{ width: "13px", height: "13px" }} aria-hidden="true" />
               Filter
               {roleFilter !== "All Roles" && (
                 <span
@@ -510,8 +506,9 @@ export default function RecentSubmissionsTable() {
                     height: "16px",
                     borderRadius: "9999px",
                     backgroundColor: "#ffffff",
-                    color: "#003370",
+                    color: "#12345b",
                     fontSize: "10px",
+                    marginLeft: "4px"
                   }}
                 >
                   1
@@ -527,17 +524,21 @@ export default function RecentSubmissionsTable() {
               />
             )}
           </div>
-        </div>
-      </div>
 
-      {/* Section header */}
-      <div
-        className="bg-[#1f5cae] h-16 flex items-center"
-        style={{ paddingLeft: CONTENT_PADDING }}
-      >
-        <h3 className="font-inter text-[18px] font-bold text-white">
-          Users Management
-        </h3>
+          {/* Export */}
+          <button
+            onClick={() => alert("Export feature coming soon!")}
+            type="button"
+            className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap"
+            style={{
+              borderRadius: "6px",
+              padding: "6px 12px",
+              fontSize: "12px",
+            }}
+          >
+            <Download className="h-4 w-4" /> Export
+          </button>
+        </div>
       </div>
 
       {/* Table */}
@@ -545,7 +546,7 @@ export default function RecentSubmissionsTable() {
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-              {["USER", "ROLE", "STATUS", "CREATED", "ACTION"].map(
+              {["USER", "ROLE", "DEPARTMENT", "LAST LOGIN", "STATUS", "ACTION"].map(
                 (heading) => (
                   <th
                     key={heading}
@@ -566,7 +567,7 @@ export default function RecentSubmissionsTable() {
             {isLoading && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-5 py-10 text-center font-inter text-sm text-gray-500"
                 >
                   <div className="flex items-center justify-center gap-2">
@@ -579,7 +580,7 @@ export default function RecentSubmissionsTable() {
             {error && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-5 py-10 text-center font-inter text-sm text-red-500"
                 >
                   Failed to load users. Please try again.
@@ -589,7 +590,7 @@ export default function RecentSubmissionsTable() {
             {!isLoading && !error && users.length === 0 && (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={6}
                   className="px-5 py-10 text-center font-inter text-sm text-gray-500"
                 >
                   No users found.
