@@ -39,6 +39,11 @@ export const submissionService = {
     return response.data;
   },
 
+  async getSubmissionById(id) {
+    const response = await apiClient.get(API_ENDPOINTS.SUBMISSIONS.DETAIL(id));
+    return response.data;
+  },
+
   async updateStatus(submissionId, status, remarksText = "") {
     const payload = {
       status: STATUS_API_MAP[status] || status,

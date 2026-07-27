@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Filter, Download, Eye, Loader2 } from "lucide-react";
+import { useSubmissions } from "../../../../hooks/useSubmissions";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 10;
 const CONTENT_PADDING = "28px";
 
 const COLORS = {
@@ -21,50 +22,6 @@ const STATUS_CONFIG = {
   rejected: { label: "Flagged", color: "#b91c1c" },
   resubmission_required: { label: "Resubmission Required", color: "#6d28d9" },
 };
-
-// ── Mock seed data ────────────────────────────────────────────────
-const MOCK_SUBMISSIONS = [
-  {
-    submission_id: "vsta20260082",
-    title: "SITE: Hackathon Even.",
-    submitted_by_email: "site.ustp@example.com",
-    category_name: "Inbound",
-    submitted_at: "2023-10-24T10:00:00Z",
-    status: "under_review",
-  },
-  {
-    submission_id: "vsta20260083",
-    title: "SITE: Hackathon Even.",
-    submitted_by_email: "site.ustp@example.com",
-    category_name: "Inbound",
-    submitted_at: "2023-10-24T10:00:00Z",
-    status: "pending",
-  },
-  {
-    submission_id: "vsta20260084",
-    title: "SITE: Hackathon Even.",
-    submitted_by_email: "site.ustp@example.com",
-    category_name: "Outbound",
-    submitted_at: "2023-10-24T10:00:00Z",
-    status: "approved",
-  },
-  {
-    submission_id: "vsta20260085",
-    title: "SITE: Hackathon Even.",
-    submitted_by_email: "site.ustp@example.com",
-    category_name: "Outbound",
-    submitted_at: "2023-10-24T10:00:00Z",
-    status: "under_review",
-  },
-  {
-    submission_id: "vsta20260086",
-    title: "SITE: Hackathon Even.",
-    submitted_by_email: "site.ustp@example.com",
-    category_name: "Outbound",
-    submitted_at: "2023-10-24T10:00:00Z",
-    status: "rejected",
-  },
-];
 
 function StatusLabel({ status }) {
   const config = STATUS_CONFIG[status] ?? {
@@ -88,22 +45,38 @@ function StatusLabel({ status }) {
 export default function ReviewTrackerTable() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const filtered = useMemo(() => {
-    if (!searchTerm) return MOCK_SUBMISSIONS;
-    const q = searchTerm.toLowerCase();
-    return MOCK_SUBMISSIONS.filter(
-      (s) =>
-        s.title.toLowerCase().includes(q) ||
-        s.submission_id.toLowerCase().includes(q) ||
-        s.category_name.toLowerCase().includes(q),
-    );
-  }, [searchTerm]);
+  const { data, isLoading } = useSubmissions({
+    page: currentPage,
+    pageSize: PAGE_SIZE,
+    search: searchTerm,
+  });
 
-  const totalCount = filtered.length;
+  const submissions = data?.results ?? [];
+  const totalCount = data?.count ?? 0;
+  const totalPages = data?.total_pages ?? 1;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= 5)
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const half = 2;
+    let start = Math.max(1, safeCurrentPage - half);
+    let end = Math.min(totalPages, safeCurrentPage + half);
+    if (end - start < 4) {
+      if (start === 1) end = Math.min(totalPages, 5);
+      else start = Math.max(1, end - 4);
+    }
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
+  }, [totalPages, safeCurrentPage]);
 
   function handleView(submission) {
     navigate(`/student/review-tracker/${submission.submission_id}`);
+  }
+
+  function goToPage(page) {
+    setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   }
 
   return (
@@ -132,7 +105,6 @@ export default function ReviewTrackerTable() {
         </h3>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Search */}
           <div className="relative">
             <Search
               className="pointer-events-none absolute"
@@ -144,25 +116,25 @@ export default function ReviewTrackerTable() {
                 width: "16px",
                 color: "#9ca3af",
               }}
-              aria-hidden="true"
             />
             <input
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
               placeholder="Search submissions..."
-              className="font-inter outline-none"
+              className="font-inter outline-none text-black"
               style={{
                 width: "230px",
                 borderRadius: "8px",
                 border: "1px solid #d1d5db",
-                backgroundColor: "#ffffff",
                 padding: "9px 12px 9px 34px",
                 fontSize: "14px",
               }}
             />
           </div>
 
-          {/* Filter */}
           <button
             type="button"
             className="inline-flex items-center gap-1.5 font-inter font-semibold text-white transition-colors"
@@ -183,7 +155,6 @@ export default function ReviewTrackerTable() {
             Filter
           </button>
 
-          {/* Export */}
           <button
             type="button"
             className="inline-flex items-center gap-1.5 font-inter font-bold transition-colors"
@@ -238,7 +209,18 @@ export default function ReviewTrackerTable() {
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {isLoading ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="text-center font-inter text-sm text-gray-500"
+                  style={{ padding: "40px 20px" }}
+                >
+                  <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
+                  Loading submissions...
+                </td>
+              </tr>
+            ) : submissions.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
@@ -249,17 +231,11 @@ export default function ReviewTrackerTable() {
                 </td>
               </tr>
             ) : (
-              filtered.map((submission) => (
+              submissions.map((submission) => (
                 <tr
                   key={submission.submission_id}
-                  className="h-16 transition-colors last:border-b-0"
+                  className="h-16 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
                   style={{ borderBottom: `1px solid ${COLORS.border}` }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#f7f9ff")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "transparent")
-                  }
                 >
                   <td
                     className="font-inter font-semibold text-gray-700 whitespace-nowrap"
@@ -269,23 +245,22 @@ export default function ReviewTrackerTable() {
                       fontSize: "13px",
                     }}
                   >
-                    #V-{submission.submission_id.slice(-4)}
+                    #{submission.submission_id.slice(0, 8)}
                   </td>
                   <td style={{ padding: "12px 20px" }}>
                     <p
                       className="font-inter font-bold text-gray-900 leading-tight"
                       style={{ fontSize: "14px" }}
                     >
-                      {submission.title}
+                      {submission.title || "Untitled Document"}
                     </p>
-                    {submission.submitted_by_email && (
-                      <p
-                        className="font-inter text-gray-400 leading-tight"
-                        style={{ fontSize: "12px", marginTop: "2px" }}
-                      >
-                        {submission.submitted_by_email}
-                      </p>
-                    )}
+                    {/* FIXED: Now pulling org_name instead of submitted_by_name */}
+                    <p
+                      className="font-inter text-gray-400 leading-tight"
+                      style={{ fontSize: "12px", marginTop: "2px" }}
+                    >
+                      {submission.org_name || "Unknown Organization"}
+                    </p>
                   </td>
                   <td style={{ padding: "12px 20px" }}>
                     <span
@@ -298,7 +273,7 @@ export default function ReviewTrackerTable() {
                         color: "#4b5b78",
                       }}
                     >
-                      {submission.category_name}
+                      {submission.category_name || "N/A"}
                     </span>
                   </td>
                   <td
@@ -337,89 +312,94 @@ export default function ReviewTrackerTable() {
       </div>
 
       {/* ---- Pagination ---- */}
-      <div
-        className="flex items-center justify-between flex-wrap gap-3"
-        style={{
-          borderTop: `1px solid ${COLORS.border}`,
-          backgroundColor: "#ffffff",
-          paddingLeft: CONTENT_PADDING,
-          paddingRight: CONTENT_PADDING,
-          paddingTop: "12px",
-          paddingBottom: "12px",
-        }}
-      >
-        <p
-          className="font-inter font-medium text-gray-500"
-          style={{ fontSize: "14px" }}
+      {totalCount > 0 && (
+        <div
+          className="flex items-center justify-between flex-wrap gap-3"
+          style={{
+            borderTop: `1px solid ${COLORS.border}`,
+            backgroundColor: "#ffffff",
+            padding: `12px ${CONTENT_PADDING}`,
+          }}
         >
-          Showing{" "}
-          <span className="font-semibold text-gray-700">1–{totalCount}</span> of{" "}
-          <span className="font-semibold text-gray-700">345</span> submissions
-        </p>
-
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            disabled
-            className="font-inter font-semibold transition"
-            style={{
-              width: "34px",
-              height: "34px",
-              fontSize: "14px",
-              borderRadius: "9999px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-              color: "#9ca3af",
-              cursor: "not-allowed",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+          <p
+            className="font-inter font-medium text-gray-500"
+            style={{ fontSize: "14px" }}
           >
-            &lt;
-          </button>
-          {[1, 2, 3].map((page) => (
+            Showing{" "}
+            <span className="font-semibold text-gray-700">
+              {(safeCurrentPage - 1) * PAGE_SIZE + 1}–
+              {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)}
+            </span>{" "}
+            of <span className="font-semibold text-gray-700">{totalCount}</span>{" "}
+            submissions
+          </p>
+
+          <div className="flex items-center gap-1.5">
             <button
-              key={page}
               type="button"
-              className="font-inter font-semibold transition"
+              onClick={() => goToPage(safeCurrentPage - 1)}
+              disabled={safeCurrentPage === 1}
+              className="font-inter font-semibold transition disabled:opacity-50"
               style={{
                 width: "34px",
                 height: "34px",
-                fontSize: "13px",
+                fontSize: "14px",
                 borderRadius: "9999px",
-                border: `1px solid ${page === 1 ? COLORS.navy : "#d1d5db"}`,
-                backgroundColor: page === 1 ? COLORS.navy : "#ffffff",
-                color: page === 1 ? "#ffffff" : "#374151",
+                border: "1px solid #d1d5db",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
+                cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
               }}
             >
-              {page}
+              &lt;
             </button>
-          ))}
-          <button
-            type="button"
-            className="font-inter font-semibold transition"
-            style={{
-              width: "34px",
-              height: "34px",
-              fontSize: "14px",
-              borderRadius: "9999px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-              color: "#374151",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: "pointer",
-            }}
-          >
-            &gt;
-          </button>
+            {pageNumbers.map((page) => (
+              <button
+                key={page}
+                type="button"
+                onClick={() => goToPage(page)}
+                className="font-inter font-semibold transition"
+                style={{
+                  width: "34px",
+                  height: "34px",
+                  fontSize: "13px",
+                  borderRadius: "9999px",
+                  border: `1px solid ${page === safeCurrentPage ? COLORS.navy : "#d1d5db"}`,
+                  backgroundColor:
+                    page === safeCurrentPage ? COLORS.navy : "#ffffff",
+                  color: page === safeCurrentPage ? "#ffffff" : "#374151",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => goToPage(safeCurrentPage + 1)}
+              disabled={safeCurrentPage >= totalPages}
+              className="font-inter font-semibold transition disabled:opacity-50"
+              style={{
+                width: "34px",
+                height: "34px",
+                fontSize: "14px",
+                borderRadius: "9999px",
+                border: "1px solid #d1d5db",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor:
+                  safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
+              }}
+            >
+              &gt;
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

@@ -1,6 +1,24 @@
 import { Info } from "lucide-react";
 
-export default function DetailsNotice() {
+const STATUS_MESSAGES = {
+  pending:
+    "Your document has been received and is waiting in the queue for initial review. This record tracks paper files submitted at the OSA office.",
+  under_review:
+    "Your document is currently being vetted by the administration. Digital copies are not stored on this system to protect original physical signatures.",
+  approved:
+    "Your document has been approved and verified. You can now proceed with the next steps of your activity.",
+  rejected:
+    "Your document has been flagged or returned. Please check the staff remarks below for required corrections.",
+  resubmission_required:
+    "Action required: Please revise and resubmit your physical document to the OSA office.",
+};
+
+export default function DetailsNotice({ status }) {
+  // Fallback to original text if status isn't matched
+  const message =
+    STATUS_MESSAGES[status] ||
+    "This record tracks paper files submitted at the OSA office. Digital copies are not stored on this system to protect original physical signatures and institutional security. Tracking here ensures you know the exact location and status of your physical documents.";
+
   return (
     <div
       style={{
@@ -23,9 +41,7 @@ export default function DetailsNotice() {
             marginTop: "2px",
           }}
         >
-          <Info
-            style={{ width: "14px", height: "14px", color: "#64748b" }}
-          />
+          <Info style={{ width: "14px", height: "14px", color: "#64748b" }} />
         </div>
         <div>
           <h4
@@ -38,10 +54,7 @@ export default function DetailsNotice() {
             className="font-inter text-gray-500"
             style={{ fontSize: "13px", lineHeight: 1.65 }}
           >
-            This record tracks paper files submitted at the OSA office. Digital
-            copies are not stored on this system to protect original physical
-            signatures and institutional security. Tracking here ensures you know
-            the exact location and status of your physical documents.
+            {message}
           </p>
         </div>
       </div>

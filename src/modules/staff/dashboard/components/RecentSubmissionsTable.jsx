@@ -343,7 +343,7 @@ export default function RecentSubmissionsTable() {
       >
         <h3
           className="font-inter font-bold"
-          style={{ fontSize: "19px", color: "white"}}
+          style={{ fontSize: "19px", color: "white" }}
         >
           Recent Submissions
         </h3>
@@ -579,7 +579,7 @@ export default function RecentSubmissionsTable() {
                         className="font-inter font-bold text-gray-900 leading-tight"
                         style={{ fontSize: "14px" }}
                       >
-                        {submission.submitted_by_name || "Unknown"}
+                        {submission.org_name || "Unknown"}
                       </p>
                       {submission.submitted_by_email && (
                         <p

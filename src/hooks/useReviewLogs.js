@@ -7,9 +7,14 @@ export const useReviewLogs = ({
   search = "",
   status = "",
   changedAfter = "",
+  submissionId = "", // ADDED
 } = {}) => {
   return useQuery({
-    queryKey: ["review-logs", { page, pageSize, search, status, changedAfter }],
+    // ADDED submissionId to the queryKey so React Query knows when to refetch
+    queryKey: [
+      "review-logs",
+      { page, pageSize, search, status, changedAfter, submissionId },
+    ],
     queryFn: () =>
       reviewLogService.getReviewLogs({
         page,
@@ -17,6 +22,7 @@ export const useReviewLogs = ({
         search,
         status,
         changedAfter,
+        submissionId, // ADDED
       }),
     keepPreviousData: true,
     staleTime: 30 * 1000,

@@ -1,6 +1,17 @@
 import { FolderOpen, Mail, ClipboardList } from "lucide-react";
 
-export default function DetailsSubmissionInfo() {
+export default function DetailsSubmissionInfo({ submission }) {
+  if (!submission) return null;
+
+  const formatDate = (dateString) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
   return (
     <div
       style={{
@@ -31,7 +42,7 @@ export default function DetailsSubmissionInfo() {
               color: "#1A59A5",
             }}
           >
-            ID: #VSTA-2026-0082
+            ID: #{submission.submission_id?.slice(0, 8).toUpperCase() || "N/A"}
           </span>
         </div>
       </div>
@@ -40,14 +51,14 @@ export default function DetailsSubmissionInfo() {
         className="font-inter font-bold text-[#142d55]"
         style={{ fontSize: "18px", marginBottom: "4px" }}
       >
-        Annual Activity Proposal 2026
+        {submission.title || "Untitled Document"}
       </h3>
 
       <p
         className="font-inter text-gray-500 text-right"
         style={{ fontSize: "12px", marginTop: "-20px", marginBottom: "8px" }}
       >
-        Submitted: Apr 24, 2026
+        Submitted: {formatDate(submission.submitted_at)}
       </p>
 
       <div className="flex items-center gap-2 mb-5">
@@ -58,7 +69,7 @@ export default function DetailsSubmissionInfo() {
           className="font-inter font-medium text-gray-600"
           style={{ fontSize: "14px" }}
         >
-          SITE: Society of Information Technology Enthusiasts
+          {submission.org_name || "Organization Pending"}
         </span>
       </div>
 
@@ -88,14 +99,14 @@ export default function DetailsSubmissionInfo() {
             Submitter Contact
           </p>
           <div className="flex items-center gap-2">
-            <Mail
-              style={{ width: "14px", height: "14px", color: "#6b7280" }}
-            />
+            <Mail style={{ width: "14px", height: "14px", color: "#6b7280" }} />
             <span
               className="font-inter font-medium text-gray-700"
               style={{ fontSize: "13px" }}
             >
-              site.jdrojo.1@gmail.com
+              {submission.submitted_by_email ||
+                submission.submitted_by_name ||
+                "N/A"}
             </span>
           </div>
         </div>
@@ -105,7 +116,7 @@ export default function DetailsSubmissionInfo() {
             className="font-inter font-bold uppercase tracking-wider"
             style={{ fontSize: "11px", marginBottom: "6px", color: "#1A59A5" }}
           >
-            Submission Mode
+            Category
           </p>
           <div className="flex items-center gap-2">
             <ClipboardList
@@ -115,7 +126,7 @@ export default function DetailsSubmissionInfo() {
               className="font-inter font-medium text-gray-700"
               style={{ fontSize: "13px" }}
             >
-              Walk-in
+              {submission.category_name || "N/A"}
             </span>
           </div>
         </div>

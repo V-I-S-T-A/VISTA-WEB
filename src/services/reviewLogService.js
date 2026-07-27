@@ -1,5 +1,4 @@
 import apiClient from "../lib/axios";
-import { API_ENDPOINTS } from "../config/api";
 
 export const reviewLogService = {
   async getReviewLogs({
@@ -8,16 +7,21 @@ export const reviewLogService = {
     search = "",
     status = "",
     changedAfter = "",
+    submissionId = "", // ADDED: Specific submission tracking
   } = {}) {
     const params = new URLSearchParams();
 
     if (page) params.append("page", page);
     if (pageSize) params.append("page_size", pageSize);
     if (search) params.append("search", search);
-    if (status) params.append("action", status);
-    if (changedAfter) params.append("performed_after", changedAfter);
 
-    const response = await apiClient.get(API_ENDPOINTS.AUDIT_LOGS.LIST, {
+    // FIXED: These now match your Django ReviewLogFilter exactly
+    if (status) params.append("new_status", status);
+    if (changedAfter) params.append("changed_after", changedAfter);
+    if (submissionId) params.append("submission_id", submissionId);
+
+    // FIXED: Changed from AUDIT_LOGS to standard review-logs endpoint
+    const response = await apiClient.get("/review-logs/", {
       params,
     });
     return response.data;
