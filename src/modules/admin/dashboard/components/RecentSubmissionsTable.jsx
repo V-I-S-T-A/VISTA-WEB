@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import {
   Search,
-  SlidersHorizontal,
+  Filter,
   SquarePen,
-  ChevronDown,
-  Check,
   Loader,
 } from "lucide-react";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
@@ -44,110 +42,94 @@ const StatusBadge = memo(function StatusBadge({ isActive }) {
   );
 });
 
-// Memoized FilterDropdown
-const FilterDropdown = memo(function FilterDropdown({
-  label,
-  options,
-  value,
-  onChange,
+// FilterPopover (matching staff design)
+function FilterPopover({
+  role,
+  onRoleChange,
+  onClear,
+  onClose,
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef(null);
+  const ref = useRef(null);
 
   useEffect(() => {
-    if (!isOpen) return;
-
     function handleClickOutside(event) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target)
-      ) {
-        setIsOpen(false);
+      if (ref.current && !ref.current.contains(event.target)) {
+        onClose();
       }
     }
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") setIsOpen(false);
-    }
-
     document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
-
-  const handleSelect = useCallback(
-    (option) => {
-      onChange(option);
-      setIsOpen(false);
-    },
-    [onChange],
-  );
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
 
   return (
-    <div className="relative" ref={containerRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-label={label}
-        className="appearance-none bg-white font-inter font-semibold text-gray-700 outline-none cursor-pointer inline-flex items-center gap-6 hover:bg-gray-50 transition-colors whitespace-nowrap"
-        style={{
-          border: "1.5px solid #d1d5db",
-          borderRadius: "7px",
-          padding: "7px 11px",
-          fontSize: "12px",
-        }}
-      >
-        {value}
-        <ChevronDown
-          className="pointer-events-none h-4 w-4 flex-shrink-0 text-gray-500 transition-transform"
-          style={{ transform: isOpen ? "rotate(180deg)" : "none" }}
-          aria-hidden="true"
-        />
-      </button>
-
-      {isOpen && (
-        <div
-          role="listbox"
-          className="absolute left-0 top-full z-10 mt-1.5 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg"
+    <div
+      ref={ref}
+      className="absolute right-0 top-full z-20"
+      style={{
+        marginTop: "8px",
+        width: "288px",
+        borderRadius: "10px",
+        border: `1px solid #e2e6ee`,
+        backgroundColor: "#ffffff",
+        boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
+        padding: "16px",
+      }}
+    >
+      <div style={{ marginBottom: "14px" }}>
+        <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
+          Role
+        </label>
+        <select
+          value={role}
+          onChange={(e) => onRoleChange(e.target.value)}
+          className="w-full font-inter outline-none"
+          style={{
+            borderRadius: "8px",
+            border: "1px solid #d1d5db",
+            padding: "8px 10px",
+            fontSize: "14px",
+          }}
         >
-          {options.map((option) => {
-            const isSelected = option === value;
-            return (
-              <button
-                key={option}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => handleSelect(option)}
-                className={[
-                  "flex w-full items-center justify-between gap-2 px-3 py-2 text-left font-inter font-semibold transition-colors",
-                  isSelected
-                    ? "bg-[#eef2ff] text-[#1f5cae]"
-                    : "text-gray-700 hover:bg-gray-50",
-                ].join(" ")}
-                style={{ fontSize: "12px" }}
-              >
-                {option}
-                {isSelected && (
-                  <Check
-                    className="h-3.5 w-3.5 flex-shrink-0"
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+          {ROLE_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <div className="flex items-center justify-between mt-4">
+        <button
+          type="button"
+          onClick={onClear}
+          className="font-inter font-semibold text-gray-500 hover:text-gray-700"
+          style={{ fontSize: "12px" }}
+        >
+          Clear filters
+        </button>
+        <button
+          type="button"
+          onClick={onClose}
+          className="font-inter font-bold text-white transition-colors"
+          style={{
+            borderRadius: "8px",
+            backgroundColor: "#003370",
+            padding: "7px 14px",
+            fontSize: "12px",
+          }}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#16385f")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#003370")
+          }
+        >
+          Done
+        </button>
+      </div>
     </div>
   );
-});
+}
 
 // Memoized UserRow component to prevent re-renders of unchanged rows
 const UserRow = memo(function UserRow({
@@ -240,10 +222,9 @@ export default function RecentSubmissionsTable() {
   const [searchQuery, setSearchQuery] = useState(""); // For API calls
   const [roleFilter, setRoleFilter] = useState("All Roles");
 
-  // New States for "More Filters"
-  const [showMoreFilters, setShowMoreFilters] = useState(false);
-  const [dateFilter, setDateFilter] = useState("");
-  const moreFiltersRef = useRef(null);
+  // Filter state
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [dateFilter, setDateFilter] = useState(""); // Kept for api compatibility
 
   const [currentPage, setCurrentPage] = useState(1);
   const [editUser, setEditUser] = useState(null);
@@ -483,28 +464,52 @@ export default function RecentSubmissionsTable() {
           </div>
 
           <div
-            className="flex items-center gap-2.5"
+            className="flex items-center gap-2.5 relative"
             style={{ paddingRight: "20px" }}
           >
-            <FilterDropdown
-              label="Filter by role"
-              options={ROLE_OPTIONS}
-              value={roleFilter}
-              onChange={handleRoleFilterChange}
-            />
             <button
               type="button"
-              className="inline-flex items-center gap-1.5 bg-white font-inter font-semibold text-gray-700 hover:bg-gray-50 transition-colors whitespace-nowrap"
+              onClick={() => setIsFilterOpen((open) => !open)}
+              className="inline-flex items-center gap-1.5 font-inter font-semibold text-white transition-colors"
               style={{
-                border: "1.5px solid #d1d5db",
-                borderRadius: "7px",
-                padding: "7px 13px",
-                fontSize: "12px",
+                borderRadius: "8px",
+                backgroundColor: "#003370",
+                padding: "9px 16px",
+                fontSize: "14px",
               }}
+              onMouseEnter={(e) =>
+                (e.currentTarget.style.backgroundColor = "#16385f")
+              }
+              onMouseLeave={(e) =>
+                (e.currentTarget.style.backgroundColor = "#003370")
+              }
             >
-              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-              More Filters
+              <Filter className="h-4 w-4" aria-hidden="true" />
+              Filter
+              {roleFilter !== "All Roles" && (
+                <span
+                  className="inline-flex items-center justify-center font-bold"
+                  style={{
+                    width: "16px",
+                    height: "16px",
+                    borderRadius: "9999px",
+                    backgroundColor: "#ffffff",
+                    color: "#003370",
+                    fontSize: "10px",
+                  }}
+                >
+                  1
+                </span>
+              )}
             </button>
+            {isFilterOpen && (
+              <FilterPopover
+                role={roleFilter}
+                onRoleChange={handleRoleFilterChange}
+                onClear={() => handleRoleFilterChange("All Roles")}
+                onClose={() => setIsFilterOpen(false)}
+              />
+            )}
           </div>
         </div>
       </div>
