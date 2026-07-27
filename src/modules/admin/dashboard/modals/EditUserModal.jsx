@@ -146,7 +146,7 @@ export default function EditUserModal({
   useEffect(() => {
     if (isOpen && user) {
       setForm({
-        fullName: user.full_name ?? user.name ?? "",
+        fullName: `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User",
         role: user.role ?? "",
         isActive: user.is_active !== undefined ? user.is_active : true,
       });
@@ -277,7 +277,7 @@ export default function EditUserModal({
                   margin: 0,
                 }}
               >
-                Update account information for {user.full_name || user.name}
+                Update account information for {`${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User"}
               </p>
             </div>
           </div>
@@ -332,7 +332,7 @@ export default function EditUserModal({
               flexShrink: 0,
             }}
           >
-            {(user.full_name || user.name)?.[0]?.toUpperCase() ?? "?"}
+            {`${user.first_name || ""} ${user.last_name || ""}`.trim()[0]?.toUpperCase() ?? "?"}
           </div>
           <div style={{ minWidth: 0 }}>
             <p
@@ -344,7 +344,7 @@ export default function EditUserModal({
                 margin: 0,
               }}
             >
-              {user.full_name || user.name}
+              {`${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User"}
             </p>
             <p
               style={{
