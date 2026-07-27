@@ -3,6 +3,7 @@ import {
   Search,
   Download,
   Filter,
+  Eye,
 } from "lucide-react";
 import api from "../../../../lib/axios";
 
@@ -349,10 +350,10 @@ export default function AuditLogHistory({ onViewLog }) {
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-                {["TIMESTAMP", "USER/ENTITY", "ACTION", "ID/REFERENCE"].map(
-                  (heading) => (
+                {["TIMESTAMP", "USER/ENTITY", "ACTION", "ID/REFERENCE", "ACTION"].map(
+                  (heading, idx) => (
                     <th
-                      key={heading}
+                      key={idx}
                       className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
                       style={
                         heading === "TIMESTAMP"
@@ -451,6 +452,23 @@ export default function AuditLogHistory({ onViewLog }) {
                             Table: {log.table_name}
                           </p>
                         </div>
+                      </td>
+                      <td className="px-5 py-2.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onViewLog) onViewLog(log);
+                          }}
+                          className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50"
+                          style={{ padding: "4px 12px", fontSize: "12px" }}
+                        >
+                          <Eye
+                            style={{ width: "12px", height: "12px" }}
+                            aria-hidden="true"
+                          />
+                          VIEW
+                        </button>
                       </td>
                     </tr>
                   );
