@@ -180,9 +180,9 @@ export default function AuditLogHistory({ onViewLog }) {
         </div>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
+      <section className="rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
         <div
-          className="bg-[#1f5cae] flex items-center justify-between px-4 py-3"
+          className="bg-[#1f5cae] flex items-center justify-between px-4 py-3 rounded-t-xl"
           style={{ minHeight: "64px" }}
         >
           <h3
