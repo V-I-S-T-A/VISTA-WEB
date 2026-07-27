@@ -3,6 +3,7 @@ import {
   Search,
   SlidersHorizontal,
   SquarePen,
+  Trash2,
   ChevronDown,
   Check,
   Loader,
@@ -216,19 +217,34 @@ const UserRow = memo(function UserRow({
         })}
       </td>
       <td className="px-5 py-2.5">
-        <button
-          type="button"
-          onClick={handleEdit}
-          disabled={isUpdating || isDeleting}
-          className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50 disabled:opacity-50"
-          style={{ fontSize: "12px", padding: "4px 12px" }}
-        >
-          <SquarePen
-            style={{ width: "12px", height: "12px" }}
-            aria-hidden="true"
-          />
-          EDIT
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleEdit}
+            disabled={isUpdating || isDeleting}
+            className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50 disabled:opacity-50"
+            style={{ fontSize: "12px", padding: "4px 12px" }}
+          >
+            <SquarePen
+              style={{ width: "12px", height: "12px" }}
+              aria-hidden="true"
+            />
+            EDIT
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isUpdating || isDeleting}
+            className="inline-flex items-center gap-1 rounded bg-[#fee2e2] font-inter font-bold text-red-700 transition hover:bg-[#fecaca] active:scale-95 border border-red-300 disabled:opacity-50"
+            style={{ fontSize: "12px", padding: "4px 12px" }}
+          >
+            <Trash2
+              style={{ width: "12px", height: "12px" }}
+              aria-hidden="true"
+            />
+            DELETE
+          </button>
+        </div>
       </td>
     </tr>
   );
