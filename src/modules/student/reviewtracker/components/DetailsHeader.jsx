@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 
-export default function DetailsHeader() {
+export default function DetailsHeader({ submission }) {
   const navigate = useNavigate();
 
   return (

@@ -22,6 +22,8 @@ export const API_ENDPOINTS = {
   },
   SUBMISSIONS: {
     LIST: `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/`,
+    DETAIL: (submissionId) =>
+      `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/${submissionId}/`,
     STATUS: (submissionId) =>
       `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/${submissionId}/status/`,
     EXPORT_LIST: `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/export/list/`,

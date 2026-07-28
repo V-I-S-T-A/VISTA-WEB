@@ -1,12 +1,11 @@
 import { useMemo, useState } from "react";
 import { Eye } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // 1. Imported useNavigate
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "28px";
 
-// Maps backend status values to the labels/colors used across the app's
-// submission tables (see staff RecentSubmissionsTable / SystemSubmissionsPanel).
 const STATUS_CONFIG = {
   pending: { label: "New", color: "#1d4ed8" },
   under_review: { label: "Reviewing", color: "#b45309" },
@@ -34,7 +33,8 @@ function StatusLabel({ status }) {
   );
 }
 
-export default function RecentSubmissionsTable({ onView }) {
+export default function RecentSubmissionsTable() {
+  const navigate = useNavigate(); // 2. Initialized the hook
   const [currentPage, setCurrentPage] = useState(1);
 
   const { data, isLoading } = useSubmissions({
@@ -63,6 +63,11 @@ export default function RecentSubmissionsTable({ onView }) {
 
   function goToPage(page) {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
+  }
+
+  // 3. Created the view handler to route to your details page
+  function handleView(submission) {
+    navigate(`/student/review-tracker/${submission.submission_id}`);
   }
 
   return (
@@ -133,7 +138,7 @@ export default function RecentSubmissionsTable({ onView }) {
                       className="font-inter font-bold text-gray-900 leading-tight"
                       style={{ fontSize: "14px" }}
                     >
-                      {submission.submitted_by_name || "Unknown"}
+                      {submission.org_name || "Unknown Organization"}
                     </p>
                   </td>
                   <td className="px-5 py-2.5">
@@ -165,7 +170,7 @@ export default function RecentSubmissionsTable({ onView }) {
                   <td className="px-5 py-2.5">
                     <button
                       type="button"
-                      onClick={() => onView?.(submission)}
+                      onClick={() => handleView(submission)} // 4. Calling the handler
                       className="inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
                       style={{
                         fontSize: "12px",
