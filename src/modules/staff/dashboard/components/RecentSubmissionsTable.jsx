@@ -226,6 +226,7 @@ function FilterPopover({
 export default function RecentSubmissionsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("All Status");
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -244,6 +245,13 @@ export default function RecentSubmissionsTable() {
     dateFrom,
     dateTo,
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
   const updateSubmissionStatus = useUpdateSubmissionStatus();
   const submissions = data?.results ?? [];
   const totalPages = data?.total_pages ?? 1;
@@ -364,9 +372,9 @@ export default function RecentSubmissionsTable() {
               aria-hidden="true"
             />
             <input
-              value={searchTerm}
+              value={searchInput}
               onChange={(event) => {
-                setSearchTerm(event.target.value);
+                setSearchInput(event.target.value);
                 setCurrentPage(1);
               }}
               placeholder="Search submissions..."

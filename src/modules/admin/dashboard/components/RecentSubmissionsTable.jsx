@@ -260,6 +260,7 @@ export default function RecentSubmissionsTable() {
     search: searchQuery.trim(),
     role: roleFilter === "All Roles" ? "" : roleFilter,
     date: dateFilter, // Let the backend handle the date filtering
+    isActive: true, // Only fetch active users to follow the backend's soft-delete
   });
 
   // Setup mutations
@@ -467,12 +468,9 @@ export default function RecentSubmissionsTable() {
               value={searchInput}
               onChange={(e) => {
                 handleSearchInputChange(e.target.value);
-                setSearchQuery(e.target.value);
-                setCurrentPage(1);
               }}
               onKeyDown={handleKeyDown}
               placeholder="Search by name, email"
-              disabled={isLoading}
               className="w-full bg-white font-inter text-gray-600 placeholder:text-gray-400 outline-none disabled:opacity-50"
               style={{
                 height: "36px",
