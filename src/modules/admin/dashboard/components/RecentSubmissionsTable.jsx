@@ -525,19 +525,7 @@ export default function RecentSubmissionsTable() {
             )}
           </div>
 
-          {/* Export */}
-          <button
-            onClick={() => alert("Export feature coming soon!")}
-            type="button"
-            className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap"
-            style={{
-              borderRadius: "6px",
-              padding: "6px 12px",
-              fontSize: "12px",
-            }}
-          >
-            <Download className="h-4 w-4" /> Export
-          </button>
+
         </div>
       </div>
 
