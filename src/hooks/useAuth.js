@@ -7,6 +7,7 @@ export const useCurrentUser = () => {
     queryFn: () => authService.me(),
     staleTime: 5 * 60 * 1000,
     retry: false,
+    enabled: !!localStorage.getItem("access_token") || !!localStorage.getItem("refresh_token"),
   });
 };
 
