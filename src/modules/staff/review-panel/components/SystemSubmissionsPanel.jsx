@@ -6,93 +6,29 @@ import {
   ImageIcon,
   ChevronLeft,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
+import { useSubmissions } from "../../../../hooks/useSubmissions";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "24px";
 
-// Static placeholder data — swap for real API data later
-const now = new Date();
-function daysAgo(n) {
-  const d = new Date(now);
-  d.setDate(d.getDate() - n);
-  return d;
-}
+// Map frontend UI names to backend database statuses for filtering
+const API_STATUS_MAP = {
+  New: "pending",
+  Reviewing: "under_review",
+  Verified: "approved",
+  Flagged: "rejected",
+};
 
-const STATIC_SUBMISSIONS = [
-  {
-    id: "V-9082",
-    applicant: "SITE: Hackathon Even.",
-    email: "site.ustp@example.com",
-    category: "Inbound",
-    submitted_at: daysAgo(1),
-    status: "Reviewing",
-    title: "Annual Activity Proposal 2024",
-    documentType: "Budgetary/Activity Proposal",
-  },
-  {
-    id: "V-9082",
-    applicant: "SITE: Hackathon Even.",
-    email: "site.ustp@example.com",
-    category: "Inbound",
-    submitted_at: daysAgo(1),
-    status: "New",
-    title: "Annual Activity Proposal 2024",
-    documentType: "Budgetary/Activity Proposal",
-  },
-  {
-    id: "V-9082",
-    applicant: "SITE: Hackathon Even.",
-    email: "site.ustp@example.com",
-    category: "Outbound",
-    submitted_at: daysAgo(2),
-    status: "Verified",
-    title: "Annual Activity Proposal 2024",
-    documentType: "Budgetary/Activity Proposal",
-  },
-  {
-    id: "V-9082",
-    applicant: "SITE: Hackathon Even.",
-    email: "site.ustp@example.com",
-    category: "Outbound",
-    submitted_at: daysAgo(2),
-    status: "Reviewing",
-    title: "Annual Activity Proposal 2024",
-    documentType: "Budgetary/Activity Proposal",
-  },
-  {
-    id: "V-9082",
-    applicant: "SITE: Hackathon Even.",
-    email: "site.ustp@example.com",
-    category: "Outbound",
-    submitted_at: daysAgo(3),
-    status: "Flagged",
-    title: "Annual Activity Proposal 2024",
-    documentType: "Budgetary/Activity Proposal",
-  },
-  {
-    id: "V-9083",
-    applicant: "SITE: Orientation Day",
-    email: "orient.ustp@example.com",
-    category: "Inbound",
-    submitted_at: daysAgo(4),
-    status: "New",
-    title: "Freshman Orientation Plan",
-    documentType: "Event Proposal",
-  },
-  {
-    id: "V-9084",
-    applicant: "SITE: Sports Fest Fund",
-    email: "sports.ustp@example.com",
-    category: "Outbound",
-    submitted_at: daysAgo(5),
-    status: "Verified",
-    title: "Sports Fest Liquidation",
-    documentType: "Liquidation Report",
-  },
-];
-
-const TOTAL_SUBMISSIONS = 345;
+// Map backend database statuses to frontend UI names for display
+const UI_STATUS_MAP = {
+  pending: "New",
+  under_review: "Reviewing",
+  approved: "Verified",
+  rejected: "Flagged",
+  resubmission_required: "Flagged",
+};
 
 const STATUS_CONFIG = {
   Reviewing: { dot: "#f59e0b", text: "#b45309" },
@@ -102,7 +38,9 @@ const STATUS_CONFIG = {
 };
 
 function StatusDot({ status }) {
-  const config = STATUS_CONFIG[status] ?? { dot: "#9ca3af", text: "#6b7280" };
+  const uiStatus = UI_STATUS_MAP[status] || "New"; // Default fallback
+  const config = STATUS_CONFIG[uiStatus] ?? { dot: "#9ca3af", text: "#6b7280" };
+
   return (
     <span
       className="inline-flex items-center gap-1.5 font-inter font-semibold"
@@ -112,7 +50,7 @@ function StatusDot({ status }) {
         className="h-1.5 w-1.5 rounded-full flex-shrink-0"
         style={{ backgroundColor: config.dot }}
       />
-      {status}
+      {uiStatus}
     </span>
   );
 }
@@ -124,30 +62,35 @@ const STATUS_OPTIONS = [
   "Verified",
   "Flagged",
 ];
+
 const CATEGORY_OPTIONS = ["All Categories", "Inbound", "Outbound"];
 
 function downloadCsv(rows) {
   const headers = ["ID", "Applicant", "Email", "Category", "Date", "Status"];
-  const lines = rows.map((s) =>
-    [
-      `#${s.id}`,
-      s.applicant,
-      s.email,
-      s.category,
-      s.submitted_at.toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-      }),
-      s.status,
-    ].join(","),
-  );
+  const lines = rows.map((s) => {
+    const uiStatus = UI_STATUS_MAP[s.status] || s.status;
+    const dateStr = new Date(s.submitted_at).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+
+    return [
+      `#${s.submission_id.slice(0, 8)}`,
+      `"${s.org_name || s.submitted_by_name || "Unknown"}"`, // Quotes prevent comma splitting
+      s.submitted_by_email || "N/A",
+      s.category_name || "N/A",
+      dateStr,
+      uiStatus,
+    ].join(",");
+  });
+
   const csv = [headers.join(","), ...lines].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "submissions.csv";
+  link.download = "system_submissions.csv";
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -159,26 +102,25 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [filterOpen, setFilterOpen] = useState(false);
 
-  const filtered = useMemo(() => {
-    return STATIC_SUBMISSIONS.filter((s) => {
-      const q = searchTerm.trim().toLowerCase();
-      const matchSearch =
-        !q ||
-        s.id.toLowerCase().includes(q) ||
-        s.applicant.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q);
-      const matchStatus =
-        statusFilter === "All Status" || s.status === statusFilter;
-      const matchCategory =
-        categoryFilter === "All Categories" || s.category === categoryFilter;
-      return matchSearch && matchStatus && matchCategory;
-    });
-  }, [searchTerm, statusFilter, categoryFilter]);
+  // Fetch real data from backend
+  const { data, isLoading } = useSubmissions({
+    page: currentPage,
+    pageSize: PAGE_SIZE,
+    search: searchTerm,
+    status: statusFilter === "All Status" ? "" : API_STATUS_MAP[statusFilter],
+    // Note: If backend supports category filtering later, pass categoryFilter here
+  });
 
-  const totalPages = 3; // static, mirrors "Showing 1-100 of 345 submissions"
+  const submissions = data?.results ?? [];
+  const totalCount = data?.count ?? 0;
+  const totalPages = data?.total_pages ?? 1;
   const safeCurrentPage = Math.min(currentPage, totalPages);
 
-  const paginated = filtered.slice(0, PAGE_SIZE);
+  // Optional: Client-side category filtering (since API might not filter by category name natively yet)
+  const filteredSubmissions = useMemo(() => {
+    if (categoryFilter === "All Categories") return submissions;
+    return submissions.filter((s) => s.category_name?.includes(categoryFilter));
+  }, [submissions, categoryFilter]);
 
   function goToPage(page) {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
@@ -242,15 +184,18 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
             </button>
 
             {filterOpen && (
-              <div className="absolute right-0 top-full z-20" style={{
-                marginTop: "8px",
-                width: "288px",
-                borderRadius: "10px",
-                border: "1px solid #e2e6ee",
-                backgroundColor: "#ffffff",
-                boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
-                padding: "16px",
-              }}>
+              <div
+                className="absolute right-0 top-full z-20"
+                style={{
+                  marginTop: "8px",
+                  width: "288px",
+                  borderRadius: "10px",
+                  border: "1px solid #e2e6ee",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
+                  padding: "16px",
+                }}
+              >
                 <div style={{ marginBottom: "14px" }}>
                   <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                     Status
@@ -308,6 +253,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   onClick={() => {
                     setStatusFilter("All Status");
                     setCategoryFilter("All Categories");
+                    setSearchTerm("");
                     setCurrentPage(1);
                   }}
                   className="w-full font-inter font-bold transition-colors"
@@ -318,8 +264,12 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     borderRadius: "8px",
                     fontSize: "13px",
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#e5e7eb")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#f3f4f6")
+                  }
                 >
                   Clear Filters
                 </button>
@@ -329,7 +279,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
 
           <button
             type="button"
-            onClick={() => downloadCsv(filtered)}
+            onClick={() => downloadCsv(filteredSubmissions)}
             className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
             style={{
               fontSize: "12.5px",
@@ -369,7 +319,17 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
             </tr>
           </thead>
           <tbody>
-            {paginated.length === 0 && (
+            {isLoading ? (
+              <tr>
+                <td
+                  colSpan={6}
+                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
+                >
+                  <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
+                  Loading submissions...
+                </td>
+              </tr>
+            ) : filteredSubmissions.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}
@@ -378,164 +338,200 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   No submissions found.
                 </td>
               </tr>
-            )}
-            {paginated.map((submission, idx) => (
-              <tr
-                key={`${submission.id}-${idx}`}
-                className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
-              >
-                {/* ID */}
-                <td
-                  className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
-                  style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
+            ) : (
+              filteredSubmissions.map((submission) => (
+                <tr
+                  key={submission.submission_id}
+                  className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
                 >
-                  #{submission.id}
-                </td>
-
-                {/* Applicant */}
-                <td className="px-5 py-2.5">
-                  <p
-                    className="font-inter font-bold text-gray-900 leading-tight"
-                    style={{ fontSize: "13.5px" }}
+                  {/* ID */}
+                  <td
+                    className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
+                    style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
                   >
-                    {submission.applicant}
-                  </p>
-                  <p
-                    className="font-inter font-medium text-gray-400 leading-tight"
-                    style={{ fontSize: "12px" }}
+                    #{submission.submission_id.slice(0, 8)}
+                  </td>
+
+                  {/* Applicant */}
+                  <td className="px-5 py-2.5">
+                    <p
+                      className="font-inter font-bold text-gray-900 leading-tight"
+                      style={{ fontSize: "13.5px" }}
+                    >
+                      {submission.org_name ||
+                        submission.submitted_by_name ||
+                        "Unknown Applicant"}
+                    </p>
+                    <p
+                      className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
+                      style={{ fontSize: "12px" }}
+                    >
+                      {submission.submitted_by_email || "No email"}
+                    </p>
+                  </td>
+
+                  {/* Category */}
+                  <td className="px-5 py-2.5">
+                    <span
+                      className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
+                      style={{ fontSize: "12px", padding: "4px 12px" }}
+                    >
+                      {submission.category_name || "N/A"}
+                    </span>
+                  </td>
+
+                  {/* Date */}
+                  <td
+                    className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
+                    style={{ fontSize: "13px" }}
                   >
-                    {submission.email}
-                  </p>
-                </td>
+                    {new Date(submission.submitted_at).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      },
+                    )}
+                  </td>
 
-                {/* Category */}
-                <td className="px-5 py-2.5">
-                  <span
-                    className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600"
-                    style={{ fontSize: "12px", padding: "4px 12px" }}
-                  >
-                    {submission.category}
-                  </span>
-                </td>
+                  {/* Status */}
+                  <td className="px-5 py-2.5">
+                    <StatusDot status={submission.status} />
+                  </td>
 
-                {/* Date */}
-                <td
-                  className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
-                  style={{ fontSize: "13px" }}
-                >
-                  {submission.submitted_at.toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })}
-                </td>
-
-                {/* Status */}
-                <td className="px-5 py-2.5">
-                  <StatusDot status={submission.status} />
-                </td>
-
-                {/* Actions */}
-                <td className="px-5 py-2.5">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      onViewReview?.({
-                        id: submission.id,
-                        title: submission.title,
-                        site: submission.applicant.replace(/^SITE:\s*/i, ""),
-                        contactEmail: submission.email,
-                        documentType: submission.documentType,
-                        submittedDate:
-                          submission.submitted_at.toLocaleDateString("en-US", {
+                  {/* Actions */}
+                  <td className="px-5 py-2.5">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        onViewReview?.({
+                          id: submission.submission_id,
+                          title: submission.title || "Untitled Document",
+                          site: submission.org_name || "Unknown Organization",
+                          contactEmail: submission.submitted_by_email,
+                          documentType: submission.doc_type_name || "N/A",
+                          submittedDate: new Date(
+                            submission.submitted_at,
+                          ).toLocaleDateString("en-US", {
                             month: "short",
                             day: "numeric",
                             year: "numeric",
                           }),
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 rounded font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
-                    style={{
-                      fontSize: "12px",
-                      padding: "6px 14px",
-                      backgroundColor: "#ffc700",
-                    }}
-                  >
-                    <ImageIcon
-                      style={{ width: "13px", height: "13px" }}
-                      aria-hidden="true"
-                    />
-                    VIEW &amp; REVIEW
-                  </button>
-                </td>
-              </tr>
-            ))}
+                        })
+                      }
+                      className="inline-flex items-center gap-1.5 rounded font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 whitespace-nowrap"
+                      style={{
+                        fontSize: "12px",
+                        padding: "6px 14px",
+                        backgroundColor: "#ffc700",
+                      }}
+                    >
+                      <ImageIcon
+                        style={{ width: "13px", height: "13px" }}
+                        aria-hidden="true"
+                      />
+                      VIEW &amp; REVIEW
+                    </button>
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       {/* Footer / Pagination */}
-      <div
-        className="flex items-center justify-between border-t border-gray-100 bg-white"
-        style={{
-          paddingLeft: CONTENT_PADDING,
-          paddingRight: CONTENT_PADDING,
-          paddingTop: "14px",
-          paddingBottom: "14px",
-        }}
-      >
-        <p className="font-inter text-[13px] font-medium text-gray-500">
-          Showing 1–{PAGE_SIZE * 20} of {TOTAL_SUBMISSIONS} submissions
-        </p>
+      {totalCount > 0 && (
+        <div
+          className="flex items-center justify-between border-t border-gray-100 bg-white"
+          style={{
+            paddingLeft: CONTENT_PADDING,
+            paddingRight: CONTENT_PADDING,
+            paddingTop: "14px",
+            paddingBottom: "14px",
+          }}
+        >
+          <p className="font-inter text-[13px] font-medium text-gray-500">
+            Showing {(safeCurrentPage - 1) * PAGE_SIZE + 1}–
+            {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)} of {totalCount}{" "}
+            submissions
+          </p>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => goToPage(safeCurrentPage - 1)}
-            disabled={safeCurrentPage === 1}
-            className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
-            style={{
-              borderColor: "#d1d5db",
-              color: safeCurrentPage === 1 ? "#c1c5cc" : "#374151",
-              cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
-            }}
-          >
-            <ChevronLeft style={{ width: "14px", height: "14px" }} />
-          </button>
-
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <div className="flex items-center gap-1.5">
             <button
-              key={page}
               type="button"
-              onClick={() => goToPage(page)}
-              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter font-semibold transition"
+              onClick={() => goToPage(safeCurrentPage - 1)}
+              disabled={safeCurrentPage === 1}
+              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
               style={{
-                fontSize: "12.5px",
-                borderColor: page === safeCurrentPage ? "#12345b" : "#d1d5db",
-                backgroundColor:
-                  page === safeCurrentPage ? "#12345b" : "#ffffff",
-                color: page === safeCurrentPage ? "#ffffff" : "#374151",
+                borderColor: "#d1d5db",
+                color: safeCurrentPage === 1 ? "#c1c5cc" : "#374151",
+                cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
               }}
             >
-              {page}
+              <ChevronLeft style={{ width: "14px", height: "14px" }} />
             </button>
-          ))}
 
-          <button
-            type="button"
-            onClick={() => goToPage(safeCurrentPage + 1)}
-            disabled={safeCurrentPage >= totalPages}
-            className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
-            style={{
-              borderColor: "#d1d5db",
-              color: safeCurrentPage >= totalPages ? "#c1c5cc" : "#374151",
-              cursor: safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
-            }}
-          >
-            <ChevronRight style={{ width: "14px", height: "14px" }} />
-          </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              // Simple pagination rendering
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= safeCurrentPage - 1 && page <= safeCurrentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => goToPage(page)}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border font-inter font-semibold transition"
+                    style={{
+                      fontSize: "12.5px",
+                      borderColor:
+                        page === safeCurrentPage ? "#12345b" : "#d1d5db",
+                      backgroundColor:
+                        page === safeCurrentPage ? "#12345b" : "#ffffff",
+                      color: page === safeCurrentPage ? "#ffffff" : "#374151",
+                    }}
+                  >
+                    {page}
+                  </button>
+                );
+              }
+              // Render ellipsis for gaps (very simplified)
+              if (page === 2 && safeCurrentPage > 3)
+                return (
+                  <span key={page} className="px-1 text-gray-400">
+                    ...
+                  </span>
+                );
+              if (page === totalPages - 1 && safeCurrentPage < totalPages - 2)
+                return (
+                  <span key={page} className="px-1 text-gray-400">
+                    ...
+                  </span>
+                );
+              return null;
+            })}
+
+            <button
+              type="button"
+              onClick={() => goToPage(safeCurrentPage + 1)}
+              disabled={safeCurrentPage >= totalPages}
+              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
+              style={{
+                borderColor: "#d1d5db",
+                color: safeCurrentPage >= totalPages ? "#c1c5cc" : "#374151",
+                cursor:
+                  safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
+              }}
+            >
+              <ChevronRight style={{ width: "14px", height: "14px" }} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }
