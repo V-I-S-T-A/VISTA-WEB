@@ -2,10 +2,12 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, Download } from "lucide-react";
 import vistaLogo from "../assets/shared/vista_logo.png";
 import { getHeaderConfig } from "../config/navigation";
+import { useCurrentUser } from "../hooks/useAuth";
 
 export default function Header({ layout = "public", profilePath }) {
   const navigate = useNavigate();
   const config = getHeaderConfig(layout);
+  const { data: currentUser } = useCurrentUser();
 
   if (config.type === "dashboard") {
     return (
@@ -28,14 +30,14 @@ export default function Header({ layout = "public", profilePath }) {
             aria-label="View profile"
           >
             <img
-              src={config.avatar}
+              src={currentUser?.image_url ?? config.avatar}
               alt="Profile"
               className="h-10 w-10 rounded-full object-cover"
             />
           </button>
         ) : (
           <img
-            src={config.avatar}
+            src={currentUser?.image_url ?? config.avatar}
             alt="Profile"
             className="h-10 w-10 rounded-full object-cover flex-shrink-0"
           />
