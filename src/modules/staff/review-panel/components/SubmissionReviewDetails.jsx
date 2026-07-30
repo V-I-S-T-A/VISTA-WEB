@@ -6,10 +6,13 @@ import {
   FileText,
   ChevronDown,
   CheckCircle2,
+  Loader2,
 } from "lucide-react";
+import { submissionService } from "../../../../services/submissionService";
 
 const STATUS_ACTIONS = [
   "Select Action...",
+  "Start Review Process", // <-- ADD THIS NEW OPTION
   "Mark as Verified",
   "Mark as Flagged",
   "Return for Revision",
@@ -17,21 +20,59 @@ const STATUS_ACTIONS = [
   "Reject Submission",
 ];
 
+const ACTION_TO_STATUS_MAP = {
+  "Start Review Process": "under_review",
+  "Approve Submission": "approved",
+  "Mark as Flagged": "rejected",
+  "Reject Submission": "rejected",
+  "Return for Revision": "resubmission_required",
+};
+
 export default function SubmissionReviewDetails({ submission, onBack }) {
   const [statusAction, setStatusAction] = useState(STATUS_ACTIONS[0]);
   const [remarks, setRemarks] = useState("");
   const [priorityEscalation, setPriorityEscalation] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   if (!submission) return null;
 
-  function handleSubmitDecision() {
-    // TODO: wire up to real submit endpoint
-    console.log("Submitting decision:", {
-      submissionId: submission.id,
-      statusAction,
-      remarks,
-      priorityEscalation,
-    });
+  async function handleSubmitDecision() {
+    if (statusAction === STATUS_ACTIONS[0]) {
+      alert("Please select a valid action from the dropdown.");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
+
+      // Call the backend API to update status and save the remarks log
+      await submissionService.updateStatus(
+        submission.id,
+        backendStatus,
+        remarks,
+      );
+
+      // Optional: Add priority escalation logic here if the backend supports it later
+      if (priorityEscalation) {
+        console.log("Priority Escalation triggered for:", submission.id);
+      }
+
+      alert("Decision submitted successfully!");
+      onBack(); // Return to the table view automatically
+    } catch (error) {
+      console.error("Submission error:", error);
+
+      // THIS WILL TELL US EXACTLY WHAT IS WRONG:
+      const backendError = error.response?.data
+        ? JSON.stringify(error.response.data, null, 2)
+        : error.message;
+
+      alert(`Backend Error:\n\n${backendError}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -97,7 +138,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                 className="font-inter font-medium text-gray-600"
                 style={{ fontSize: "13px" }}
               >
-                SITE: {submission.site}
+                {submission.site}
               </span>
             </div>
           </div>
@@ -107,7 +148,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               className="inline-flex items-center rounded font-inter font-bold text-[#1d4ed8] bg-[#eaf1ff]"
               style={{ fontSize: "12px", padding: "4px 10px" }}
             >
-              ID: #{submission.id}
+              ID: #{submission.id?.slice(0, 8)}
             </span>
             <span
               className="font-inter font-medium text-gray-400"
@@ -207,7 +248,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           <select
             value={statusAction}
             onChange={(e) => setStatusAction(e.target.value)}
-            className="w-full appearance-none rounded-lg bg-[#eef1f9] font-inter font-bold text-gray-800 outline-none cursor-pointer"
+            disabled={isSubmitting}
+            className="w-full appearance-none rounded-lg bg-[#eef1f9] font-inter font-bold text-gray-800 outline-none cursor-pointer disabled:opacity-70"
             style={{ fontSize: "14px", padding: "12px 40px 12px 14px" }}
           >
             {STATUS_ACTIONS.map((action) => (
@@ -231,9 +273,10 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         <textarea
           value={remarks}
           onChange={(e) => setRemarks(e.target.value)}
+          disabled={isSubmitting}
           placeholder="Provide detailed justification for your decision..."
           rows={4}
-          className="w-full resize-none rounded-lg bg-[#eef1f9] font-inter font-medium text-gray-700 placeholder-gray-400 outline-none"
+          className="w-full resize-none rounded-lg bg-[#eef1f9] font-inter font-medium text-gray-700 placeholder-gray-400 outline-none disabled:opacity-70"
           style={{
             fontSize: "13.5px",
             padding: "12px 14px",
@@ -250,7 +293,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
             type="checkbox"
             checked={priorityEscalation}
             onChange={(e) => setPriorityEscalation(e.target.checked)}
-            className="h-4 w-4 rounded border-gray-300 text-[#1f5cae] focus:ring-[#1f5cae]"
+            disabled={isSubmitting}
+            className="h-4 w-4 rounded border-gray-300 text-[#1f5cae] focus:ring-[#1f5cae] disabled:opacity-70"
           />
           <span
             className="font-inter font-semibold text-gray-700"
@@ -264,18 +308,23 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           <button
             type="button"
             onClick={handleSubmitDecision}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
+            disabled={isSubmitting}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               fontSize: "13.5px",
               padding: "13px 20px",
               backgroundColor: "#ffc700",
             }}
           >
-            <CheckCircle2
-              style={{ width: "16px", height: "16px" }}
-              aria-hidden="true"
-            />
-            SUBMIT OFFICIAL DECISION
+            {isSubmitting ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <CheckCircle2
+                style={{ width: "16px", height: "16px" }}
+                aria-hidden="true"
+              />
+            )}
+            {isSubmitting ? "SUBMITTING..." : "SUBMIT OFFICIAL DECISION"}
           </button>
         </div>
       </div>

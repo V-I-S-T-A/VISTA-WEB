@@ -45,17 +45,30 @@ export const submissionService = {
   },
 
   async updateStatus(submissionId, status, remarksText = "") {
-    const payload = {
-      status: STATUS_API_MAP[status] || status,
-    };
+    const mappedStatus = STATUS_API_MAP[status] || status;
+
+    // Use FormData instead of a standard JS object.
+    // This perfectly mimics a form submission and bypasses all JSON parsing errors in Django.
+    const formData = new FormData();
+    formData.append("status", mappedStatus);
 
     if (remarksText) {
-      payload.remarks_text = remarksText;
+      formData.append("remarks_text", remarksText);
+    }
+
+    console.log("SENDING PATCH PAYLOAD VIA FORMDATA");
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}: ${value}`);
     }
 
     const response = await apiClient.patch(
       API_ENDPOINTS.SUBMISSIONS.STATUS(submissionId),
-      payload,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      },
     );
     return response.data;
   },
