@@ -26,7 +26,7 @@ export default function Dashboard() {
       <Sidebar role="admin" />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="admin" />
+        <Header layout="admin" profilePath="/admin/profile" />
 
         <main
           className="flex-1 overflow-y-auto"

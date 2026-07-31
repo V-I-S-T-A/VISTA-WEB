@@ -399,6 +399,17 @@ export default function AuditLogHistory({ onViewLog }) {
                   const actionColor =
                     ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
                   const userName = log.performed_by || "System";
+                  const userEmail = log.performed_by_email || "System User";
+                  
+                  const getInitials = (name) => {
+                    if (!name || name === "System") return "SY";
+                    const parts = name.trim().split(" ");
+                    const first = parts[0] ? parts[0].charAt(0) : "";
+                    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+                    return (first + last).toUpperCase() || "??";
+                  };
+                  const initials = getInitials(userName);
+
                   return (
                     <tr
                       key={log.audit_id}
@@ -415,6 +426,7 @@ export default function AuditLogHistory({ onViewLog }) {
                         {formatDate(log.performed_at)}
                       </td>
                       <td className="px-5 py-2.5">
+<<<<<<< HEAD
                         <p
                           className="font-inter font-bold text-gray-900 leading-tight"
                           style={{ fontSize: "13px" }}
@@ -428,6 +440,35 @@ export default function AuditLogHistory({ onViewLog }) {
                         >
                           {log.performed_by_org || "Automated Process"}
                         </p>
+=======
+                        <div className="flex items-center gap-3 min-w-0">
+                          {log.performed_by_image ? (
+                            <img
+                              src={log.performed_by_image}
+                              alt=""
+                              className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1f5cae] font-inter text-[11px] font-bold text-white uppercase">
+                              {initials}
+                            </div>
+                          )}
+                          <div className="flex flex-col">
+                            <p
+                              className="font-inter font-bold text-gray-900 leading-tight"
+                              style={{ fontSize: "14px" }}
+                            >
+                              {userName}
+                            </p>
+                            <p
+                              className="font-inter font-medium text-gray-400 mt-0.5"
+                              style={{ fontSize: "12px" }}
+                            >
+                              {userEmail}
+                            </p>
+                          </div>
+                        </div>
+>>>>>>> c2c2d556050bc89c4c69380fab9cafedb57ee81d
                       </td>
                       <td className="px-5 py-2.5">
                         <span

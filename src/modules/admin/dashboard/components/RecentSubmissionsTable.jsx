@@ -216,10 +216,17 @@ export default function RecentSubmissionsTable() {
   const { data, isLoading, isFetching } = useSubmissions({
     page: currentPage,
     pageSize: PAGE_SIZE,
+<<<<<<< HEAD
     status: statusFilter,
     search: searchTerm,
     dateFrom,
     dateTo,
+=======
+    search: searchQuery.trim(),
+    role: roleFilter === "All Roles" ? "" : roleFilter,
+    date: dateFilter, // Let the backend handle the date filtering
+    isActive: true, // Only fetch active users to follow the backend's soft-delete
+>>>>>>> c2c2d556050bc89c4c69380fab9cafedb57ee81d
   });
   const updateSubmissionStatus = useUpdateSubmissionStatus();
   const submissions = data?.results ?? [];
@@ -365,9 +372,18 @@ export default function RecentSubmissionsTable() {
             <input
               type="search"
               value={searchInput}
+<<<<<<< HEAD
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search submissions..."
               className="w-full bg-white font-inter text-gray-600 placeholder:text-gray-400 outline-none"
+=======
+              onChange={(e) => {
+                handleSearchInputChange(e.target.value);
+              }}
+              onKeyDown={handleKeyDown}
+              placeholder="Search by name, email"
+              className="w-full bg-white font-inter text-gray-600 placeholder:text-gray-400 outline-none disabled:opacity-50"
+>>>>>>> c2c2d556050bc89c4c69380fab9cafedb57ee81d
               style={{
                 height: "36px",
                 border: "1.5px solid #d1d5db",
@@ -437,6 +453,7 @@ export default function RecentSubmissionsTable() {
             )}
           </div>
 
+<<<<<<< HEAD
           <button
             type="button"
             onClick={handleExportCSV}
@@ -458,6 +475,20 @@ export default function RecentSubmissionsTable() {
           >
             <Download className="h-4 w-4" aria-hidden="true" />
             Export
+=======
+          {/* Export */}
+          <button
+            onClick={() => alert("Export feature coming soon!")}
+            type="button"
+            className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap"
+            style={{
+              borderRadius: "6px",
+              padding: "6px 12px",
+              fontSize: "12px",
+            }}
+          >
+            <Download className="h-4 w-4" /> Export
+>>>>>>> c2c2d556050bc89c4c69380fab9cafedb57ee81d
           </button>
         </div>
       </div>

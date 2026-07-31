@@ -23,7 +23,7 @@ export default function AuditLogs() {
             <Sidebar role="admin" />
 
             <div className="flex flex-1 flex-col overflow-hidden">
-                <Header layout="auditlog" />
+                <Header layout="auditlog" profilePath="/admin/profile" />
 
                 <main className="flex-1 overflow-y-auto" style={{ padding: '20px 24px' }}>
                     <div className="w-full">

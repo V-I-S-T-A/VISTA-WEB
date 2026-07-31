@@ -54,7 +54,8 @@ export default function ProfileForm() {
     const payload = {
       first_name: form.firstName,
       last_name: form.lastName,
-      ...(avatarFile ? { image: avatarFile } : {}),
+      ...(avatarFile && avatarFile !== "REMOVE" ? { image: avatarFile } : {}),
+      ...(avatarFile === "REMOVE" ? { remove_image: true } : {}),
     };
 
     updateProfile.mutate(payload, {
@@ -84,7 +85,7 @@ export default function ProfileForm() {
         style={{ gap: "36px" }}
       >
         <ProfileAvatarUpload
-          avatarUrl={profile?.image_url}
+          avatarUrl={avatarFile === "REMOVE" ? null : profile?.image_url}
           onAvatarChange={setAvatarFile}
         />
 

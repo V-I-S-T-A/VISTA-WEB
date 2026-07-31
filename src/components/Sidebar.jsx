@@ -67,7 +67,11 @@ export default function Sidebar({ role = "admin" }) {
           <button
             type="button"
             onClick={() => navigate(`/${role}/profile`)}
-            className="flex items-center gap-3.5 w-full rounded-md text-left transition-colors hover:bg-white/10"
+            className={`flex items-center gap-3.5 w-full rounded-md text-left transition-colors ${
+              location.pathname.startsWith(`/${role}/profile`)
+                ? "bg-[#ffd100] text-[#1f2937]"
+                : "text-white hover:bg-white/10"
+            }`}
             style={{
               paddingLeft: "12px",
               paddingRight: "12px",
@@ -78,7 +82,7 @@ export default function Sidebar({ role = "admin" }) {
             aria-label="View profile"
           >
             <img
-              src={currentUser?.avatar ?? config.user.avatar}
+              src={currentUser?.image_url ?? config.user.avatar}
               alt=""
               className="h-11 w-11 rounded-full object-cover border border-white/10"
               aria-hidden="true"

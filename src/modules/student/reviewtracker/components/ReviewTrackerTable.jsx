@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Filter, Download, Eye, Loader2 } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
@@ -44,6 +44,7 @@ function StatusLabel({ status }) {
 
 export default function ReviewTrackerTable() {
   const navigate = useNavigate();
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -52,6 +53,13 @@ export default function ReviewTrackerTable() {
     pageSize: PAGE_SIZE,
     search: searchTerm,
   });
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const submissions = data?.results ?? [];
   const totalCount = data?.count ?? 0;
@@ -165,9 +173,9 @@ export default function ReviewTrackerTable() {
               }}
             />
             <input
-              value={searchTerm}
+              value={searchInput}
               onChange={(e) => {
-                setSearchTerm(e.target.value);
+                setSearchInput(e.target.value);
                 setCurrentPage(1);
               }}
               placeholder="Search submissions..."

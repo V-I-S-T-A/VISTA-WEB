@@ -70,12 +70,19 @@ export default function ProfileAvatarUpload({ avatarUrl, onAvatarChange }) {
         </label>
       </div>
 
-      <p
-        className="font-inter font-bold text-white"
-        style={{ fontSize: "14px", marginTop: "12px" }}
-      >
-        Edit Profile
-      </p>
+      {displayUrl !== defaultAvatar && (
+        <button
+          type="button"
+          onClick={() => {
+            setPreviewUrl(null);
+            onAvatarChange?.("REMOVE");
+          }}
+          className="font-inter font-bold text-red-300 hover:text-red-200 transition-colors"
+          style={{ fontSize: "14px", marginTop: "12px" }}
+        >
+          Remove Profile
+        </button>
+      )}
     </div>
   );
 }

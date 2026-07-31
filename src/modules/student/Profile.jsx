@@ -24,7 +24,7 @@ export default function Profile() {
       <Sidebar role="student" />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="profile" />
+        <Header layout="profile" profilePath="/student/profile" />
 
         <main className="flex-1 overflow-y-auto bg-[#f5f7fb]">
           <div style={{ padding: "20px 24px" }}>
