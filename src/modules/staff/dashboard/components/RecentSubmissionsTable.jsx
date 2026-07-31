@@ -4,7 +4,6 @@ import {
   Filter,
   Download,
   Loader2,
-  Check,
   MoreVertical,
   AlertCircle,
   SquarePen,
@@ -13,7 +12,6 @@ import {
   useSubmissions,
   useUpdateSubmissionStatus,
 } from "../../../../hooks/useSubmissions";
-import { submissionService } from "../../../../services/submissionService";
 
 const PAGE_SIZE = 50;
 const CONTENT_PADDING = "28px";
@@ -27,8 +25,6 @@ const COLORS = {
   border: "#e2e6ee",
 };
 
-// Maps the backend's raw status values to display labels/colors.
-// Rendered as a dot + colored label (no background pill) per design.
 const STATUS_CONFIG = {
   pending: { label: "New", color: "#1d4ed8" },
   under_review: { label: "Reviewing", color: "#b45309" },
@@ -37,7 +33,6 @@ const STATUS_CONFIG = {
   resubmission_required: { label: "Resubmission Required", color: "#6d28d9" },
 };
 
-// Filter dropdown options — must match submissionService's STATUS_API_MAP keys.
 const STATUS_OPTIONS = [
   "All Status",
   "Pending",
@@ -47,8 +42,6 @@ const STATUS_OPTIONS = [
   "Resubmission Required",
 ];
 
-// Only transitions allowed by SubmissionStatusUpdateSerializer.validate_status()
-// on the backend. Terminal statuses (approved/rejected) get no entry.
 const PRIMARY_ACTION = {
   pending: { label: "VIEW & REVIEW", target: "under_review" },
   under_review: { label: "VIEW & REVIEW", target: "approved" },
@@ -81,23 +74,6 @@ function StatusLabel({ status }) {
       {config.label}
     </span>
   );
-}
-
-function extractFilename(contentDisposition, fallback) {
-  if (!contentDisposition) return fallback;
-  const match = contentDisposition.match(/filename="?([^";]+)"?/i);
-  return match?.[1] || fallback;
-}
-
-function downloadBlob(blob, filename) {
-  const url = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  window.URL.revokeObjectURL(url);
 }
 
 function FilterPopover({
@@ -233,8 +209,6 @@ export default function RecentSubmissionsTable() {
   const [updatingSubmissionId, setUpdatingSubmissionId] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
   const [actionError, setActionError] = useState("");
-  const [isExporting, setIsExporting] = useState(false);
-  const [exportError, setExportError] = useState("");
 
   const { data, isLoading, isFetching } = useSubmissions({
     page: currentPage,
@@ -274,8 +248,6 @@ export default function RecentSubmissionsTable() {
     setCurrentPage(1);
   }
 
-  // `status` is always a raw backend value (from PRIMARY_ACTION/SECONDARY_ACTIONS
-  // targets), which the API expects as-is.
   async function handleStatusUpdate(submissionId, status) {
     setUpdatingSubmissionId(submissionId);
     setActionError("");
@@ -293,30 +265,52 @@ export default function RecentSubmissionsTable() {
     }
   }
 
-  // All filtering (status, search, date range) is applied server-side by
-  // SubmissionViewSet.export_list — this just streams back whatever PDF the
-  // backend generates for the currently active filters and saves it.
-  async function handleExport() {
-    setIsExporting(true);
-    setExportError("");
-    try {
-      const response = await submissionService.exportList({
-        search: searchTerm,
-        status: statusFilter,
-        dateFrom,
-        dateTo,
-      });
-      const filename = extractFilename(
-        response.headers?.["content-disposition"],
-        `submissions_export_${Date.now()}.pdf`,
-      );
-      downloadBlob(response.data, filename);
-    } catch (error) {
-      setExportError("Failed to export submissions. Please try again.");
-    } finally {
-      setIsExporting(false);
+  // Frontend CSV Exporter
+  const handleExportCSV = () => {
+    if (!submissions || submissions.length === 0) {
+      alert("No submissions to export.");
+      return;
     }
-  }
+
+    const headers = [
+      "ID",
+      "TITLE",
+      "ORGANIZATION/APPLICANT",
+      "CATEGORY",
+      "SUBMITTED DATE",
+      "STATUS",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...submissions.map((sub) => {
+        const id = sub.submission_id;
+        const title = (sub.title || "Untitled Document").replace(/"/g, '""');
+        const applicant = (
+          sub.org_name ||
+          sub.submitted_by_name ||
+          sub.submitted_by_email ||
+          "Unknown"
+        ).replace(/"/g, '""');
+        const category = sub.category_name || "N/A";
+        const date = sub.submitted_at
+          ? new Date(sub.submitted_at).toLocaleDateString("en-US")
+          : "N/A";
+        const status = sub.status || "Unknown";
+
+        return `"${id}","${title}","${applicant}","${category}","${date}","${status}"`;
+      }),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `recent_submissions_export_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   const activeFilterCount =
     (statusFilter !== "All Status" ? 1 : 0) +
@@ -332,7 +326,6 @@ export default function RecentSubmissionsTable() {
         boxShadow: "0 1px 3px rgba(15, 42, 74, 0.06)",
       }}
     >
-      {/* ---- Header: title / search / filter / export ---- */}
       <div
         className="flex items-center justify-between gap-3 flex-wrap"
         style={{
@@ -349,7 +342,6 @@ export default function RecentSubmissionsTable() {
         </h3>
 
         <div className="flex items-center gap-2 flex-wrap">
-          {/* Search */}
           <div className="relative">
             <Search
               className="pointer-events-none absolute"
@@ -382,7 +374,6 @@ export default function RecentSubmissionsTable() {
             />
           </div>
 
-          {/* Filter */}
           <div className="relative">
             <button
               type="button"
@@ -442,11 +433,9 @@ export default function RecentSubmissionsTable() {
             )}
           </div>
 
-          {/* Export */}
           <button
             type="button"
-            onClick={handleExport}
-            disabled={isExporting}
+            onClick={handleExportCSV}
             className="inline-flex items-center gap-1.5 font-inter font-bold text-white transition-colors"
             style={{
               borderRadius: "8px",
@@ -455,34 +444,27 @@ export default function RecentSubmissionsTable() {
               padding: "9px 16px",
               fontSize: "14px",
               boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-              opacity: isExporting ? 0.6 : 1,
-              cursor: isExporting ? "not-allowed" : "pointer",
             }}
             onMouseEnter={(e) => {
-              if (!isExporting)
-                e.currentTarget.style.backgroundColor = COLORS.amberHover;
+              e.currentTarget.style.backgroundColor = COLORS.amberHover;
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = COLORS.amber;
             }}
           >
-            {isExporting ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Download className="h-4 w-4" aria-hidden="true" />
-            )}
+            <Download className="h-4 w-4" aria-hidden="true" />
             Export
           </button>
         </div>
       </div>
 
-      {(actionError || exportError) && (
+      {actionError && (
         <div
           className="flex items-center gap-2 bg-red-50 border-b border-red-200 text-red-700 font-inter"
           style={{ padding: "10px 24px", fontSize: "13px" }}
         >
           <AlertCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-          {actionError || exportError}
+          {actionError}
         </div>
       )}
 
@@ -531,6 +513,7 @@ export default function RecentSubmissionsTable() {
                   className="text-center font-inter text-sm text-gray-500"
                   style={{ padding: "40px 20px" }}
                 >
+                  <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
                   Loading submissions...
                 </td>
               </tr>

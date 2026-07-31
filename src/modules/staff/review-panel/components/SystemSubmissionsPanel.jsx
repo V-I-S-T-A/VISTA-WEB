@@ -13,7 +13,6 @@ import { useSubmissions } from "../../../../hooks/useSubmissions";
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "24px";
 
-// Map frontend UI names to backend database statuses for filtering
 const API_STATUS_MAP = {
   New: "pending",
   Reviewing: "under_review",
@@ -21,7 +20,6 @@ const API_STATUS_MAP = {
   Flagged: "rejected",
 };
 
-// Map backend database statuses to frontend UI names for display
 const UI_STATUS_MAP = {
   pending: "New",
   under_review: "Reviewing",
@@ -38,7 +36,7 @@ const STATUS_CONFIG = {
 };
 
 function StatusDot({ status }) {
-  const uiStatus = UI_STATUS_MAP[status] || "New"; // Default fallback
+  const uiStatus = UI_STATUS_MAP[status] || "New";
   const config = STATUS_CONFIG[uiStatus] ?? { dot: "#9ca3af", text: "#6b7280" };
 
   return (
@@ -62,38 +60,7 @@ const STATUS_OPTIONS = [
   "Verified",
   "Flagged",
 ];
-
 const CATEGORY_OPTIONS = ["All Categories", "Inbound", "Outbound"];
-
-function downloadCsv(rows) {
-  const headers = ["ID", "Applicant", "Email", "Category", "Date", "Status"];
-  const lines = rows.map((s) => {
-    const uiStatus = UI_STATUS_MAP[s.status] || s.status;
-    const dateStr = new Date(s.submitted_at).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-
-    return [
-      `#${s.submission_id.slice(0, 8)}`,
-      `"${s.org_name || s.submitted_by_name || "Unknown"}"`, // Quotes prevent comma splitting
-      s.submitted_by_email || "N/A",
-      s.category_name || "N/A",
-      dateStr,
-      uiStatus,
-    ].join(",");
-  });
-
-  const csv = [headers.join(","), ...lines].join("\n");
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = "system_submissions.csv";
-  link.click();
-  URL.revokeObjectURL(url);
-}
 
 export default function SystemSubmissionsPanel({ onViewReview }) {
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,13 +69,11 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // Fetch real data from backend
   const { data, isLoading } = useSubmissions({
     page: currentPage,
     pageSize: PAGE_SIZE,
     search: searchTerm,
     status: statusFilter === "All Status" ? "" : API_STATUS_MAP[statusFilter],
-    // Note: If backend supports category filtering later, pass categoryFilter here
   });
 
   const submissions = data?.results ?? [];
@@ -116,7 +81,6 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
   const totalPages = data?.total_pages ?? 1;
   const safeCurrentPage = Math.min(currentPage, totalPages);
 
-  // Optional: Client-side category filtering (since API might not filter by category name natively yet)
   const filteredSubmissions = useMemo(() => {
     if (categoryFilter === "All Categories") return submissions;
     return submissions.filter((s) => s.category_name?.includes(categoryFilter));
@@ -126,9 +90,55 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   }
 
+  // Frontend CSV Exporter
+  const handleExportCSV = () => {
+    if (!submissions || submissions.length === 0) {
+      alert("No submissions to export.");
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "TITLE",
+      "ORGANIZATION/APPLICANT",
+      "CATEGORY",
+      "SUBMITTED DATE",
+      "STATUS",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...submissions.map((sub) => {
+        const id = sub.submission_id;
+        const title = (sub.title || "Untitled Document").replace(/"/g, '""');
+        const applicant = (
+          sub.org_name ||
+          sub.submitted_by_name ||
+          sub.submitted_by_email ||
+          "Unknown"
+        ).replace(/"/g, '""');
+        const category = sub.category_name || "N/A";
+        const date = sub.submitted_at
+          ? new Date(sub.submitted_at).toLocaleDateString("en-US")
+          : "N/A";
+        const status = sub.status || "Unknown";
+
+        return `"${id}","${title}","${applicant}","${category}","${date}","${status}"`;
+      }),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `system_submissions_export_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      {/* Toolbar */}
       <div
         className="flex flex-wrap items-center justify-between gap-3 bg-[#1f5cae]"
         style={{
@@ -144,10 +154,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
 
         <div className="flex items-center gap-2">
           <div className="relative">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400" />
             <input
               type="text"
               value={searchTerm}
@@ -176,10 +183,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                 backgroundColor: "#12345b",
               }}
             >
-              <Filter
-                style={{ width: "13px", height: "13px" }}
-                aria-hidden="true"
-              />
+              <Filter style={{ width: "13px", height: "13px" }} />
               Filter
             </button>
 
@@ -221,7 +225,6 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     ))}
                   </select>
                 </div>
-
                 <div style={{ marginBottom: "14px" }}>
                   <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                     Category
@@ -247,7 +250,6 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     ))}
                   </select>
                 </div>
-
                 <button
                   type="button"
                   onClick={() => {
@@ -256,20 +258,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     setSearchTerm("");
                     setCurrentPage(1);
                   }}
-                  className="w-full font-inter font-bold transition-colors"
-                  style={{
-                    backgroundColor: "#f3f4f6",
-                    color: "#4b5563",
-                    padding: "8px 0",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#e5e7eb")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#f3f4f6")
-                  }
+                  className="w-full font-inter font-bold transition-colors bg-gray-100 text-gray-600 rounded-md py-2 text-sm hover:bg-gray-200"
                 >
                   Clear Filters
                 </button>
@@ -279,7 +268,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
 
           <button
             type="button"
-            onClick={() => downloadCsv(filteredSubmissions)}
+            onClick={handleExportCSV}
             className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
             style={{
               fontSize: "12.5px",
@@ -287,16 +276,12 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
               backgroundColor: "#ffc700",
             }}
           >
-            <Download
-              style={{ width: "13px", height: "13px" }}
-              aria-hidden="true"
-            />
+            <Download style={{ width: "13px", height: "13px" }} />
             Export
           </button>
         </div>
       </div>
 
-      {/* Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse">
           <thead>
@@ -326,7 +311,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   className="px-5 py-10 text-center font-inter text-sm text-gray-500"
                 >
                   <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
-                  Loading submissions...
+                  Loading...
                 </td>
               </tr>
             ) : filteredSubmissions.length === 0 ? (
@@ -344,15 +329,12 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   key={submission.submission_id}
                   className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
                 >
-                  {/* ID */}
                   <td
                     className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
                     style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
                   >
                     #{submission.submission_id.slice(0, 8)}
                   </td>
-
-                  {/* Applicant */}
                   <td className="px-5 py-2.5">
                     <p
                       className="font-inter font-bold text-gray-900 leading-tight"
@@ -360,17 +342,15 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     >
                       {submission.org_name ||
                         submission.submitted_by_name ||
-                        "Unknown Applicant"}
+                        "Unknown"}
                     </p>
                     <p
                       className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
                       style={{ fontSize: "12px" }}
                     >
-                      {submission.submitted_by_email || "No email"}
+                      {submission.submitted_by_email}
                     </p>
                   </td>
-
-                  {/* Category */}
                   <td className="px-5 py-2.5">
                     <span
                       className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
@@ -379,28 +359,18 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                       {submission.category_name || "N/A"}
                     </span>
                   </td>
-
-                  {/* Date */}
                   <td
                     className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
                     style={{ fontSize: "13px" }}
                   >
                     {new Date(submission.submitted_at).toLocaleDateString(
                       "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      },
+                      { month: "short", day: "numeric", year: "numeric" },
                     )}
                   </td>
-
-                  {/* Status */}
                   <td className="px-5 py-2.5">
                     <StatusDot status={submission.status} />
                   </td>
-
-                  {/* Actions */}
                   <td className="px-5 py-2.5">
                     <button
                       type="button"
@@ -427,10 +397,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                         backgroundColor: "#ffc700",
                       }}
                     >
-                      <ImageIcon
-                        style={{ width: "13px", height: "13px" }}
-                        aria-hidden="true"
-                      />
+                      <ImageIcon style={{ width: "13px", height: "13px" }} />{" "}
                       VIEW &amp; REVIEW
                     </button>
                   </td>
@@ -441,7 +408,6 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
         </table>
       </div>
 
-      {/* Footer / Pagination */}
       {totalCount > 0 && (
         <div
           className="flex items-center justify-between border-t border-gray-100 bg-white"
@@ -457,24 +423,16 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
             {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)} of {totalCount}{" "}
             submissions
           </p>
-
           <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => goToPage(safeCurrentPage - 1)}
               disabled={safeCurrentPage === 1}
-              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
-              style={{
-                borderColor: "#d1d5db",
-                color: safeCurrentPage === 1 ? "#c1c5cc" : "#374151",
-                cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
-              }}
+              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition disabled:opacity-50"
             >
               <ChevronLeft style={{ width: "14px", height: "14px" }} />
             </button>
-
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-              // Simple pagination rendering
               if (
                 page === 1 ||
                 page === totalPages ||
@@ -499,7 +457,6 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   </button>
                 );
               }
-              // Render ellipsis for gaps (very simplified)
               if (page === 2 && safeCurrentPage > 3)
                 return (
                   <span key={page} className="px-1 text-gray-400">
@@ -514,18 +471,11 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                 );
               return null;
             })}
-
             <button
               type="button"
               onClick={() => goToPage(safeCurrentPage + 1)}
               disabled={safeCurrentPage >= totalPages}
-              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
-              style={{
-                borderColor: "#d1d5db",
-                color: safeCurrentPage >= totalPages ? "#c1c5cc" : "#374151",
-                cursor:
-                  safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
-              }}
+              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition disabled:opacity-50"
             >
               <ChevronRight style={{ width: "14px", height: "14px" }} />
             </button>

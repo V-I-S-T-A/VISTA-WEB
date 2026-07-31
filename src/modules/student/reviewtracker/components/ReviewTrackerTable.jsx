@@ -79,6 +79,53 @@ export default function ReviewTrackerTable() {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   }
 
+  // Frontend CSV Exporter
+  const handleExportCSV = () => {
+    if (!submissions || submissions.length === 0) {
+      alert("No submissions to export.");
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "TITLE",
+      "ORGANIZATION/APPLICANT",
+      "CATEGORY",
+      "SUBMITTED DATE",
+      "STATUS",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...submissions.map((sub) => {
+        const id = sub.submission_id;
+        const title = (sub.title || "Untitled Document").replace(/"/g, '""');
+        const applicant = (
+          sub.org_name ||
+          sub.submitted_by_name ||
+          sub.submitted_by_email ||
+          "Unknown"
+        ).replace(/"/g, '""');
+        const category = sub.category_name || "N/A";
+        const date = sub.submitted_at
+          ? new Date(sub.submitted_at).toLocaleDateString("en-US")
+          : "N/A";
+        const status = sub.status || "Unknown";
+
+        return `"${id}","${title}","${applicant}","${category}","${date}","${status}"`;
+      }),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `my_submissions_export_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <section
       className="overflow-hidden"
@@ -157,6 +204,7 @@ export default function ReviewTrackerTable() {
 
           <button
             type="button"
+            onClick={handleExportCSV}
             className="inline-flex items-center gap-1.5 font-inter font-bold transition-colors"
             style={{
               borderRadius: "8px",
@@ -254,7 +302,6 @@ export default function ReviewTrackerTable() {
                     >
                       {submission.title || "Untitled Document"}
                     </p>
-                    {/* FIXED: Now pulling org_name instead of submitted_by_name */}
                     <p
                       className="font-inter text-gray-400 leading-tight"
                       style={{ fontSize: "12px", marginTop: "2px" }}

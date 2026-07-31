@@ -1,10 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import {
-  Search,
-  Download,
-  Filter,
-  Eye,
-} from "lucide-react";
+import { Search, Download, Filter, Eye } from "lucide-react";
 import api from "../../../../lib/axios";
 
 const PAGE_SIZE = 5;
@@ -20,8 +15,6 @@ const ACTION_COLORS = {
   status_change: { bg: "#e9d5ff", text: "#6b21a8" },
   DEFAULT: { bg: "#f3f4f6", text: "#4b5563" },
 };
-
-
 
 export default function AuditLogHistory({ onViewLog }) {
   const [logs, setLogs] = useState([]);
@@ -244,24 +237,28 @@ export default function AuditLogHistory({ onViewLog }) {
                       backgroundColor: "#ffffff",
                       color: "#12345b",
                       fontSize: "10px",
-                      marginLeft: "4px"
+                      marginLeft: "4px",
                     }}
                   >
-                    {(actionFilter !== "All Actions" ? 1 : 0) + (dateFilter ? 1 : 0)}
+                    {(actionFilter !== "All Actions" ? 1 : 0) +
+                      (dateFilter ? 1 : 0)}
                   </span>
                 )}
               </button>
 
               {showMoreFilters && (
-                <div className="absolute right-0 top-full z-20" style={{
-                  marginTop: "8px",
-                  width: "288px",
-                  borderRadius: "10px",
-                  border: "1px solid #e2e6ee",
-                  backgroundColor: "#ffffff",
-                  boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
-                  padding: "16px",
-                }}>
+                <div
+                  className="absolute right-0 top-full z-20"
+                  style={{
+                    marginTop: "8px",
+                    width: "288px",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e6ee",
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
+                    padding: "16px",
+                  }}
+                >
                   <div style={{ marginBottom: "14px" }}>
                     <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                       Action
@@ -324,8 +321,12 @@ export default function AuditLogHistory({ onViewLog }) {
                       borderRadius: "8px",
                       fontSize: "13px",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#e5e7eb")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#f3f4f6")
+                    }
                   >
                     Clear Filters
                   </button>
@@ -350,21 +351,25 @@ export default function AuditLogHistory({ onViewLog }) {
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-                {["TIMESTAMP", "USER/ENTITY", "ACTION", "ID/REFERENCE", "ACTION"].map(
-                  (heading, idx) => (
-                    <th
-                      key={idx}
-                      className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
-                      style={
-                        heading === "TIMESTAMP"
-                          ? { paddingLeft: CONTENT_PADDING }
-                          : undefined
-                      }
-                    >
-                      {heading}
-                    </th>
-                  ),
-                )}
+                {[
+                  "TIMESTAMP",
+                  "USER/ENTITY",
+                  "ACTION",
+                  "ID/REFERENCE",
+                  "ACTION",
+                ].map((heading, idx) => (
+                  <th
+                    key={idx}
+                    className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
+                    style={
+                      heading === "TIMESTAMP"
+                        ? { paddingLeft: CONTENT_PADDING }
+                        : undefined
+                    }
+                  >
+                    {heading}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -414,11 +419,12 @@ export default function AuditLogHistory({ onViewLog }) {
                           >
                             {userName}
                           </p>
+                          {/* UPDATED: Now displays the real organization name */}
                           <p
                             className="font-inter font-medium text-gray-400 mt-0.5"
                             style={{ fontSize: "12px" }}
                           >
-                            System User
+                            {log.performed_by_org || "Automated Process"}
                           </p>
                         </div>
                       </td>
