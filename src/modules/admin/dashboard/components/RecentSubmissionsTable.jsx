@@ -408,6 +408,7 @@ export default function RecentSubmissionsTable() {
           userData: {
             full_name: data.full_name || data.fullName,
             role: data.role,
+            org_id: data.org_id ?? null,
             is_active:
               data.is_active !== undefined ? data.is_active : data.isActive,
           },
@@ -626,7 +627,7 @@ export default function RecentSubmissionsTable() {
               {[
                 "USER",
                 "ROLE",
-                "DEPARTMENT",
+                "ORGANIZATION",
                 "LAST LOGIN",
                 "STATUS",
                 "ACTION",
