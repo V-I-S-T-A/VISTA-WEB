@@ -1,17 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import {
   Search,
   Filter,
+  SquarePen,
+  Trash2,
+  Loader,
   Download,
   Loader2,
-  MoreVertical,
   AlertCircle,
-  SquarePen,
 } from "lucide-react";
+import defaultUser from "../../../../assets/shared/default_user.jpg";
+import EditUserModal from "../modals/EditUserModal";
+import { useUsers } from "../../../../hooks/useUsers";
 import {
-  useSubmissions,
-  useUpdateSubmissionStatus,
-} from "../../../../hooks/useSubmissions";
+  useUpdateUser,
+  useDeleteUser,
+} from "../../../../hooks/useUserMutations";
+import { userService } from "../../../../services/userService";
 
 const PAGE_SIZE = 50;
 const CONTENT_PADDING = "28px";
@@ -74,18 +79,29 @@ function StatusLabel({ status }) {
       {config.label}
     </span>
   );
+});
+
+// Pulls the filename the backend suggested via Content-Disposition, falling
+// back to a sensible default if the header isn't present.
+function extractFilename(contentDisposition, fallback) {
+  if (!contentDisposition) return fallback;
+  const match = contentDisposition.match(/filename="?([^";]+)"?/i);
+  return match?.[1] || fallback;
 }
 
-function FilterPopover({
-  status,
-  onStatusChange,
-  dateFrom,
-  dateTo,
-  onDateFromChange,
-  onDateToChange,
-  onClear,
-  onClose,
-}) {
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
+// FilterPopover (matching staff design)
+function FilterPopover({ role, onRoleChange, onClear, onClose }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -199,15 +215,131 @@ function FilterPopover({
   );
 }
 
+// Memoized UserRow component to prevent re-renders of unchanged rows
+const UserRow = memo(function UserRow({
+  user,
+  onEdit,
+  onDelete,
+  isUpdating,
+  isDeleting,
+}) {
+  const handleEdit = useCallback(() => onEdit(user), [user, onEdit]);
+  const handleDelete = useCallback(
+    () => onDelete(user.user_id),
+    [user.user_id, onDelete],
+  );
+
+  return (
+    <tr className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]">
+      <td className="px-5 py-2.5" style={{ paddingLeft: CONTENT_PADDING }}>
+        <div className="flex items-center gap-3">
+          <img
+            src={user.image_url || defaultUser}
+            alt=""
+            className="flex-shrink-0 rounded-full object-cover"
+            style={{ width: "45px", height: "45px" }}
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <p
+              className="font-inter font-bold text-gray-900 leading-tight"
+              style={{ fontSize: "15px" }}
+            >
+              {`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                "Unknown User"}
+            </p>
+            <p
+              className="max-w-[200px] truncate font-inter font-medium text-gray-400 mt-0.5"
+              style={{ fontSize: "12px" }}
+            >
+              {user.email}
+            </p>
+          </div>
+        </div>
+      </td>
+      <td className="px-5 py-2.5">
+        <span
+          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${
+            user.role === "staff"
+              ? "bg-[#dfe7fb] text-[#12345b]"
+              : "bg-[#e8e3ff] text-[#4a3f99]"
+          }`}
+          style={{ fontSize: "13px", minWidth: "80px" }}
+        >
+          {user.role}
+        </span>
+      </td>
+      <td className="px-5 py-2.5">
+        <span
+          className="font-inter font-medium text-gray-700 whitespace-nowrap uppercase"
+          style={{ fontSize: "13px" }}
+        >
+          {user.department || "N/A"}
+        </span>
+      </td>
+      <td
+        className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
+        style={{ fontSize: "13px" }}
+      >
+        {user.last_login
+          ? new Date(user.last_login).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "Never"}
+      </td>
+      <td className="px-5 py-2.5">
+        <StatusBadge isActive={user.is_active} />
+      </td>
+      <td className="px-5 py-2.5">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={handleEdit}
+            disabled={isUpdating || isDeleting}
+            className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50 disabled:opacity-50"
+            style={{ fontSize: "12px", padding: "4px 12px" }}
+          >
+            <SquarePen
+              style={{ width: "12px", height: "12px" }}
+              aria-hidden="true"
+            />
+            EDIT
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={isUpdating || isDeleting}
+            className="inline-flex items-center gap-1 rounded bg-[#ef4444] font-inter font-bold text-white transition hover:bg-[#dc2626] active:scale-95 border border-[#b91c1c]/50 disabled:opacity-50"
+            style={{ fontSize: "12px", padding: "4px 12px" }}
+          >
+            <Trash2
+              style={{ width: "12px", height: "12px" }}
+              aria-hidden="true"
+            />
+            DELETE
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+});
+
 export default function RecentSubmissionsTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [updatingSubmissionId, setUpdatingSubmissionId] = useState(null);
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [actionError, setActionError] = useState("");
+  const [dateFilter, setDateFilter] = useState(""); // Kept for api compatibility
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const [editUser, setEditUser] = useState(null);
+
+  // Export state
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   // DEBOUNCE STATES
   const [searchInput, setSearchInput] = useState("");
@@ -236,14 +368,119 @@ export default function RecentSubmissionsTable() {
 
   // DEBOUNCE EFFECT: Waits 400ms after user stops typing
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchTerm(searchInput);
-      setCurrentPage(1);
-    }, 400);
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
 
-    return () => clearTimeout(timer);
-  }, [searchInput]);
+  // Handle search button click (immediate search)
+  const handleSearchClick = useCallback(() => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    setSearchQuery(searchInput);
+    setCurrentPage(1);
+    if (searchInput.trim() !== "" && roleFilter !== "All Roles") {
+      setRoleFilter("All Roles");
+    }
+  }, [searchInput, roleFilter]);
 
+  // Handle Enter key
+  const handleKeyDown = useCallback(
+    (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleSearchClick();
+      }
+    },
+    [handleSearchClick],
+  );
+
+  // Handle role filter change
+  const handleRoleFilterChange = useCallback((value) => {
+    setRoleFilter(value);
+    setCurrentPage(1);
+    // Clear search when changing role filter
+    setSearchInput("");
+    setSearchQuery("");
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+  }, []);
+
+  // Navigation functions
+  const goToPage = useCallback(
+    (page) => {
+      setCurrentPage(Math.min(Math.max(page, 1), totalPages));
+    },
+    [totalPages],
+  );
+
+  // Save edit handler
+  const handleSaveEdit = useCallback(
+    async (data) => {
+      if (!editUser?.user_id) return;
+
+      try {
+        await updateUserMutation.mutateAsync({
+          userId: editUser.user_id,
+          userData: {
+            full_name: data.full_name || data.fullName,
+            role: data.role,
+            org_id: data.org_id ?? null,
+            is_active:
+              data.is_active !== undefined ? data.is_active : data.isActive,
+          },
+        });
+        setEditUser(null);
+      } catch (err) {
+        console.error("Error updating user:", err);
+      }
+    },
+    [editUser, updateUserMutation],
+  );
+
+  // Delete handler
+  const handleDeleteUser = useCallback(
+    async (userId) => {
+      if (!confirm("Are you sure you want to delete this user?")) return;
+
+      try {
+        await deleteUserMutation.mutateAsync(userId);
+      } catch (err) {
+        console.error("Error deleting user:", err);
+      }
+    },
+    [deleteUserMutation],
+  );
+
+  // Export handler — streams the backend-generated PDF (respecting the
+  // same search/role filters currently applied to the table) and saves it.
+  const handleExport = useCallback(async () => {
+    setIsExporting(true);
+    setExportError("");
+    try {
+      const response = await userService.exportUsers({
+        search: searchQuery.trim(),
+        role: roleFilter,
+        isActive: true,
+      });
+      const filename = extractFilename(
+        response.headers?.["content-disposition"],
+        `users_export_${Date.now()}.pdf`,
+      );
+      downloadBlob(response.data, filename);
+    } catch (err) {
+      console.error("Error exporting users:", err);
+      setExportError("Failed to export users. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [searchQuery, roleFilter]);
+
+  // Pagination numbers
   const pageNumbers = useMemo(() => {
     if (totalPages <= 5)
       return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -361,8 +598,11 @@ export default function RecentSubmissionsTable() {
           Recent Submissions
         </h3>
 
-        <div className="flex items-center gap-2 flex-wrap">
-          {/* AUDIT LOG STYLE SEARCH BAR */}
+        <div
+          className="flex items-center gap-3"
+          style={{ paddingRight: "20px" }}
+        >
+          {/* Search */}
           <div className="relative" style={{ width: "300px" }}>
             <Search
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"
@@ -400,19 +640,15 @@ export default function RecentSubmissionsTable() {
               onClick={() => setIsFilterOpen((open) => !open)}
               className="inline-flex items-center gap-1.5 font-inter font-semibold text-white transition-colors"
               style={{
-                borderRadius: "8px",
-                backgroundColor: COLORS.navy,
-                padding: "9px 16px",
-                fontSize: "14px",
+                fontSize: "12.5px",
+                padding: "7px 14px",
+                backgroundColor: "#12345b",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = COLORS.navyHover)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = COLORS.navy)
-              }
             >
-              <Filter className="h-4 w-4" aria-hidden="true" />
+              <Filter
+                style={{ width: "13px", height: "13px" }}
+                aria-hidden="true"
+              />
               Filter
               {activeFilterCount > 0 && (
                 <span
@@ -424,6 +660,7 @@ export default function RecentSubmissionsTable() {
                     backgroundColor: "#ffffff",
                     color: COLORS.navy,
                     fontSize: "10px",
+                    marginLeft: "4px",
                   }}
                 >
                   {activeFilterCount}
@@ -478,20 +715,36 @@ export default function RecentSubmissionsTable() {
 =======
           {/* Export */}
           <button
-            onClick={() => alert("Export feature coming soon!")}
+            onClick={handleExport}
             type="button"
-            className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap"
+            disabled={isExporting}
+            className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap disabled:opacity-60"
             style={{
               borderRadius: "6px",
               padding: "6px 12px",
               fontSize: "12px",
+              cursor: isExporting ? "not-allowed" : "pointer",
             }}
           >
-            <Download className="h-4 w-4" /> Export
->>>>>>> c2c2d556050bc89c4c69380fab9cafedb57ee81d
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {isExporting ? "Exporting..." : "Export"}
           </button>
         </div>
       </div>
+
+      {exportError && (
+        <div
+          className="flex items-center gap-2 bg-red-50 border-b border-red-200 text-red-700 font-inter"
+          style={{ padding: "10px 24px", fontSize: "13px" }}
+        >
+          <AlertCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+          {exportError}
+        </div>
+      )}
 
       {actionError && (
         <div
@@ -515,29 +768,27 @@ export default function RecentSubmissionsTable() {
       <div className="overflow-x-auto bg-white">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr
-              className="h-14"
-              style={{
-                borderBottom: `1px solid ${COLORS.border}`,
-                backgroundColor: "#f8f9fc",
-              }}
-            >
-              {["ID", "APPLICANT", "CATEGORY", "DATE", "STATUS", "ACTIONS"].map(
-                (heading) => (
-                  <th
-                    key={heading}
-                    className="text-left font-inter font-bold uppercase tracking-wider text-gray-500"
-                    style={{
-                      padding: "12px 20px",
-                      fontSize: "13px",
-                      paddingLeft:
-                        heading === "ID" ? CONTENT_PADDING : undefined,
-                    }}
-                  >
-                    {heading}
-                  </th>
-                ),
-              )}
+            <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
+              {[
+                "USER",
+                "ROLE",
+                "ORGANIZATION",
+                "LAST LOGIN",
+                "STATUS",
+                "ACTION",
+              ].map((heading) => (
+                <th
+                  key={heading}
+                  className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
+                  style={
+                    heading === "USER"
+                      ? { paddingLeft: CONTENT_PADDING }
+                      : undefined
+                  }
+                >
+                  {heading}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>

@@ -76,4 +76,24 @@ export const userService = {
     const response = await apiClient.delete(API_ENDPOINTS.USERS.DELETE(userId));
     return response.data;
   },
+
+  /**
+   * Streams the server-generated users PDF report as a blob.
+   * All filtering (search, role, is_active) happens server-side via
+   * UserViewSet.export_list (same filterset as the standard list endpoint)
+   * — this just triggers the request and hands back the raw response so
+   * the caller can turn it into a download.
+   */
+  async exportUsers({ search = "", role = "", isActive = null } = {}) {
+    const params = new URLSearchParams();
+
+    if (search) params.append("search", search);
+    if (role && role !== "All Roles") params.append("role", role);
+    if (isActive !== null) params.append("is_active", isActive);
+
+    return apiClient.get(`${API_ENDPOINTS.USERS.LIST}export/list/`, {
+      params,
+      responseType: "blob",
+    });
+  },
 };
