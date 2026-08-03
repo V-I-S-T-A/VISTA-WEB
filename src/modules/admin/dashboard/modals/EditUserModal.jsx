@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X, SquarePen } from "lucide-react";
+import { useOrganizations } from "../../../../hooks/useOrganizations";
 
 const ROLES = ["staff", "student"];
 
@@ -136,19 +137,31 @@ export default function EditUserModal({
   onSave,
   isLoading = false,
 }) {
-  const [form, setForm] = useState({ fullName: "", role: "", isActive: true });
+  const [form, setForm] = useState({
+    fullName: "",
+    role: "",
+    isActive: true,
+    orgId: "",
+  });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const overlayRef = useRef(null);
   const firstInputRef = useRef(null);
 
-  // Populate form whenever the modal opens with a user
+  const { data: orgData } = useOrganizations();
+  const organizations = Array.isArray(orgData)
+    ? orgData
+    : orgData?.results || [];
+
   useEffect(() => {
     if (isOpen && user) {
       setForm({
-        fullName: `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User",
+        fullName:
+          `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+          "Unknown User",
         role: user.role ?? "",
         isActive: user.is_active !== undefined ? user.is_active : true,
+        orgId: user.org_id ?? "",
       });
       setErrors({});
       setTimeout(() => firstInputRef.current?.focus(), 50);
@@ -173,6 +186,8 @@ export default function EditUserModal({
     const errs = {};
     if (!form.fullName.trim()) errs.fullName = "Full name is required.";
     if (!form.role) errs.role = "Role is required.";
+    if (form.role === "student" && !form.orgId)
+      errs.orgId = "Organization is required for students.";
     return errs;
   }
 
@@ -187,6 +202,7 @@ export default function EditUserModal({
       await onSave?.({
         full_name: form.fullName.trim(),
         role: form.role,
+        org_id: form.role === "student" ? form.orgId : null,
         is_active: form.isActive,
       });
       onClose();
@@ -277,7 +293,9 @@ export default function EditUserModal({
                   margin: 0,
                 }}
               >
-                Update account information for {`${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User"}
+                Update account information for{" "}
+                {`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                  "Unknown User"}
               </p>
             </div>
           </div>
@@ -332,7 +350,9 @@ export default function EditUserModal({
               flexShrink: 0,
             }}
           >
-            {`${user.first_name || ""} ${user.last_name || ""}`.trim()[0]?.toUpperCase() ?? "?"}
+            {`${user.first_name || ""} ${user.last_name || ""}`
+              .trim()[0]
+              ?.toUpperCase() ?? "?"}
           </div>
           <div style={{ minWidth: 0 }}>
             <p
@@ -344,7 +364,8 @@ export default function EditUserModal({
                 margin: 0,
               }}
             >
-              {`${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User"}
+              {`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                "Unknown User"}
             </p>
             <p
               style={{
@@ -404,7 +425,10 @@ export default function EditUserModal({
           <Field label="Role *" error={errors.role}>
             <FocusSelect
               value={form.role}
-              onChange={(e) => set("role", e.target.value)}
+              onChange={(e) => {
+                set("role", e.target.value);
+                if (e.target.value !== "student") set("orgId", "");
+              }}
               disabled={saving || isLoading}
             >
               <option value="">Select role</option>
@@ -415,6 +439,24 @@ export default function EditUserModal({
               ))}
             </FocusSelect>
           </Field>
+
+          {/* Organization (only for students) */}
+          {form.role === "student" && (
+            <Field label="Organization *" error={errors.orgId}>
+              <FocusSelect
+                value={form.orgId}
+                onChange={(e) => set("orgId", e.target.value)}
+                disabled={saving || isLoading}
+              >
+                <option value="">Select organization</option>
+                {organizations.map((org) => (
+                  <option key={org.org_id} value={org.org_id}>
+                    {org.acronym} - {org.name}
+                  </option>
+                ))}
+              </FocusSelect>
+            </Field>
+          )}
 
           {/* Status toggle */}
           <div
