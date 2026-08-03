@@ -1,5 +1,14 @@
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
-import { Search, Filter, SquarePen, Trash2, Loader, Download } from "lucide-react";
+import {
+  Search,
+  Filter,
+  SquarePen,
+  Trash2,
+  Loader,
+  Download,
+  Loader2,
+  AlertCircle,
+} from "lucide-react";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
 import EditUserModal from "../modals/EditUserModal";
 import { useUsers } from "../../../../hooks/useUsers";
@@ -7,6 +16,7 @@ import {
   useUpdateUser,
   useDeleteUser,
 } from "../../../../hooks/useUserMutations";
+import { userService } from "../../../../services/userService";
 
 const PAGE_SIZE = 50;
 const CONTENT_PADDING = "30px";
@@ -37,13 +47,27 @@ const StatusBadge = memo(function StatusBadge({ isActive }) {
   );
 });
 
+// Pulls the filename the backend suggested via Content-Disposition, falling
+// back to a sensible default if the header isn't present.
+function extractFilename(contentDisposition, fallback) {
+  if (!contentDisposition) return fallback;
+  const match = contentDisposition.match(/filename="?([^";]+)"?/i);
+  return match?.[1] || fallback;
+}
+
+function downloadBlob(blob, filename) {
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.URL.revokeObjectURL(url);
+}
+
 // FilterPopover (matching staff design)
-function FilterPopover({
-  role,
-  onRoleChange,
-  onClear,
-  onClose,
-}) {
+function FilterPopover({ role, onRoleChange, onClear, onClose }) {
   const ref = useRef(null);
 
   useEffect(() => {
@@ -156,7 +180,8 @@ const UserRow = memo(function UserRow({
               className="font-inter font-bold text-gray-900 leading-tight"
               style={{ fontSize: "15px" }}
             >
-              {`${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User"}
+              {`${user.first_name || ""} ${user.last_name || ""}`.trim() ||
+                "Unknown User"}
             </p>
             <p
               className="max-w-[200px] truncate font-inter font-medium text-gray-400 mt-0.5"
@@ -169,10 +194,11 @@ const UserRow = memo(function UserRow({
       </td>
       <td className="px-5 py-2.5">
         <span
-          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${user.role === "staff"
-            ? "bg-[#dfe7fb] text-[#12345b]"
-            : "bg-[#e8e3ff] text-[#4a3f99]"
-            }`}
+          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${
+            user.role === "staff"
+              ? "bg-[#dfe7fb] text-[#12345b]"
+              : "bg-[#e8e3ff] text-[#4a3f99]"
+          }`}
           style={{ fontSize: "13px", minWidth: "80px" }}
         >
           {user.role}
@@ -190,11 +216,13 @@ const UserRow = memo(function UserRow({
         className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
         style={{ fontSize: "13px" }}
       >
-        {user.last_login ? new Date(user.last_login).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        }) : "Never"}
+        {user.last_login
+          ? new Date(user.last_login).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
+          : "Never"}
       </td>
       <td className="px-5 py-2.5">
         <StatusBadge isActive={user.is_active} />
@@ -245,6 +273,10 @@ export default function RecentSubmissionsTable() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const [editUser, setEditUser] = useState(null);
+
+  // Export state
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState("");
 
   // Refs
   const debounceTimerRef = useRef(null);
@@ -402,6 +434,30 @@ export default function RecentSubmissionsTable() {
     [deleteUserMutation],
   );
 
+  // Export handler — streams the backend-generated PDF (respecting the
+  // same search/role filters currently applied to the table) and saves it.
+  const handleExport = useCallback(async () => {
+    setIsExporting(true);
+    setExportError("");
+    try {
+      const response = await userService.exportUsers({
+        search: searchQuery.trim(),
+        role: roleFilter,
+        isActive: true,
+      });
+      const filename = extractFilename(
+        response.headers?.["content-disposition"],
+        `users_export_${Date.now()}.pdf`,
+      );
+      downloadBlob(response.data, filename);
+    } catch (err) {
+      console.error("Error exporting users:", err);
+      setExportError("Failed to export users. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [searchQuery, roleFilter]);
+
   // Pagination numbers
   const pageNumbers = useMemo(() => {
     if (totalPages <= 5) {
@@ -455,7 +511,10 @@ export default function RecentSubmissionsTable() {
           Users Management
         </h3>
 
-        <div className="flex items-center gap-3" style={{ paddingRight: "20px" }}>
+        <div
+          className="flex items-center gap-3"
+          style={{ paddingRight: "20px" }}
+        >
           {/* Search */}
           <div className="relative" style={{ width: "300px" }}>
             <Search
@@ -494,7 +553,10 @@ export default function RecentSubmissionsTable() {
                 backgroundColor: "#12345b",
               }}
             >
-              <Filter style={{ width: "13px", height: "13px" }} aria-hidden="true" />
+              <Filter
+                style={{ width: "13px", height: "13px" }}
+                aria-hidden="true"
+              />
               Filter
               {roleFilter !== "All Roles" && (
                 <span
@@ -506,7 +568,7 @@ export default function RecentSubmissionsTable() {
                     backgroundColor: "#ffffff",
                     color: "#12345b",
                     fontSize: "10px",
-                    marginLeft: "4px"
+                    marginLeft: "4px",
                   }}
                 >
                   1
@@ -525,40 +587,62 @@ export default function RecentSubmissionsTable() {
 
           {/* Export */}
           <button
-            onClick={() => alert("Export feature coming soon!")}
+            onClick={handleExport}
             type="button"
-            className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap"
+            disabled={isExporting}
+            className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap disabled:opacity-60"
             style={{
               borderRadius: "6px",
               padding: "6px 12px",
               fontSize: "12px",
+              cursor: isExporting ? "not-allowed" : "pointer",
             }}
           >
-            <Download className="h-4 w-4" /> Export
+            {isExporting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {isExporting ? "Exporting..." : "Export"}
           </button>
         </div>
       </div>
+
+      {exportError && (
+        <div
+          className="flex items-center gap-2 bg-red-50 border-b border-red-200 text-red-700 font-inter"
+          style={{ padding: "10px 24px", fontSize: "13px" }}
+        >
+          <AlertCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
+          {exportError}
+        </div>
+      )}
 
       {/* Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-              {["USER", "ROLE", "DEPARTMENT", "LAST LOGIN", "STATUS", "ACTION"].map(
-                (heading) => (
-                  <th
-                    key={heading}
-                    className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
-                    style={
-                      heading === "USER"
-                        ? { paddingLeft: CONTENT_PADDING }
-                        : undefined
-                    }
-                  >
-                    {heading}
-                  </th>
-                ),
-              )}
+              {[
+                "USER",
+                "ROLE",
+                "DEPARTMENT",
+                "LAST LOGIN",
+                "STATUS",
+                "ACTION",
+              ].map((heading) => (
+                <th
+                  key={heading}
+                  className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
+                  style={
+                    heading === "USER"
+                      ? { paddingLeft: CONTENT_PADDING }
+                      : undefined
+                  }
+                >
+                  {heading}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
