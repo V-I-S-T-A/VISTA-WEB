@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   Building2,
@@ -7,12 +7,13 @@ import {
   ChevronDown,
   CheckCircle2,
   Loader2,
+  Download,
 } from "lucide-react";
 import { submissionService } from "../../../../services/submissionService";
 
 const STATUS_ACTIONS = [
   "Select Action...",
-  "Start Review Process", // <-- ADD THIS NEW OPTION
+  "Start Review Process",
   "Mark as Verified",
   "Mark as Flagged",
   "Return for Revision",
@@ -33,6 +34,27 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const [remarks, setRemarks] = useState("");
   const [priorityEscalation, setPriorityEscalation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // New state to hold the fully fetched submission (including documents)
+  const [submissionDetails, setSubmissionDetails] = useState(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+
+  // Fetch full details when the component mounts
+  useEffect(() => {
+    async function fetchFullDetails() {
+      if (!submission?.id) return;
+      try {
+        setIsLoadingDetails(true);
+        const data = await submissionService.getSubmissionById(submission.id);
+        setSubmissionDetails(data);
+      } catch (error) {
+        console.error("Failed to fetch full submission details:", error);
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    }
+    fetchFullDetails();
+  }, [submission]);
 
   if (!submission) return null;
 
@@ -214,6 +236,56 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* --- ATTACHED DOCUMENTS SECTION --- */}
+        <div style={{ marginTop: "24px" }}>
+          <p
+            className="font-inter font-bold uppercase tracking-wider text-gray-400"
+            style={{ fontSize: "11px", marginBottom: "10px" }}
+          >
+            Attached Files
+          </p>
+
+          {isLoadingDetails ? (
+            <div className="flex items-center gap-2 font-inter text-[13px] text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Fetching documents...
+            </div>
+          ) : submissionDetails?.documents?.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {submissionDetails.documents.map((doc, idx) => (
+                <div
+                  key={doc.id || idx}
+                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#eaf1ff]">
+                      <FileText className="h-4 w-4 text-[#1d4ed8]" />
+                    </div>
+                    <span className="truncate font-inter text-[13.5px] font-semibold text-gray-800">
+                      {doc.file_name || `Document ${idx + 1}`}
+                    </span>
+                  </div>
+                  <a
+                    href={doc.file} // This binds to the file URL from Django
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded bg-white px-3 py-1.5 font-inter text-[11.5px] font-bold text-[#1f5cae] border border-gray-200 transition hover:bg-gray-100 active:scale-95 flex-shrink-0"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    VIEW FILE
+                  </a>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center">
+              <span className="font-inter text-[13px] text-gray-500 italic">
+                No files attached to this submission.
+              </span>
+            </div>
+          )}
         </div>
       </div>
 

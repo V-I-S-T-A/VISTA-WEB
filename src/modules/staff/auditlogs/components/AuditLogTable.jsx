@@ -400,12 +400,13 @@ export default function AuditLogHistory({ onViewLog }) {
                     ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
                   const userName = log.performed_by || "System";
                   const userEmail = log.performed_by_email || "System User";
-                  
+
                   const getInitials = (name) => {
                     if (!name || name === "System") return "SY";
                     const parts = name.trim().split(" ");
                     const first = parts[0] ? parts[0].charAt(0) : "";
-                    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+                    const last =
+                      parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
                     return (first + last).toUpperCase() || "??";
                   };
                   const initials = getInitials(userName);
@@ -426,21 +427,6 @@ export default function AuditLogHistory({ onViewLog }) {
                         {formatDate(log.performed_at)}
                       </td>
                       <td className="px-5 py-2.5">
-<<<<<<< HEAD
-                        <p
-                          className="font-inter font-bold text-gray-900 leading-tight"
-                          style={{ fontSize: "13px" }}
-                        >
-                          {log.performed_by || "System"}
-                        </p>
-                        {/* ADD THIS P TAG TO SHOW THE ORGANIZATION */}
-                        <p
-                          className="font-inter text-gray-400 leading-tight"
-                          style={{ fontSize: "11.5px", marginTop: "2px" }}
-                        >
-                          {log.performed_by_org || "Automated Process"}
-                        </p>
-=======
                         <div className="flex items-center gap-3 min-w-0">
                           {log.performed_by_image ? (
                             <img
@@ -468,7 +454,6 @@ export default function AuditLogHistory({ onViewLog }) {
                             </p>
                           </div>
                         </div>
->>>>>>> c2c2d556050bc89c4c69380fab9cafedb57ee81d
                       </td>
                       <td className="px-5 py-2.5">
                         <span
