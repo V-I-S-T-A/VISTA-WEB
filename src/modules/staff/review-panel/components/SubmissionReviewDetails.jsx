@@ -35,11 +35,9 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const [priorityEscalation, setPriorityEscalation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // New state to hold the fully fetched submission (including documents)
   const [submissionDetails, setSubmissionDetails] = useState(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
 
-  // Fetch full details when the component mounts
   useEffect(() => {
     async function fetchFullDetails() {
       if (!submission?.id) return;
@@ -68,29 +66,23 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
-
-      // Call the backend API to update status and save the remarks log
       await submissionService.updateStatus(
         submission.id,
         backendStatus,
         remarks,
       );
 
-      // Optional: Add priority escalation logic here if the backend supports it later
       if (priorityEscalation) {
         console.log("Priority Escalation triggered for:", submission.id);
       }
 
       alert("Decision submitted successfully!");
-      onBack(); // Return to the table view automatically
+      onBack();
     } catch (error) {
       console.error("Submission error:", error);
-
-      // THIS WILL TELL US EXACTLY WHAT IS WRONG:
       const backendError = error.response?.data
         ? JSON.stringify(error.response.data, null, 2)
         : error.message;
-
       alert(`Backend Error:\n\n${backendError}`);
     } finally {
       setIsSubmitting(false);
@@ -99,7 +91,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
   return (
     <div className="w-full">
-      {/* Back row */}
       <div
         className="flex items-center gap-3"
         style={{ paddingBottom: "20px" }}
@@ -128,7 +119,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         </span>
       </div>
 
-      {/* Submission details card */}
       <div
         className="w-full rounded-xl border border-gray-200 bg-white shadow-sm"
         style={{ padding: "24px", marginBottom: "20px" }}
@@ -238,7 +228,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           </div>
         </div>
 
-        {/* --- ATTACHED DOCUMENTS SECTION --- */}
         <div style={{ marginTop: "24px" }}>
           <p
             className="font-inter font-bold uppercase tracking-wider text-gray-400"
@@ -267,8 +256,17 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                       {doc.file_name || `Document ${idx + 1}`}
                     </span>
                   </div>
+                  {/* FIXED: Uses doc.file_url */}
                   <a
-                    href={doc.file} // This binds to the file URL from Django
+                    href={doc.file_url || "#"}
+                    onClick={(e) => {
+                      if (!doc.file_url) {
+                        e.preventDefault();
+                        alert(
+                          "Error: This file's URL is missing from the database.",
+                        );
+                      }
+                    }}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded bg-white px-3 py-1.5 font-inter text-[11.5px] font-bold text-[#1f5cae] border border-gray-200 transition hover:bg-gray-100 active:scale-95 flex-shrink-0"
@@ -289,7 +287,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         </div>
       </div>
 
-      {/* Decision panel card */}
       <div
         className="w-full rounded-xl border border-gray-200 bg-white shadow-sm"
         style={{ padding: "24px" }}

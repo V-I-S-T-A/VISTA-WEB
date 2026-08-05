@@ -16,7 +16,7 @@ export default function DocumentEntry() {
 
   const [organizations, setOrganizations] = useState([]);
   const [users, setUsers] = useState([]);
-  const [academicYears, setAcademicYears] = useState([]);
+  const [academicYears, setAcademicYears] = useState([]); // <-- ADD THIS BACK
   const [documentTypes, setDocumentTypes] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -37,14 +37,14 @@ export default function DocumentEntry() {
           await Promise.all([
             api.get("/organizations/"),
             api.get("/users/"),
-            api.get("/academic-years/"),
+            api.get("/academic-years/"), // <-- ADD THIS BACK
             api.get("/document-types/"),
             api.get("/categories/"),
           ]);
 
         setOrganizations(orgRes.data.results || orgRes.data || []);
         setUsers(userRes.data.results || userRes.data || []);
-        setAcademicYears(acadRes.data.results || acadRes.data || []);
+        setAcademicYears(acadRes.data.results || acadRes.data || []); // <-- ADD THIS BACK
         setDocumentTypes(docTypeRes.data.results || docTypeRes.data || []);
         setCategories(catRes.data.results || catRes.data || []);
       } catch (err) {
@@ -55,8 +55,8 @@ export default function DocumentEntry() {
   }, []);
 
   const availableUsers = useMemo(() => {
-    if (!formData.org_id) return users;
-    return users.filter((u) => u.org_id === formData.org_id);
+    if (!formData.org_id) return [];
+    return users.filter((u) => String(u.org_id) === String(formData.org_id));
   }, [users, formData.org_id]);
 
   const handleChange = (e) => {
@@ -70,6 +70,7 @@ export default function DocumentEntry() {
   };
 
   const handleSubmit = async () => {
+    // 1. Validate mandatory text fields (File is no longer mandatory)
     if (
       !formData.org_id ||
       !formData.submitted_by ||
@@ -81,75 +82,67 @@ export default function DocumentEntry() {
       setError("Please fill out all fields before submitting.");
       return;
     }
-    if (!file) {
-      setError("Please upload a document file.");
-      return;
-    }
 
     setIsLoading(true);
     setError("");
 
     try {
-      // 1. Create the Core Submission Record
+      // 2. Create the Core Submission Record
       const submissionRes = await api.post("/submissions/", {
         ...formData,
-        description: "Direct Staff Upload (Pending OCR/GDrive Automation)",
+        description: "Direct Staff Upload",
       });
 
       const submissionId = submissionRes.data.submission_id;
 
-      // 2. Upload the attached document
-      try {
-        const cloudinaryData = new FormData();
-        cloudinaryData.append("file", file);
-        cloudinaryData.append("upload_preset", "vista_uploads");
+      // 3. Optional: Upload Document to Cloudinary if a file was provided
+      if (file) {
+        try {
+          const cloudinaryData = new FormData();
+          cloudinaryData.append("file", file);
+          cloudinaryData.append("upload_preset", "vista_uploads");
 
-        const cloudName = "djtdar2ex";
-        const cloudinaryRes = await fetch(
-          `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-          {
-            method: "POST",
-            body: cloudinaryData,
-          },
-        );
+          const cloudName = "djtdar2ex"; // Remember to change to your real cloud name if needed
+          const cloudinaryRes = await fetch(
+            `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
+            {
+              method: "POST",
+              body: cloudinaryData,
+            },
+          );
 
-        const cloudinaryJson = await cloudinaryRes.json();
+          const cloudinaryJson = await cloudinaryRes.json();
 
-        if (cloudinaryJson.secure_url) {
-          // Save the document metadata to Django
-          const docPayload = {
-            submission_id: submissionId,
-            file_name: file.name,
-            file_url: cloudinaryJson.secure_url,
-            mime_type: file.type || "application/pdf",
-            file_size_kb: Math.max(1, Math.round(file.size / 1024)),
-          };
-
-          await api.post("/documents/", docPayload);
-        } else {
-          throw new Error(JSON.stringify(cloudinaryJson));
+          if (cloudinaryJson.secure_url) {
+            await api.post("/documents/", {
+              submission_id: submissionId,
+              file_name: file.name,
+              file_url: cloudinaryJson.secure_url,
+              mime_type: file.type || "application/pdf",
+              file_size_kb: Math.max(1, Math.round(file.size / 1024)),
+            });
+          } else {
+            throw new Error(JSON.stringify(cloudinaryJson));
+          }
+        } catch (docErr) {
+          console.error(
+            "Document file upload failed:",
+            docErr.response?.data || docErr,
+          );
+          // We show an alert but DO NOT halt, because the submission was still created!
+          alert(
+            "Submission created, but document failed to upload to Cloudinary.",
+          );
         }
-      } catch (docErr) {
-        console.error(
-          "Document file upload failed:",
-          docErr.response?.data || docErr,
-        );
-        // HALT EXECUTION: Display the exact backend error so we can fix it!
-        setError(
-          "Document failed to save to Database: " +
-            JSON.stringify(docErr.response?.data || docErr.message),
-        );
-        setIsLoading(false);
-        return;
       }
 
-      // 3. Only redirect if the document successfully saved
-      navigate("/staff/registration/analysis-results", {
-        state: { submissionId },
-      });
+      // 4. Navigate directly to the Review Panel
+      navigate("/staff/review-panel");
     } catch (err) {
       console.error("Submission failed:", err);
-      let errorMessage = "An error occurred while creating the submission.";
+      let errorMessage =
+        "An error occurred while creating the submission in the database.";
+
       if (err.response?.data) {
         const data = err.response.data;
         if (data.detail) {
@@ -163,6 +156,7 @@ export default function DocumentEntry() {
           }
         }
       }
+
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -284,11 +278,12 @@ export default function DocumentEntry() {
                         value={formData.submitted_by}
                         onChange={handleChange}
                         style={selectStyle(formData.submitted_by)}
+                        disabled={!formData.org_id}
                       >
                         <option value="" disabled>
                           {formData.org_id
-                            ? "Select User in Org"
-                            : "Select User"}
+                            ? "Select User"
+                            : "Select Institution First"}
                         </option>
                         {availableUsers.map((user) => (
                           <option
