@@ -244,24 +244,28 @@ export default function AuditLogHistory({ onViewLog }) {
                       backgroundColor: "#ffffff",
                       color: "#12345b",
                       fontSize: "10px",
-                      marginLeft: "4px"
+                      marginLeft: "4px",
                     }}
                   >
-                    {(actionFilter !== "All Actions" ? 1 : 0) + (dateFilter ? 1 : 0)}
+                    {(actionFilter !== "All Actions" ? 1 : 0) +
+                      (dateFilter ? 1 : 0)}
                   </span>
                 )}
               </button>
 
               {showMoreFilters && (
-                <div className="absolute right-0 top-full z-20" style={{
-                  marginTop: "8px",
-                  width: "288px",
-                  borderRadius: "10px",
-                  border: "1px solid #e2e6ee",
-                  backgroundColor: "#ffffff",
-                  boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
-                  padding: "16px",
-                }}>
+                <div
+                  className="absolute right-0 top-full z-20"
+                  style={{
+                    marginTop: "8px",
+                    width: "288px",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e6ee",
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
+                    padding: "16px",
+                  }}
+                >
                   <div style={{ marginBottom: "14px" }}>
                     <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                       Action
@@ -324,8 +328,12 @@ export default function AuditLogHistory({ onViewLog }) {
                       borderRadius: "8px",
                       fontSize: "13px",
                     }}
-                    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#e5e7eb")}
-                    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#f3f4f6")}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#e5e7eb")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#f3f4f6")
+                    }
                   >
                     Clear Filters
                   </button>
@@ -392,12 +400,13 @@ export default function AuditLogHistory({ onViewLog }) {
                     ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
                   const userName = log.performed_by || "System";
                   const userEmail = log.performed_by_email || "System User";
-                  
+
                   const getInitials = (name) => {
                     if (!name || name === "System") return "SY";
                     const parts = name.trim().split(" ");
                     const first = parts[0] ? parts[0].charAt(0) : "";
-                    const last = parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
+                    const last =
+                      parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
                     return (first + last).toUpperCase() || "??";
                   };
                   const initials = getInitials(userName);

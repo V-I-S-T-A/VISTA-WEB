@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronLeft,
   Building2,
@@ -7,12 +7,13 @@ import {
   ChevronDown,
   CheckCircle2,
   Loader2,
+  Download,
 } from "lucide-react";
 import { submissionService } from "../../../../services/submissionService";
 
 const STATUS_ACTIONS = [
   "Select Action...",
-  "Start Review Process", // <-- ADD THIS NEW OPTION
+  "Start Review Process",
   "Mark as Verified",
   "Mark as Flagged",
   "Return for Revision",
@@ -34,6 +35,25 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const [priorityEscalation, setPriorityEscalation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const [submissionDetails, setSubmissionDetails] = useState(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+
+  useEffect(() => {
+    async function fetchFullDetails() {
+      if (!submission?.id) return;
+      try {
+        setIsLoadingDetails(true);
+        const data = await submissionService.getSubmissionById(submission.id);
+        setSubmissionDetails(data);
+      } catch (error) {
+        console.error("Failed to fetch full submission details:", error);
+      } finally {
+        setIsLoadingDetails(false);
+      }
+    }
+    fetchFullDetails();
+  }, [submission]);
+
   if (!submission) return null;
 
   async function handleSubmitDecision() {
@@ -46,29 +66,23 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
-
-      // Call the backend API to update status and save the remarks log
       await submissionService.updateStatus(
         submission.id,
         backendStatus,
         remarks,
       );
 
-      // Optional: Add priority escalation logic here if the backend supports it later
       if (priorityEscalation) {
         console.log("Priority Escalation triggered for:", submission.id);
       }
 
       alert("Decision submitted successfully!");
-      onBack(); // Return to the table view automatically
+      onBack();
     } catch (error) {
       console.error("Submission error:", error);
-
-      // THIS WILL TELL US EXACTLY WHAT IS WRONG:
       const backendError = error.response?.data
         ? JSON.stringify(error.response.data, null, 2)
         : error.message;
-
       alert(`Backend Error:\n\n${backendError}`);
     } finally {
       setIsSubmitting(false);
@@ -77,7 +91,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
   return (
     <div className="w-full">
-      {/* Back row */}
       <div
         className="flex items-center gap-3"
         style={{ paddingBottom: "20px" }}
@@ -106,7 +119,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         </span>
       </div>
 
-      {/* Submission details card */}
       <div
         className="w-full rounded-xl border border-gray-200 bg-white shadow-sm"
         style={{ padding: "24px", marginBottom: "20px" }}
@@ -215,9 +227,66 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
             </div>
           </div>
         </div>
+
+        <div style={{ marginTop: "24px" }}>
+          <p
+            className="font-inter font-bold uppercase tracking-wider text-gray-400"
+            style={{ fontSize: "11px", marginBottom: "10px" }}
+          >
+            Attached Files
+          </p>
+
+          {isLoadingDetails ? (
+            <div className="flex items-center gap-2 font-inter text-[13px] text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Fetching documents...
+            </div>
+          ) : submissionDetails?.documents?.length > 0 ? (
+            <div className="flex flex-col gap-2">
+              {submissionDetails.documents.map((doc, idx) => (
+                <div
+                  key={doc.id || idx}
+                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#eaf1ff]">
+                      <FileText className="h-4 w-4 text-[#1d4ed8]" />
+                    </div>
+                    <span className="truncate font-inter text-[13.5px] font-semibold text-gray-800">
+                      {doc.file_name || `Document ${idx + 1}`}
+                    </span>
+                  </div>
+                  {/* FIXED: Uses doc.file_url */}
+                  <a
+                    href={doc.file_url || "#"}
+                    onClick={(e) => {
+                      if (!doc.file_url) {
+                        e.preventDefault();
+                        alert(
+                          "Error: This file's URL is missing from the database.",
+                        );
+                      }
+                    }}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded bg-white px-3 py-1.5 font-inter text-[11.5px] font-bold text-[#1f5cae] border border-gray-200 transition hover:bg-gray-100 active:scale-95 flex-shrink-0"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    VIEW FILE
+                  </a>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center">
+              <span className="font-inter text-[13px] text-gray-500 italic">
+                No files attached to this submission.
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Decision panel card */}
       <div
         className="w-full rounded-xl border border-gray-200 bg-white shadow-sm"
         style={{ padding: "24px" }}

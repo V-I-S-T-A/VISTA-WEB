@@ -66,7 +66,15 @@ const STATUS_OPTIONS = [
 const CATEGORY_OPTIONS = ["All Categories", "Inbound", "Outbound"];
 
 function downloadCsv(rows) {
-  const headers = ["ID", "Applicant", "Email", "Category", "Date", "Status"];
+  const headers = [
+    "ID",
+    "Document Title",
+    "Applicant",
+    "Email",
+    "Category",
+    "Date",
+    "Status",
+  ];
   const lines = rows.map((s) => {
     const uiStatus = UI_STATUS_MAP[s.status] || s.status;
     const dateStr = new Date(s.submitted_at).toLocaleDateString("en-US", {
@@ -77,6 +85,7 @@ function downloadCsv(rows) {
 
     return [
       `#${s.submission_id.slice(0, 8)}`,
+      `"${s.title || "Untitled Document"}"`,
       `"${s.org_name || s.submitted_by_name || "Unknown"}"`, // Quotes prevent comma splitting
       s.submitted_by_email || "N/A",
       s.category_name || "N/A",
@@ -301,21 +310,26 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="h-12 border-b border-gray-100 bg-[#f8f9fc]">
-              {["ID", "APPLICANT", "CATEGORY", "DATE", "STATUS", "ACTIONS"].map(
-                (heading) => (
-                  <th
-                    key={heading}
-                    className="px-5 py-2 text-left font-inter text-[12px] font-bold uppercase tracking-wider text-gray-500"
-                    style={
-                      heading === "ID"
-                        ? { paddingLeft: CONTENT_PADDING }
-                        : undefined
-                    }
-                  >
-                    {heading}
-                  </th>
-                ),
-              )}
+              {[
+                "ID",
+                "DOCUMENT / APPLICANT",
+                "CATEGORY",
+                "DATE",
+                "STATUS",
+                "ACTIONS",
+              ].map((heading) => (
+                <th
+                  key={heading}
+                  className="px-5 py-2 text-left font-inter text-[12px] font-bold uppercase tracking-wider text-gray-500"
+                  style={
+                    heading === "ID"
+                      ? { paddingLeft: CONTENT_PADDING }
+                      : undefined
+                  }
+                >
+                  {heading}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -352,21 +366,21 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     #{submission.submission_id.slice(0, 8)}
                   </td>
 
-                  {/* Applicant */}
+                  {/* Applicant / Document Title */}
                   <td className="px-5 py-2.5">
                     <p
                       className="font-inter font-bold text-gray-900 leading-tight"
                       style={{ fontSize: "13.5px" }}
                     >
-                      {submission.org_name ||
-                        submission.submitted_by_name ||
-                        "Unknown Applicant"}
+                      {submission.title || "Untitled Document"}
                     </p>
                     <p
                       className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
                       style={{ fontSize: "12px" }}
                     >
-                      {submission.submitted_by_email || "No email"}
+                      {submission.org_name ||
+                        submission.submitted_by_name ||
+                        "Unknown Applicant"}
                     </p>
                   </td>
 
@@ -474,7 +488,6 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
             </button>
 
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-              // Simple pagination rendering
               if (
                 page === 1 ||
                 page === totalPages ||
@@ -499,7 +512,6 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   </button>
                 );
               }
-              // Render ellipsis for gaps (very simplified)
               if (page === 2 && safeCurrentPage > 3)
                 return (
                   <span key={page} className="px-1 text-gray-400">
