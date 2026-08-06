@@ -15,6 +15,7 @@ import StudentDashboard from "./modules/student/Dashboard";
 import StudentReviewTracker from "./modules/student/ReviewTracker";
 import StudentReviewTrackerDetails from "./modules/student/reviewtracker/ReviewTrackerDetails";
 import StudentProfile from "./modules/student/Profile";
+import StaffGdriveCallback from "./modules/staff/gdrive/GdriveCallback";
 
 function App() {
   return (
@@ -35,6 +36,7 @@ function App() {
         <Route path="/staff/profile" element={<StaffProfile />} />
         <Route path="/staff/review-panel" element={<StaffReviewPanel />} />
         <Route path="/staff/gdrive-sync" element={<StaffGdrive />} />
+        <Route path="/staff/gdrive-sync/callback" element={<StaffGdriveCallback />} />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route
           path="/student/review-tracker"
