@@ -9,6 +9,7 @@ export const API_CONFIG = {
     ORGANIZATIONS: "/organizations",
     SUBMISSIONS: "/submissions",
     AUDIT_LOGS: "/audit-logs",
+    DRIVE: "/drive",
   },
 };
 
@@ -44,5 +45,14 @@ export const API_ENDPOINTS = {
     DETAIL: (orgId) => `${API_CONFIG.ENDPOINTS.ORGANIZATIONS}/${orgId}/`,
     UPDATE: (orgId) => `${API_CONFIG.ENDPOINTS.ORGANIZATIONS}/${orgId}/`,
     DELETE: (orgId) => `${API_CONFIG.ENDPOINTS.ORGANIZATIONS}/${orgId}/`,
+  },
+  DRIVE: {
+    CONNECTION: `${API_CONFIG.ENDPOINTS.DRIVE}/connection/`,
+    AUTH_START: `${API_CONFIG.ENDPOINTS.DRIVE}/auth/start/`,
+    AUTH_CALLBACK: `${API_CONFIG.ENDPOINTS.DRIVE}/auth/callback/`,
+    FOLDERS: `${API_CONFIG.ENDPOINTS.DRIVE}/folders/`,
+    FOLDER_SELECT: `${API_CONFIG.ENDPOINTS.DRIVE}/folders/select/`,
+    FOLDER_CREATE: `${API_CONFIG.ENDPOINTS.DRIVE}/folders/create/`,
+    DISCONNECT: `${API_CONFIG.ENDPOINTS.DRIVE}/disconnect/`,
   },
 };
