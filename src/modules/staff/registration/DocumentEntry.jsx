@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import api from "./../../../lib/axios";
 
 import Header from "../../../components/Header";
@@ -12,11 +12,12 @@ import registrationSider from "../../assets/registration_sider.png";
 export default function DocumentEntry() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [error, setError] = useState("");
 
   const [organizations, setOrganizations] = useState([]);
   const [users, setUsers] = useState([]);
-  const [academicYears, setAcademicYears] = useState([]); // <-- ADD THIS BACK
+  const [academicYears, setAcademicYears] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [categories, setCategories] = useState([]);
 
@@ -30,6 +31,7 @@ export default function DocumentEntry() {
     title: "",
   });
 
+  // 1. FETCH ALL DROPDOWNS SECURELY FROM DJANGO (Prevents UUID errors)
   useEffect(() => {
     const fetchDropdowns = async () => {
       try {
@@ -37,14 +39,14 @@ export default function DocumentEntry() {
           await Promise.all([
             api.get("/organizations/"),
             api.get("/users/"),
-            api.get("/academic-years/"), // <-- ADD THIS BACK
+            api.get("/academic-years/"),
             api.get("/document-types/"),
             api.get("/categories/"),
           ]);
 
         setOrganizations(orgRes.data.results || orgRes.data || []);
         setUsers(userRes.data.results || userRes.data || []);
-        setAcademicYears(acadRes.data.results || acadRes.data || []); // <-- ADD THIS BACK
+        setAcademicYears(acadRes.data.results || acadRes.data || []);
         setDocumentTypes(docTypeRes.data.results || docTypeRes.data || []);
         setCategories(catRes.data.results || catRes.data || []);
       } catch (err) {
@@ -54,6 +56,7 @@ export default function DocumentEntry() {
     fetchDropdowns();
   }, []);
 
+  // 2. STRICT USER FILTERING
   const availableUsers = useMemo(() => {
     if (!formData.org_id) return [];
     return users.filter((u) => String(u.org_id) === String(formData.org_id));
@@ -69,8 +72,48 @@ export default function DocumentEntry() {
     setError("");
   };
 
+  // 3. OCR AUTOFILL INTEGRATION
+  const handleFileUpload = async (uploadedFile) => {
+    setFile(uploadedFile);
+    if (!uploadedFile) return;
+
+    setIsScanning(true);
+    setError("");
+
+    try {
+      const fd = new FormData();
+      fd.append("file", uploadedFile);
+
+      // Hit the Django OCR autofill endpoint immediately on upload
+      const res = await api.post("/submissions/autofill/", fd, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const draft = res.data;
+
+      // Auto-fill the form fields based on the OCR matches
+      if (draft.status === "draft_pending_review") {
+        setFormData((prev) => ({
+          ...prev,
+          org_id: draft.suggested_org_id || prev.org_id,
+          doc_type_id: draft.suggested_doc_type_id || prev.doc_type_id,
+          category_id: draft.suggested_category_id || prev.category_id,
+          // FIX: The new OCR display name now overwrites the old title
+          title: draft.display_name || prev.title || "",
+        }));
+      }
+    } catch (err) {
+      console.error("OCR Failed:", err);
+      setError(
+        "OCR Engine failed to read the document. You can still select the fields manually.",
+      );
+    } finally {
+      setIsScanning(false);
+    }
+  };
+
+  // 4. SUBMIT FORM (WITH CLOUDINARY BYPASS)
   const handleSubmit = async () => {
-    // 1. Validate mandatory text fields (File is no longer mandatory)
     if (
       !formData.org_id ||
       !formData.submitted_by ||
@@ -87,22 +130,21 @@ export default function DocumentEntry() {
     setError("");
 
     try {
-      // 2. Create the Core Submission Record
       const submissionRes = await api.post("/submissions/", {
         ...formData,
-        description: "Direct Staff Upload",
+        description: "Direct Staff Upload (OCR Processed)",
       });
 
       const submissionId = submissionRes.data.submission_id;
 
-      // 3. Optional: Upload Document to Cloudinary if a file was provided
       if (file) {
         try {
           const cloudinaryData = new FormData();
           cloudinaryData.append("file", file);
+          // CRITICAL: You must create an unsigned upload preset named "vista_uploads" in Cloudinary
           cloudinaryData.append("upload_preset", "vista_uploads");
 
-          const cloudName = "djtdar2ex"; // Remember to change to your real cloud name if needed
+          const cloudName = "djtdar2ex"; // Your actual cloud name
           const cloudinaryRes = await fetch(
             `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
             {
@@ -114,6 +156,7 @@ export default function DocumentEntry() {
           const cloudinaryJson = await cloudinaryRes.json();
 
           if (cloudinaryJson.secure_url) {
+            // Save the real Cloudinary URL to Django
             await api.post("/documents/", {
               submission_id: submissionId,
               file_name: file.name,
@@ -125,24 +168,20 @@ export default function DocumentEntry() {
             throw new Error(JSON.stringify(cloudinaryJson));
           }
         } catch (docErr) {
-          console.error(
-            "Document file upload failed:",
-            docErr.response?.data || docErr,
-          );
-          // We show an alert but DO NOT halt, because the submission was still created!
+          console.error("Cloudinary upload failed:", docErr);
           alert(
-            "Submission created, but document failed to upload to Cloudinary.",
+            "Submission created but file failed to upload to Cloudinary. Check your upload preset.",
           );
         }
       }
-
-      // 4. Navigate directly to the Review Panel
-      navigate("/staff/review-panel");
+      // Navigate directly to the Analysis Results Page
+      navigate("/staff/registration/analysis-results", {
+        state: { submissionId },
+      });
     } catch (err) {
       console.error("Submission failed:", err);
       let errorMessage =
         "An error occurred while creating the submission in the database.";
-
       if (err.response?.data) {
         const data = err.response.data;
         if (data.detail) {
@@ -156,7 +195,6 @@ export default function DocumentEntry() {
           }
         }
       }
-
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -282,7 +320,7 @@ export default function DocumentEntry() {
                       >
                         <option value="" disabled>
                           {formData.org_id
-                            ? "Select User"
+                            ? "Select User in Org"
                             : "Select Institution First"}
                         </option>
                         {availableUsers.map((user) => (
@@ -436,10 +474,32 @@ export default function DocumentEntry() {
                     />
                   </div>
 
+                  {/* OCR SCANNING INDICATOR */}
+                  {isScanning && (
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "10px",
+                        padding: "12px 16px",
+                        backgroundColor: "#eef2fa",
+                        border: "1px solid #d1d5db",
+                        borderRadius: "8px",
+                        marginBottom: "20px",
+                      }}
+                    >
+                      <Loader2 className="w-4 h-4 animate-spin text-[#1f5cae]" />
+                      <span className="font-inter text-[#1f5cae] font-semibold text-[13px]">
+                        Scanning document with OCR Engine... Auto-filling
+                        fields.
+                      </span>
+                    </div>
+                  )}
+
                   <SubmitRegistration
                     file={file}
-                    setFile={setFile}
-                    isLoading={isLoading}
+                    setFile={handleFileUpload}
+                    isLoading={isLoading || isScanning}
                     onSubmit={handleSubmit}
                   />
                 </div>
