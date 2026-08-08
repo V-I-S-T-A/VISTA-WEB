@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Plus, Building2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { Plus, Building2, Eye } from "lucide-react";
 import AddUserModal from "../modals/AddUserModal";
 import AddOrgModal from "../modals/AddOrgModal";
 import { useCreateUser } from "../../../../hooks/useUserMutations";
 import { useCreateOrganization } from "../../../../hooks/useOrganizations";
 
 export default function UserManagementHeader() {
+  const navigate = useNavigate();
   const [showAddModal, setShowAddModal] = useState(false);
   const [showAddOrgModal, setShowAddOrgModal] = useState(false);
   const createUserMutation = useCreateUser();
@@ -64,6 +66,20 @@ export default function UserManagementHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => navigate("/admin/dashboard/registeredorg")}
+            className="inline-flex items-center gap-1.5 rounded border border-blue-900 bg-[#003370] font-inter font-bold text-white transition-colors hover:bg-[#16385f]"
+            style={{ fontSize: "12px", padding: "8px 14px", marginTop: "2px" }}
+          >
+            <Eye
+              style={{ width: "13px", height: "13px" }}
+              strokeWidth={2.5}
+              aria-hidden="true"
+            />
+            View Org
+          </button>
+
           <button
             type="button"
             onClick={() => setShowAddOrgModal(true)}
