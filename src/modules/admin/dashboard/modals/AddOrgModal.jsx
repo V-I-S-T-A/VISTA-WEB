@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { X, Building2 } from 'lucide-react'
+import { X, Building2, ImagePlus, Trash2 } from 'lucide-react'
 
 const FIELD_STYLES = {
     label: {
@@ -56,6 +56,126 @@ function FocusInput({ style, ...props }) {
     )
 }
 
+function PhotoDropzone({ preview, error, onSelect, onRemove, disabled }) {
+    const [dragOver, setDragOver] = useState(false)
+    const inputRef = useRef(null)
+
+    function handleFiles(fileList) {
+        const file = fileList?.[0]
+        if (file && file.type.startsWith('image/')) {
+            onSelect(file)
+        }
+    }
+
+    return (
+        <div>
+            {preview ? (
+                <div
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        border: '1.5px solid #d1d5db',
+                        borderRadius: '8px',
+                        padding: '10px',
+                    }}
+                >
+                    <img
+                        src={preview}
+                        alt="Organization preview"
+                        style={{
+                            width: '56px',
+                            height: '56px',
+                            borderRadius: '8px',
+                            objectFit: 'cover',
+                            flexShrink: 0,
+                            border: '1px solid #e5e7eb',
+                        }}
+                    />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                            Photo selected
+                        </p>
+                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6b7280', margin: '2px 0 0' }}>
+                            Click remove to choose a different photo.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={onRemove}
+                        disabled={disabled}
+                        aria-label="Remove photo"
+                        style={{
+                            background: '#fee2e2',
+                            border: 'none',
+                            borderRadius: '7px',
+                            width: '30px',
+                            height: '30px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            cursor: disabled ? 'not-allowed' : 'pointer',
+                            color: '#dc2626',
+                            flexShrink: 0,
+                        }}
+                    >
+                        <Trash2 style={{ width: '14px', height: '14px' }} />
+                    </button>
+                </div>
+            ) : (
+                <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => !disabled && inputRef.current?.click()}
+                    onKeyDown={(e) => {
+                        if (!disabled && (e.key === 'Enter' || e.key === ' ')) inputRef.current?.click()
+                    }}
+                    onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragOver(true) }}
+                    onDragLeave={() => setDragOver(false)}
+                    onDrop={(e) => {
+                        e.preventDefault()
+                        setDragOver(false)
+                        if (!disabled) handleFiles(e.dataTransfer.files)
+                    }}
+                    style={{
+                        border: `1.5px dashed ${error ? '#dc2626' : dragOver ? '#1f5cae' : '#d1d5db'}`,
+                        borderRadius: '8px',
+                        padding: '18px',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '6px',
+                        background: dragOver ? '#f0f6ff' : '#f9fafb',
+                        cursor: disabled ? 'not-allowed' : 'pointer',
+                        transition: 'background 0.15s, border-color 0.15s',
+                    }}
+                >
+                    <ImagePlus style={{ width: '20px', height: '20px', color: '#9ca3af' }} />
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                        Click to upload or drag and drop
+                    </p>
+                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#9ca3af', margin: 0 }}>
+                        PNG, JPG up to a few MB
+                    </p>
+                </div>
+            )}
+            <input
+                ref={inputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                style={{ display: 'none' }}
+                disabled={disabled}
+                onChange={(e) => {
+                    handleFiles(e.target.files)
+                    e.target.value = ''
+                }}
+            />
+        </div>
+    )
+}
+
 const EMPTY_FORM = {
     name: '',
     acronym: '',
@@ -67,6 +187,8 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
     const [form, setForm] = useState(EMPTY_FORM)
     const [errors, setErrors] = useState({})
     const [saving, setSaving] = useState(false)
+    const [photo, setPhoto] = useState(null)
+    const [photoPreview, setPhotoPreview] = useState(null)
     const overlayRef = useRef(null)
     const firstInputRef = useRef(null)
 
@@ -74,9 +196,37 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
         if (isOpen) {
             setForm(EMPTY_FORM)
             setErrors({})
+            setPhoto(null)
+            setPhotoPreview(null)
             setTimeout(() => firstInputRef.current?.focus(), 50)
         }
     }, [isOpen])
+
+    // Revoke the local object URL on unmount / replacement to avoid leaking
+    // memory across repeated selections.
+    useEffect(() => {
+        return () => {
+            if (photoPreview) URL.revokeObjectURL(photoPreview)
+        }
+    }, [photoPreview])
+
+    function handlePhotoSelect(file) {
+        const nextPreview = URL.createObjectURL(file)
+        setPhotoPreview((prev) => {
+            if (prev) URL.revokeObjectURL(prev)
+            return nextPreview
+        })
+        setPhoto(file)
+        setErrors((e) => ({ ...e, photo: undefined }))
+    }
+
+    function handlePhotoRemove() {
+        setPhotoPreview((prev) => {
+            if (prev) URL.revokeObjectURL(prev)
+            return null
+        })
+        setPhoto(null)
+    }
 
     useEffect(() => {
         if (!isOpen) return
@@ -96,6 +246,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
         const errs = {}
         if (!form.name.trim()) errs.name = 'Organization name is required.'
         if (!form.acronym.trim()) errs.acronym = 'Acronym is required.'
+        if (!photo) errs.photo = 'Organization photo is required.'
         return errs
     }
 
@@ -111,6 +262,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                 name: form.name.trim(),
                 acronym: form.acronym.trim().toUpperCase(),
                 description: form.description.trim(),
+                image: photo,
                 is_active: form.isActive,
             })
             onClose()
@@ -226,7 +378,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
 
                 {/* Body */}
                 <div style={{ padding: '24px', overflowY: 'auto', flex: 1, display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    
+
                     {error && (
                         <div style={{
                             background: '#fee2e2',
@@ -262,7 +414,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                             disabled={saving || isLoading}
                         />
                     </Field>
-                    
+
                     {/* Description */}
                     <Field label="Description" error={errors.description}>
                         <FocusInput
@@ -270,6 +422,17 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                             placeholder="Brief description of the organization"
                             value={form.description}
                             onChange={(e) => set('description', e.target.value)}
+                            disabled={saving || isLoading}
+                        />
+                    </Field>
+
+                    {/* Photo */}
+                    <Field label="Add Photo *" error={errors.photo}>
+                        <PhotoDropzone
+                            preview={photoPreview}
+                            error={errors.photo}
+                            onSelect={handlePhotoSelect}
+                            onRemove={handlePhotoRemove}
                             disabled={saving || isLoading}
                         />
                     </Field>
