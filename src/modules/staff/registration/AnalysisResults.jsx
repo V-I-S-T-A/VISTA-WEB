@@ -1,10 +1,13 @@
+import { useLocation } from "react-router-dom";
 import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
 import OCRResults from "./components/OCRResults";
 import registrationSider from "../../assets/registration_sider.png";
-import systemScopeBanner from "../../../assets/shared/systemscope.png";
 
 export default function AnalysisResults() {
+  const location = useLocation();
+  const submissionId = location.state?.submissionId;
+
   return (
     <div className="flex min-h-screen bg-white">
       <Sidebar role="staff" />
@@ -37,7 +40,8 @@ export default function AnalysisResults() {
             >
               {/* Left: OCR Results */}
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
-                <OCRResults />
+                {/* Pass the submissionId down to the OCRResults component */}
+                <OCRResults submissionId={submissionId} />
               </div>
 
               {/* Right: Side Image */}
@@ -60,8 +64,6 @@ export default function AnalysisResults() {
                 />
               </div>
             </div>
-
-
           </div>
         </main>
       </div>
