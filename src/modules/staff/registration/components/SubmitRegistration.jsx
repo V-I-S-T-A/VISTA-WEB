@@ -58,9 +58,9 @@ export default function SubmitRegistration({
           }}
           onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#1f5cae")}
           onMouseLeave={(e) =>
-            (e.currentTarget.style.borderColor = isDragging
-              ? "#1f5cae"
-              : "#d1d5db")
+          (e.currentTarget.style.borderColor = isDragging
+            ? "#1f5cae"
+            : "#d1d5db")
           }
         >
           <CloudUpload
@@ -82,7 +82,7 @@ export default function SubmitRegistration({
             className="font-inter text-gray-400"
             style={{ fontSize: "11px", marginTop: "4px" }}
           >
-            PDF, DOCX, or XLSX up to 50MB
+            PDF, or Images up to 50MB
           </p>
         </div>
       ) : (
