@@ -139,6 +139,12 @@ export const sidebarConfig = {
         path: "/student/review-tracker",
         active: false,
       },
+      {
+        label: "AUDIT LOGS",
+        icon: "FileText",
+        path: "/student/audit-logs",
+        active: false,
+      },
     ],
     logout: {
       label: "LOGOUT",
