@@ -16,6 +16,7 @@ import StudentDashboard from "./modules/student/Dashboard";
 import StudentReviewTracker from "./modules/student/ReviewTracker";
 import StudentReviewTrackerDetails from "./modules/student/reviewtracker/ReviewTrackerDetails";
 import StudentProfile from "./modules/student/Profile";
+import StudentAuditLogs from "./modules/student/AuditLogs";
 import StaffGdriveCallback from "./modules/staff/gdrive/GdriveCallback";
 
 function App() {
@@ -48,6 +49,7 @@ function App() {
           path="/student/review-tracker/:submissionId"
           element={<StudentReviewTrackerDetails />}
         />
+        <Route path="/student/audit-logs" element={<StudentAuditLogs />} />
         <Route path="/student/profile" element={<StudentProfile />} />
       </Routes>
     </BrowserRouter>
