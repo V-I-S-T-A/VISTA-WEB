@@ -9,7 +9,10 @@ import {
   Loader2,
   Download,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { submissionService } from "../../../../services/submissionService";
+import { reviewLogService } from "../../../../services/reviewLogService";
+import ConfirmDriveSyncModal from "./modals/ConfirmDriveSyncModal";
 
 const STATUS_ACTIONS = [
   "Select Action...",
@@ -17,26 +20,32 @@ const STATUS_ACTIONS = [
   "Mark as Verified",
   "Mark as Flagged",
   "Return for Revision",
-  "Approve Submission",
   "Reject Submission",
 ];
 
 const ACTION_TO_STATUS_MAP = {
   "Start Review Process": "under_review",
-  "Approve Submission": "approved",
+  "Mark as Verified": "approved",
   "Mark as Flagged": "rejected",
   "Reject Submission": "rejected",
   "Return for Revision": "resubmission_required",
 };
 
+// Only show Drive modal when marking as verified (approved)
+const REQUIRES_DRIVE_CONFIRM = new Set(["Mark as Verified"]);
+
 export default function SubmissionReviewDetails({ submission, onBack }) {
+  const queryClient = useQueryClient();
   const [statusAction, setStatusAction] = useState(STATUS_ACTIONS[0]);
   const [remarks, setRemarks] = useState("");
   const [priorityEscalation, setPriorityEscalation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
   const [submissionDetails, setSubmissionDetails] = useState(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
+  const [reviewLogs, setReviewLogs] = useState([]);
+  const [isLoadingLogs, setIsLoadingLogs] = useState(true);
 
   useEffect(() => {
     async function fetchFullDetails() {
@@ -54,30 +63,73 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     fetchFullDetails();
   }, [submission]);
 
+  useEffect(() => {
+    async function fetchLogs() {
+      if (!submission?.id) return;
+      try {
+        setIsLoadingLogs(true);
+        const data = await reviewLogService.getReviewLogs({
+          submissionId: submission.id,
+          pageSize: 50,
+        });
+        setReviewLogs(data?.results ?? []);
+      } catch (error) {
+        console.error("Failed to fetch review logs:", error);
+      } finally {
+        setIsLoadingLogs(false);
+      }
+    }
+    fetchLogs();
+  }, [submission]);
+
   if (!submission) return null;
 
-  async function handleSubmitDecision() {
+  function handleOpenConfirmModal() {
     if (statusAction === STATUS_ACTIONS[0]) {
       alert("Please select a valid action from the dropdown.");
       return;
     }
+    // Only show Drive folder modal when marking as Verified (approved)
+    if (REQUIRES_DRIVE_CONFIRM.has(statusAction)) {
+      setShowConfirmModal(true);
+    } else {
+      handleSubmitDecision();
+    }
+  }
 
+  async function invalidateAndGoBack() {
+    // Invalidate all submission-related queries so Recent Submissions & Review Panel refresh
+    await queryClient.invalidateQueries({ queryKey: ["submissions"] });
+    await queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
+    onBack();
+  }
+
+  async function handleSubmitDecision() {
     setIsSubmitting(true);
-
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
-      await submissionService.updateStatus(
-        submission.id,
-        backendStatus,
-        remarks,
-      );
-
-      if (priorityEscalation) {
-        console.log("Priority Escalation triggered for:", submission.id);
-      }
-
+      await submissionService.updateStatus(submission.id, backendStatus, remarks);
       alert("Decision submitted successfully!");
-      onBack();
+      await invalidateAndGoBack();
+    } catch (error) {
+      console.error("Submission error:", error);
+      const backendError = error.response?.data
+        ? JSON.stringify(error.response.data, null, 2)
+        : error.message;
+      alert(`Backend Error:\n\n${backendError}`);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleFinalSubmitDecision(driveFolderData) {
+    setIsSubmitting(true);
+    try {
+      const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
+      await submissionService.updateStatus(submission.id, backendStatus, remarks);
+      alert("Submission verified and synced to Google Drive!");
+      setShowConfirmModal(false);
+      await invalidateAndGoBack();
     } catch (error) {
       console.error("Submission error:", error);
       const backendError = error.response?.data
@@ -98,18 +150,23 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1 rounded-full font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
+          className="inline-flex items-center rounded-full transition hover:brightness-105 active:scale-95"
           style={{
-            fontSize: "12.5px",
-            padding: "6px 14px",
-            backgroundColor: "#ffc700",
+            backgroundColor: "#FFE452",
+            padding: "3px",
           }}
         >
-          <ChevronLeft
-            style={{ width: "13px", height: "13px" }}
-            aria-hidden="true"
-          />
-          Back
+          <span
+            className="inline-flex items-center rounded-full font-inter font-medium text-[#1a1a1a]"
+            style={{
+              backgroundColor: "#FFF2A8",
+              padding: "4px 14px",
+              fontSize: "13px",
+            }}
+          >
+            <span style={{ fontSize: "16px", lineHeight: "20px", marginRight: "4px" }}>›</span>
+            Back
+          </span>
         </button>
         <span
           className="font-inter font-medium text-gray-500"
@@ -376,7 +433,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         <div className="flex justify-center">
           <button
             type="button"
-            onClick={handleSubmitDecision}
+            onClick={handleOpenConfirmModal}
             disabled={isSubmitting}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
@@ -397,6 +454,224 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           </button>
         </div>
       </div>
+
+      {/* Double Authentication & GDrive Folder Selection Modal */}
+      <ConfirmDriveSyncModal
+        isOpen={showConfirmModal}
+        onClose={() => setShowConfirmModal(false)}
+        onConfirm={handleFinalSubmitDecision}
+        isSubmitting={isSubmitting}
+        submission={submission}
+        statusAction={statusAction}
+        remarks={remarks}
+      />
+
+      {/* ── STATUS HISTORY ─────────────────────────────────────────── */}
+      <div
+        className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+        style={{ marginTop: "20px" }}
+      >
+        {/* Yellow header band */}
+        <div
+          style={{
+            background: "#ffc700",
+            padding: "12px 20px",
+          }}
+        >
+          <h4
+            className="font-inter font-extrabold uppercase tracking-widest text-gray-900"
+            style={{ fontSize: "12px" }}
+          >
+            Status History
+          </h4>
+        </div>
+
+        <div style={{ padding: "20px 24px" }}>
+          {isLoadingLogs ? (
+            <div className="flex items-center gap-2 font-inter text-[13px] text-gray-500">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading history…
+            </div>
+          ) : reviewLogs.length === 0 ? (
+            <p className="font-inter text-[13px] italic text-gray-400">
+              No status changes recorded yet.
+            </p>
+          ) : (
+            <ol className="relative" style={{ paddingLeft: "20px" }}>
+              {reviewLogs.map((log, idx) => {
+                const isFirst = idx === 0;
+                const labelMap = {
+                  pending: "New / Pending",
+                  under_review: "Under Review",
+                  approved: "Verified / Approved",
+                  rejected: "Flagged / Rejected",
+                  resubmission_required: "Resubmission Required",
+                };
+                return (
+                  <li
+                    key={log.log_id}
+                    className="relative"
+                    style={{ paddingBottom: "20px" }}
+                  >
+                    {/* Timeline vertical line */}
+                    {idx < reviewLogs.length - 1 && (
+                      <span
+                        className="absolute left-0 top-3"
+                        style={{
+                          width: "1px",
+                          bottom: 0,
+                          background: "#d1d5db",
+                          transform: "translateX(-50%)",
+                        }}
+                      />
+                    )}
+                    {/* Timeline dot */}
+                    <span
+                      className="absolute rounded-full"
+                      style={{
+                        width: "10px",
+                        height: "10px",
+                        left: 0,
+                        top: "4px",
+                        transform: "translateX(-50%)",
+                        background: isFirst ? "#3b82f6" : "#9ca3af",
+                        border: "2px solid white",
+                        boxShadow: isFirst ? "0 0 0 2px #93c5fd" : "none",
+                      }}
+                    />
+                    <div style={{ paddingLeft: "16px" }}>
+                      <p
+                        className="font-inter font-bold text-gray-900"
+                        style={{
+                          fontSize: "13.5px",
+                          color: isFirst ? "#1d4ed8" : "#374151",
+                        }}
+                      >
+                        {labelMap[log.new_status] || log.new_status}
+                      </p>
+                      <p
+                        className="font-inter text-gray-400"
+                        style={{ fontSize: "11.5px", marginTop: "1px" }}
+                      >
+                        {new Date(log.changed_at).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                        {log.changed_by_name ? ` · ${log.changed_by_name}` : ""}
+                      </p>
+                      {log.remarks_text && (
+                        <p
+                          className="font-inter text-gray-600"
+                          style={{ fontSize: "13px", marginTop: "6px" }}
+                        >
+                          {log.remarks_text}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
+            </ol>
+          )}
+        </div>
+      </div>
+
+      {/* ── STAFF REMARKS & FEEDBACKS ──────────────────────────────── */}
+      {reviewLogs.some((l) => l.remarks_text) && (
+        <div
+          className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+          style={{ marginTop: "16px" }}
+        >
+          {/* Blue header band */}
+          <div
+            className="flex items-center justify-between"
+            style={{
+              background: "#1f5cae",
+              padding: "12px 20px",
+            }}
+          >
+            <h4
+              className="font-inter font-extrabold uppercase tracking-widest text-white"
+              style={{ fontSize: "12px" }}
+            >
+              Staff Remarks &amp; Feedbacks
+            </h4>
+            {/* update badge */}
+            <span
+              className="inline-flex items-center rounded-full font-inter font-extrabold text-gray-900"
+              style={{
+                background: "#ffc700",
+                fontSize: "11px",
+                padding: "3px 10px",
+              }}
+            >
+              {reviewLogs.filter((l) => l.remarks_text).length} UPDATE
+              {reviewLogs.filter((l) => l.remarks_text).length !== 1 ? "S" : ""}
+            </span>
+          </div>
+
+          <div style={{ padding: "16px 20px" }} className="flex flex-col gap-4">
+            {reviewLogs
+              .filter((l) => l.remarks_text)
+              .map((log) => (
+                <div key={log.log_id} className="flex gap-3">
+                  {/* Avatar placeholder */}
+                  <div
+                    className="flex-shrink-0 flex items-center justify-center rounded-full bg-[#eef1f9] font-inter font-bold text-[#1f5cae]"
+                    style={{ width: "38px", height: "38px", fontSize: "13px" }}
+                  >
+                    {log.changed_by_name
+                      ? log.changed_by_name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")
+                          .slice(0, 2)
+                          .toUpperCase()
+                      : "?"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-baseline justify-between gap-2 flex-wrap">
+                      <div>
+                        <span
+                          className="font-inter font-bold text-gray-900"
+                          style={{ fontSize: "13.5px" }}
+                        >
+                          {log.changed_by_name || "Unknown Staff"}
+                        </span>
+                      </div>
+                      <span
+                        className="font-inter text-gray-400 flex-shrink-0"
+                        style={{ fontSize: "11.5px" }}
+                      >
+                        {new Date(log.changed_at).toLocaleString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
+                      </span>
+                    </div>
+                    <div
+                      className="rounded-lg bg-gray-50 border border-gray-200 font-inter text-gray-700"
+                      style={{
+                        fontSize: "13px",
+                        padding: "10px 14px",
+                        marginTop: "6px",
+                      }}
+                    >
+                      {log.remarks_text}
+                    </div>
+                  </div>
+                </div>
+              ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
