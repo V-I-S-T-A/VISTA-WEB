@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import api from "./../../../../lib/axios";
 
 export default function OCRResults({ submissionId }) {
+  const navigate = useNavigate();
   const [submissionData, setSubmissionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,9 +32,8 @@ export default function OCRResults({ submissionId }) {
     fetchSubmissionDetails();
   }, [submissionId]);
 
-  const handleSaveToDrive = async () => {
-    // You can implement the actual save-to-drive API call here later
-    alert("Simulating Save to Drive for submission: " + submissionId);
+  const handleSubmitForReview = () => {
+    navigate("/staff/review-panel");
   };
 
   if (isLoading) {
@@ -327,7 +328,7 @@ export default function OCRResults({ submissionId }) {
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
         <button
           type="button"
-          onClick={handleSaveToDrive}
+          onClick={handleSubmitForReview}
           className="font-inter font-bold uppercase tracking-wider transition hover:bg-[#e8b832] active:scale-95"
           style={{
             fontSize: "12px",
@@ -340,7 +341,7 @@ export default function OCRResults({ submissionId }) {
             letterSpacing: "0.06em",
           }}
         >
-          Approve &amp; Save to Drive
+          Submit to Review
         </button>
         <button
           type="button"
