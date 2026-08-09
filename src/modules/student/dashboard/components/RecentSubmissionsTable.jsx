@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom"; // 1. Imported useNavigate
 import { useSubmissions } from "../../../../hooks/useSubmissions";
+import defaultUser from "../../../../assets/shared/default_user.jpg";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "28px";
@@ -134,12 +135,35 @@ export default function RecentSubmissionsTable() {
                     #{submission.submission_id.slice(0, 8)}
                   </td>
                   <td className="px-5 py-2.5">
-                    <p
-                      className="font-inter font-bold text-gray-900 leading-tight"
-                      style={{ fontSize: "14px" }}
-                    >
-                      {submission.org_name || "Unknown Organization"}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={submission.org_image_url || defaultUser}
+                        alt=""
+                        className="flex-shrink-0 rounded-full object-cover border border-gray-200"
+                        style={{ width: "36px", height: "36px" }}
+                        onError={(e) => {
+                          e.currentTarget.src = defaultUser;
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <p
+                          className="font-inter font-bold text-gray-900 leading-tight"
+                          style={{ fontSize: "14px" }}
+                        >
+                          {submission.org_name ||
+                            submission.submitted_by_name ||
+                            "Unknown Organization"}
+                        </p>
+                        {submission.submitted_by_email && (
+                          <p
+                            className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
+                            style={{ fontSize: "12px" }}
+                          >
+                            {submission.submitted_by_email}
+                          </p>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="px-5 py-2.5">
                     <span
