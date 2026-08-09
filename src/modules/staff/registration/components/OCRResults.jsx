@@ -233,7 +233,7 @@ export default function OCRResults({ submissionId }) {
                 backgroundColor: "#fff",
               }}
             >
-              {submissionData?.submitted_by_name || "Unknown"}
+              {submissionData?.submitted_by_name || submissionData?.submitted_by || "Unknown"}
             </div>
           </div>
 
