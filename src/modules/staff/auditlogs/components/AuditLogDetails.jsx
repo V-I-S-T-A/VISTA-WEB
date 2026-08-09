@@ -72,11 +72,23 @@ export default function AuditLogDetails({ log, onBack }) {
         <button
           type="button"
           onClick={onBack}
-          className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-bold text-gray-900 transition-colors rounded-full"
-          style={{ fontSize: "12px", padding: "7px 16px" }}
+          className="inline-flex items-center rounded-full transition hover:brightness-105 active:scale-95"
+          style={{
+            backgroundColor: "#FFE452",
+            padding: "3px",
+          }}
         >
-          <ArrowLeft className="h-3.5 w-3.5" aria-hidden="true" />
-          Back
+          <span
+            className="inline-flex items-center rounded-full font-inter font-medium text-[#1a1a1a]"
+            style={{
+              backgroundColor: "#FFF2A8",
+              padding: "4px 14px",
+              fontSize: "13px",
+            }}
+          >
+            <span style={{ fontSize: "16px", lineHeight: "20px", marginRight: "4px" }}>›</span>
+            Back
+          </span>
         </button>
         <span className="font-inter text-gray-500" style={{ fontSize: "13px" }}>
           Audit log history details.
