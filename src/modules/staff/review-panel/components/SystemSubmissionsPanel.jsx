@@ -7,8 +7,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
+import defaultUser from "../../../../assets/shared/default_user.jpg";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "24px";
@@ -27,7 +29,7 @@ const UI_STATUS_MAP = {
   under_review: "Reviewing",
   approved: "Verified",
   rejected: "Flagged",
-  resubmission_required: "Flagged",
+  resubmission_required: "Resubmission Required",
 };
 
 const STATUS_CONFIG = {
@@ -35,6 +37,7 @@ const STATUS_CONFIG = {
   New: { dot: "#3b82f6", text: "#1d4ed8" },
   Verified: { dot: "#22c55e", text: "#15803d" },
   Flagged: { dot: "#ef4444", text: "#b91c1c" },
+  "Resubmission Required": { dot: "#7c3aed", text: "#6d28d9" },
 };
 
 function StatusDot({ status }) {
@@ -105,19 +108,24 @@ function downloadCsv(rows) {
 }
 
 export default function SystemSubmissionsPanel({ onViewReview }) {
+  const [activeTab, setActiveTab] = useState("active"); // active | completed
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [filterOpen, setFilterOpen] = useState(false);
 
+  // Completed tab always filters by approved; Active tab uses user's status filter
+  const apiStatus = activeTab === "completed"
+    ? "approved"
+    : statusFilter === "All Status" ? "" : API_STATUS_MAP[statusFilter];
+
   // Fetch real data from backend
   const { data, isLoading } = useSubmissions({
     page: currentPage,
     pageSize: PAGE_SIZE,
     search: searchTerm,
-    status: statusFilter === "All Status" ? "" : API_STATUS_MAP[statusFilter],
-    // Note: If backend supports category filtering later, pass categoryFilter here
+    status: apiStatus,
   });
 
   const submissions = data?.results ?? [];
@@ -147,9 +155,62 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
           paddingBottom: "14px",
         }}
       >
-        <h3 className="font-inter text-[16px] font-bold text-white">
-          System Submissions
-        </h3>
+        <div className="flex items-center gap-3">
+          <h3 className="font-inter text-[16px] font-bold text-white">
+            System Submissions
+          </h3>
+          {/* Active / Completed tabs */}
+          <div
+            style={{
+              display: "flex",
+              background: "rgba(255,255,255,0.12)",
+              borderRadius: "8px",
+              padding: "3px",
+              gap: "4px",
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => { setActiveTab("active"); setCurrentPage(1); setStatusFilter("All Status"); }}
+              style={{
+                padding: "5px 14px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "12px",
+                fontWeight: "700",
+                backgroundColor: activeTab === "active" ? "#ffffff" : "transparent",
+                color: activeTab === "active" ? "#1f5cae" : "rgba(255,255,255,0.8)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              onClick={() => { setActiveTab("completed"); setCurrentPage(1); setStatusFilter("All Status"); }}
+              style={{
+                padding: "5px 14px",
+                borderRadius: "6px",
+                border: "none",
+                cursor: "pointer",
+                fontFamily: "Inter, sans-serif",
+                fontSize: "12px",
+                fontWeight: "700",
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                backgroundColor: activeTab === "completed" ? "#ffffff" : "transparent",
+                color: activeTab === "completed" ? "#15803d" : "rgba(255,255,255,0.8)",
+                transition: "all 0.15s ease",
+              }}
+            >
+              <CheckCircle2 style={{ width: "13px", height: "13px" }} />
+              Completed
+            </button>
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           <div className="relative">
@@ -368,20 +429,33 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
 
                   {/* Applicant / Document Title */}
                   <td className="px-5 py-2.5">
-                    <p
-                      className="font-inter font-bold text-gray-900 leading-tight"
-                      style={{ fontSize: "13.5px" }}
-                    >
-                      {submission.title || "Untitled Document"}
-                    </p>
-                    <p
-                      className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
-                      style={{ fontSize: "12px" }}
-                    >
-                      {submission.org_name ||
-                        submission.submitted_by_name ||
-                        "Unknown Applicant"}
-                    </p>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={submission.org_image_url || defaultUser}
+                        alt=""
+                        className="flex-shrink-0 rounded-full object-cover border border-gray-200"
+                        style={{ width: "36px", height: "36px" }}
+                        onError={(e) => {
+                          e.currentTarget.src = defaultUser;
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <p
+                          className="font-inter font-bold text-gray-900 leading-tight"
+                          style={{ fontSize: "13.5px" }}
+                        >
+                          {submission.title || "Untitled Document"}
+                        </p>
+                        <p
+                          className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
+                          style={{ fontSize: "12px" }}
+                        >
+                          {submission.org_name ||
+                            submission.submitted_by_name ||
+                            "Unknown Applicant"}
+                        </p>
+                      </div>
+                    </div>
                   </td>
 
                   {/* Category */}
@@ -423,7 +497,9 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                           id: submission.submission_id,
                           title: submission.title || "Untitled Document",
                           site: submission.org_name || "Unknown Organization",
-                          contactEmail: submission.submitted_by_email,
+                          contactEmail: submission.submitted_by_email
+                            ? `${submission.submitted_by_name || ""} (${submission.submitted_by_email})`.trim()
+                            : submission.submitted_by_name || "N/A",
                           documentType: submission.doc_type_name || "N/A",
                           submittedDate: new Date(
                             submission.submitted_at,
