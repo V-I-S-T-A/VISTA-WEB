@@ -8,10 +8,12 @@ import {
   AlertCircle,
   SquarePen,
 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import {
   useSubmissions,
   useUpdateSubmissionStatus,
 } from "../../../../hooks/useSubmissions";
+import defaultUser from "../../../../assets/shared/default_user.jpg";
 
 const PAGE_SIZE = 50;
 const CONTENT_PADDING = "28px";
@@ -200,6 +202,7 @@ function FilterPopover({
 }
 
 export default function RecentSubmissionsTable() {
+  const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("All Status");
   const [searchInput, setSearchInput] = useState("");
@@ -566,20 +569,33 @@ export default function RecentSubmissionsTable() {
                       #{submission.submission_id.slice(0, 8)}
                     </td>
                     <td style={{ padding: "12px 20px" }}>
-                      <p
-                        className="font-inter font-bold text-gray-900 leading-tight"
-                        style={{ fontSize: "14px" }}
-                      >
-                        {submission.org_name || "Unknown"}
-                      </p>
-                      {submission.submitted_by_email && (
-                        <p
-                          className="font-inter text-gray-400 leading-tight"
-                          style={{ fontSize: "12px", marginTop: "2px" }}
-                        >
-                          {submission.submitted_by_email}
-                        </p>
-                      )}
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={submission.org_image_url || defaultUser}
+                          alt=""
+                          className="flex-shrink-0 rounded-full object-cover border border-gray-200"
+                          style={{ width: "36px", height: "36px" }}
+                          onError={(e) => {
+                            e.currentTarget.src = defaultUser;
+                          }}
+                        />
+                        <div className="min-w-0">
+                          <p
+                            className="font-inter font-bold text-gray-900 leading-tight"
+                            style={{ fontSize: "14px" }}
+                          >
+                            {submission.org_name || "Unknown"}
+                          </p>
+                          {submission.submitted_by_email && (
+                            <p
+                              className="font-inter text-gray-400 leading-tight"
+                              style={{ fontSize: "12px", marginTop: "2px" }}
+                            >
+                              {submission.submitted_by_email}
+                            </p>
+                          )}
+                        </div>
+                      </div>
                     </td>
                     <td style={{ padding: "12px 20px" }}>
                       <span
@@ -620,13 +636,7 @@ export default function RecentSubmissionsTable() {
                         <div className="flex items-center gap-1.5 relative">
                           <button
                             type="button"
-                            disabled={isUpdatingRow}
-                            onClick={() =>
-                              handleStatusUpdate(
-                                submission.submission_id,
-                                primary.target,
-                              )
-                            }
+                            onClick={() => navigate("/staff/review-panel")}
                             className="inline-flex items-center gap-1.5 font-inter font-bold text-white active:scale-95"
                             style={{
                               fontSize: "12px",
@@ -634,13 +644,11 @@ export default function RecentSubmissionsTable() {
                               borderRadius: "9999px",
                               backgroundColor: COLORS.amber,
                               boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-                              opacity: isUpdatingRow ? 0.6 : 1,
-                              cursor: isUpdatingRow ? "not-allowed" : "pointer",
+                              cursor: "pointer",
                             }}
                             onMouseEnter={(e) => {
-                              if (!isUpdatingRow)
-                                e.currentTarget.style.backgroundColor =
-                                  COLORS.amberHover;
+                              e.currentTarget.style.backgroundColor =
+                                COLORS.amberHover;
                             }}
                             onMouseLeave={(e) => {
                               e.currentTarget.style.backgroundColor =
