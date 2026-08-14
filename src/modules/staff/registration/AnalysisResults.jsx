@@ -7,6 +7,7 @@ import registrationSider from "../../assets/registration_sider.png";
 export default function AnalysisResults() {
   const location = useLocation();
   const submissionId = location.state?.submissionId;
+  const ocrConfidence = location.state?.ocrConfidence || 100;
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -41,7 +42,10 @@ export default function AnalysisResults() {
               {/* Left: OCR Results */}
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
                 {/* Pass the submissionId down to the OCRResults component */}
-                <OCRResults submissionId={submissionId} />
+                <OCRResults
+                  submissionId={submissionId}
+                  ocrConfidence={ocrConfidence}
+                />{" "}
               </div>
 
               {/* Right: Side Image */}

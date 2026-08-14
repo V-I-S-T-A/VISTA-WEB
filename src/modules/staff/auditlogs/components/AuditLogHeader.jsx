@@ -6,7 +6,7 @@ import {
   Check,
   SlidersHorizontal,
 } from "lucide-react";
-import api from "../../../../lib/axios"; // Adjust path to your axios instance if needed
+import api from "./../../../lib/axios"; // Adjust path to your axios instance if needed
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "30px";
@@ -487,10 +487,10 @@ export default function AuditLogHistory() {
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-                {["TIMESTAMP", "USER/ENTITY", "ACTION", "ID/REFERENCE"].map(
-                  (heading) => (
+                {["TIMESTAMP", "USER/ENTITY", "ACTION", "DETAILS"].map(
+                  (heading, index) => (
                     <th
-                      key={heading}
+                      key={index}
                       className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
                       style={
                         heading === "TIMESTAMP"
@@ -579,21 +579,23 @@ export default function AuditLogHistory() {
                         </span>
                       </td>
                       <td className="px-5 py-2.5">
-                        <div className="min-w-0">
-                          <p
-                            className="font-inter font-semibold text-gray-700 truncate max-w-[200px]"
-                            style={{ fontSize: "13px" }}
-                            title={log.audit_id}
-                          >
-                            {log.audit_id}
-                          </p>
-                          <p
-                            className="font-inter font-medium text-gray-400 mt-0.5"
-                            style={{ fontSize: "11px" }}
-                          >
-                            Table: {log.table_name}
-                          </p>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => console.log("View Details for", log)}
+                          className="font-inter font-bold uppercase tracking-wider transition hover:bg-gray-100 active:scale-95"
+                          style={{
+                            fontSize: "10px",
+                            padding: "6px 14px",
+                            backgroundColor: "#fff",
+                            color: "#142d55",
+                            border: "2px solid #142d55",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            letterSpacing: "0.04em",
+                          }}
+                        >
+                          View Details
+                        </button>
                       </td>
                     </tr>
                   );

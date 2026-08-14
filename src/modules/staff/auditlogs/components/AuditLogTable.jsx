@@ -350,7 +350,8 @@ export default function AuditLogHistory({ onViewLog }) {
                 fontSize: "12px",
               }}
             >
-              <Download className="h-4 w-4" /> Export
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Export
             </button>
           </div>
         </div>
@@ -358,7 +359,7 @@ export default function AuditLogHistory({ onViewLog }) {
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-                {["TIMESTAMP", "USER/ENTITY", "ACTION", "ID/REFERENCE"].map(
+                {["TIMESTAMP", "USER/ENTITY", "ACTION", "DETAILS"].map(
                   (heading) => (
                     <th
                       key={heading}
@@ -398,24 +399,11 @@ export default function AuditLogHistory({ onViewLog }) {
                 paginatedLogs.map((log) => {
                   const actionColor =
                     ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
-                  const userName = log.performed_by || "System";
-                  const userEmail = log.performed_by_email || "System User";
-
-                  const getInitials = (name) => {
-                    if (!name || name === "System") return "SY";
-                    const parts = name.trim().split(" ");
-                    const first = parts[0] ? parts[0].charAt(0) : "";
-                    const last =
-                      parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
-                    return (first + last).toUpperCase() || "??";
-                  };
-                  const initials = getInitials(userName);
 
                   return (
                     <tr
                       key={log.audit_id}
-                      onClick={() => onViewLog && onViewLog(log)}
-                      className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff] cursor-pointer"
+                      className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
                     >
                       <td
                         className="px-5 py-2.5 font-inter font-medium text-gray-700"
@@ -427,32 +415,19 @@ export default function AuditLogHistory({ onViewLog }) {
                         {formatDate(log.performed_at)}
                       </td>
                       <td className="px-5 py-2.5">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {log.performed_by_image ? (
-                            <img
-                              src={log.performed_by_image}
-                              alt=""
-                              className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1f5cae] font-inter text-[11px] font-bold text-white uppercase">
-                              {initials}
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                            <p
-                              className="font-inter font-bold text-gray-900 leading-tight"
-                              style={{ fontSize: "14px" }}
-                            >
-                              {userName}
-                            </p>
-                            <p
-                              className="font-inter font-medium text-gray-400 mt-0.5"
-                              style={{ fontSize: "12px" }}
-                            >
-                              {userEmail}
-                            </p>
-                          </div>
+                        <div className="min-w-0">
+                          <p
+                            className="font-inter font-bold text-gray-900 leading-tight"
+                            style={{ fontSize: "15px" }}
+                          >
+                            {log.performed_by || "System"}
+                          </p>
+                          <p
+                            className="font-inter font-medium text-gray-400 mt-0.5"
+                            style={{ fontSize: "12px" }}
+                          >
+                            {log.user_email || "System User"}
+                          </p>
                         </div>
                       </td>
                       <td className="px-5 py-2.5">
@@ -470,21 +445,23 @@ export default function AuditLogHistory({ onViewLog }) {
                         </span>
                       </td>
                       <td className="px-5 py-2.5">
-                        <div className="min-w-0">
-                          <p
-                            className="font-inter font-semibold text-gray-700 truncate max-w-[200px]"
-                            style={{ fontSize: "13px" }}
-                            title={log.audit_id}
-                          >
-                            {log.audit_id}
-                          </p>
-                          <p
-                            className="font-inter font-medium text-gray-400 mt-0.5"
-                            style={{ fontSize: "11px" }}
-                          >
-                            Table: {log.table_name}
-                          </p>
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => onViewLog && onViewLog(log)}
+                          className="font-inter font-bold uppercase tracking-wider transition hover:bg-gray-100 active:scale-95"
+                          style={{
+                            fontSize: "10px",
+                            padding: "6px 14px",
+                            backgroundColor: "#fff",
+                            color: "#142d55",
+                            border: "2px solid #142d55",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            letterSpacing: "0.04em",
+                          }}
+                        >
+                          View Details
+                        </button>
                       </td>
                     </tr>
                   );

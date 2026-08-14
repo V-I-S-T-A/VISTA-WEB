@@ -1,13 +1,13 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import api from "./../../../../lib/axios";
 
-export default function OCRResults({ submissionId }) {
-  const navigate = useNavigate();
+export default function OCRResults({ submissionId, ocrConfidence = 100 }) {
   const [submissionData, setSubmissionData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const displayScore = Math.round(ocrConfidence);
 
   useEffect(() => {
     const fetchSubmissionDetails = async () => {
@@ -18,7 +18,6 @@ export default function OCRResults({ submissionId }) {
       }
 
       try {
-        // Fetch the detailed submission record from your backend
         const response = await api.get(`/submissions/${submissionId}/`);
         setSubmissionData(response.data);
       } catch (err) {
@@ -32,8 +31,8 @@ export default function OCRResults({ submissionId }) {
     fetchSubmissionDetails();
   }, [submissionId]);
 
-  const handleSubmitForReview = () => {
-    navigate("/staff/review-panel");
+  const handleSaveToDrive = async () => {
+    alert("Simulating Save to Drive for submission: " + submissionId);
   };
 
   if (isLoading) {
@@ -60,7 +59,6 @@ export default function OCRResults({ submissionId }) {
 
   return (
     <div>
-      {/* Back button */}
       <div style={{ marginBottom: "16px" }}>
         <span className="font-inter text-gray-500" style={{ fontSize: "13px" }}>
           <button
@@ -89,7 +87,6 @@ export default function OCRResults({ submissionId }) {
         </span>
       </div>
 
-      {/* OCR Extraction Card */}
       <div
         style={{
           background:
@@ -148,11 +145,10 @@ export default function OCRResults({ submissionId }) {
               className="font-inter font-black"
               style={{ fontSize: "30px", lineHeight: 1, color: "#F59E0B" }}
             >
-              100%
+              {displayScore}%
             </p>
           </div>
         </div>
-        {/* Amber progress bar */}
         <div
           style={{
             marginTop: "8px",
@@ -164,7 +160,7 @@ export default function OCRResults({ submissionId }) {
         >
           <div
             style={{
-              width: "100%",
+              width: `${displayScore}%`,
               height: "100%",
               borderRadius: "99px",
               backgroundColor: "#F59E0B",
@@ -173,7 +169,6 @@ export default function OCRResults({ submissionId }) {
         </div>
       </div>
 
-      {/* Extracted Structured Data Banner */}
       <div
         style={{
           background: "#1f5cae",
@@ -194,7 +189,6 @@ export default function OCRResults({ submissionId }) {
         </p>
       </div>
 
-      {/* Structured Data Fields */}
       <div
         style={{
           border: "1.5px solid #e5e7eb",
@@ -210,7 +204,6 @@ export default function OCRResults({ submissionId }) {
             gap: "20px",
           }}
         >
-          {/* Submitter Name */}
           <div>
             <p
               className="font-inter font-bold text-[#142d55] uppercase"
@@ -233,11 +226,10 @@ export default function OCRResults({ submissionId }) {
                 backgroundColor: "#fff",
               }}
             >
-              {submissionData?.submitted_by_name || submissionData?.submitted_by || "Unknown"}
+              {submissionData?.submitted_by_name || "Unknown"}
             </div>
           </div>
 
-          {/* Date of Submission */}
           <div>
             <p
               className="font-inter font-bold text-[#142d55] uppercase"
@@ -266,7 +258,6 @@ export default function OCRResults({ submissionId }) {
             </div>
           </div>
 
-          {/* Document Type */}
           <div>
             <p
               className="font-inter font-bold text-[#142d55] uppercase"
@@ -293,7 +284,6 @@ export default function OCRResults({ submissionId }) {
             </div>
           </div>
 
-          {/* Reference ID */}
           <div>
             <p
               className="font-inter font-bold text-[#142d55] uppercase"
@@ -324,11 +314,10 @@ export default function OCRResults({ submissionId }) {
         </div>
       </div>
 
-      {/* Action Buttons */}
       <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
         <button
           type="button"
-          onClick={handleSubmitForReview}
+          onClick={handleSaveToDrive}
           className="font-inter font-bold uppercase tracking-wider transition hover:bg-[#e8b832] active:scale-95"
           style={{
             fontSize: "12px",
@@ -341,7 +330,7 @@ export default function OCRResults({ submissionId }) {
             letterSpacing: "0.06em",
           }}
         >
-          Submit to Review
+          Approve &amp; Save to Drive
         </button>
         <button
           type="button"
