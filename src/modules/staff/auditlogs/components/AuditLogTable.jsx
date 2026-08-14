@@ -426,7 +426,7 @@ export default function AuditLogHistory({ onViewLog }) {
                             className="font-inter font-medium text-gray-400 mt-0.5"
                             style={{ fontSize: "12px" }}
                           >
-                            {log.user_email || "System User"}
+                            {log.performed_by_org || "System User"}
                           </p>
                         </div>
                       </td>
