@@ -108,7 +108,11 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     setIsSubmitting(true);
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
-      await submissionService.updateStatus(submission.id, backendStatus, remarks);
+      await submissionService.updateStatus(
+        submission.id,
+        backendStatus,
+        remarks,
+      );
       alert("Decision submitted successfully!");
       await invalidateAndGoBack();
     } catch (error) {
@@ -126,7 +130,11 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     setIsSubmitting(true);
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
-      await submissionService.updateStatus(submission.id, backendStatus, remarks);
+      await submissionService.updateStatus(
+        submission.id,
+        backendStatus,
+        remarks,
+      );
       alert("Submission verified and synced to Google Drive!");
       setShowConfirmModal(false);
       await invalidateAndGoBack();
@@ -164,7 +172,15 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               fontSize: "13px",
             }}
           >
-            <span style={{ fontSize: "16px", lineHeight: "20px", marginRight: "4px" }}>›</span>
+            <span
+              style={{
+                fontSize: "16px",
+                lineHeight: "20px",
+                marginRight: "4px",
+              }}
+            >
+              ›
+            </span>
             Back
           </span>
         </button>

@@ -20,6 +20,7 @@ export default function DocumentEntry() {
   const [academicYears, setAcademicYears] = useState([]);
   const [documentTypes, setDocumentTypes] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [ocrConfidence, setOcrConfidence] = useState(100);
 
   const [file, setFile] = useState(null);
   const [formData, setFormData] = useState({
@@ -93,12 +94,14 @@ export default function DocumentEntry() {
 
       // Auto-fill the form fields based on the OCR matches
       if (draft.status === "draft_pending_review") {
+        setOcrConfidence(draft.template_confidence || 100);
         setFormData((prev) => ({
           ...prev,
           org_id: draft.suggested_org_id || prev.org_id,
+          academic_year_id:
+            draft.suggested_academic_year_id || prev.academic_year_id,
           doc_type_id: draft.suggested_doc_type_id || prev.doc_type_id,
           category_id: draft.suggested_category_id || prev.category_id,
-          // FIX: The new OCR display name now overwrites the old title
           title: draft.display_name || prev.title || "",
         }));
       }
@@ -176,7 +179,7 @@ export default function DocumentEntry() {
       }
       // Navigate directly to the Analysis Results Page
       navigate("/staff/registration/analysis-results", {
-        state: { submissionId },
+        state: { submissionId, ocrConfidence },
       });
     } catch (err) {
       console.error("Submission failed:", err);
