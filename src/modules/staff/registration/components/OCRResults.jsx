@@ -1,172 +1,26 @@
-import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-import api from "./../../../../lib/axios";
 
-export default function OCRResults({ submissionId, ocrConfidence = 100 }) {
-  const [submissionData, setSubmissionData] = useState(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const displayScore = Math.round(ocrConfidence);
-
-  useEffect(() => {
-    const fetchSubmissionDetails = async () => {
-      if (!submissionId) {
-        setIsLoading(false);
-        setError("No submission ID provided.");
-        return;
-      }
-
-      try {
-        const response = await api.get(`/submissions/${submissionId}/`);
-        setSubmissionData(response.data);
-      } catch (err) {
-        console.error("Failed to fetch submission details:", err);
-        setError("Failed to load submission data.");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSubmissionDetails();
-  }, [submissionId]);
-
-  const handleSaveToDrive = async () => {
-    alert("Simulating Save to Drive for submission: " + submissionId);
-  };
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center py-10">
-        <Loader2 className="w-8 h-8 animate-spin text-[#142d55]" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg">
-        <p>{error}</p>
-        <button
-          onClick={() => window.history.back()}
-          className="mt-2 text-sm underline font-medium"
-        >
-          Go Back
-        </button>
-      </div>
-    );
-  }
-
+export default function OCRResults({
+  summaryData,
+  onApprove,
+  onRedo,
+  isSubmitting,
+}) {
   return (
     <div>
       <div style={{ marginBottom: "16px" }}>
-        <span className="font-inter text-gray-500" style={{ fontSize: "13px" }}>
-          <button
-            type="button"
-            onClick={() => window.history.back()}
-            className="inline-flex items-center gap-1 font-inter font-semibold"
-            style={{
-              fontSize: "12px",
-              background:
-                "linear-gradient(#FFF4BA, #FFF4BA) padding-box, linear-gradient(#FFE452, #FFE452) border-box",
-              border: "3px solid transparent",
-              borderRadius: "99px",
-              padding: "4px 14px",
-              cursor: "pointer",
-              marginRight: "8px",
-              color: "#142d55",
-              outline: "none",
-              boxShadow: "0 0 0 3px #FFE452",
-              backgroundColor: "#FFF4BA",
-              boxSizing: "border-box",
-            }}
-          >
-            &gt; Back
-          </button>
-          OCR Extraction results.
+        <span
+          className="font-inter font-semibold text-[#142d55]"
+          style={{ fontSize: "16px" }}
+        >
+          Review Extracted Details
         </span>
-      </div>
-
-      <div
-        style={{
-          background:
-            "linear-gradient(135deg, #FDC849 0%, #FDC849 50%, #FDC849 100%)",
-          borderRadius: "12px",
-          padding: "18px 24px 14px",
-          marginBottom: "16px",
-        }}
-      >
-        <div
-          style={{
-            display: "flex",
-            alignItems: "flex-start",
-            justifyContent: "space-between",
-          }}
+        <p
+          className="font-inter text-gray-500 mt-1"
+          style={{ fontSize: "13px" }}
         >
-          <div>
-            <p
-              className="font-inter font-semibold"
-              style={{
-                fontSize: "11px",
-                color: "#142d55",
-                marginBottom: "2px",
-              }}
-            >
-              System Health
-            </p>
-            <p
-              className="font-inter font-black uppercase"
-              style={{
-                fontSize: "22px",
-                letterSpacing: "0.02em",
-                color: "#ffffff",
-              }}
-            >
-              OCR Extraction
-            </p>
-          </div>
-          <div style={{ textAlign: "right" }}>
-            <span
-              className="font-inter font-bold uppercase"
-              style={{
-                fontSize: "8px",
-                color: "#0B8380",
-                backgroundColor: "rgba(255,255,255,0.9)",
-                padding: "3px 10px",
-                borderRadius: "99px",
-                display: "inline-block",
-                marginBottom: "4px",
-                letterSpacing: "0.06em",
-              }}
-            >
-              Active Engine
-            </span>
-            <p
-              className="font-inter font-black"
-              style={{ fontSize: "30px", lineHeight: 1, color: "#F59E0B" }}
-            >
-              {displayScore}%
-            </p>
-          </div>
-        </div>
-        <div
-          style={{
-            marginTop: "8px",
-            height: "5px",
-            borderRadius: "99px",
-            backgroundColor: "rgba(0,0,0,0.15)",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              width: `${displayScore}%`,
-              height: "100%",
-              borderRadius: "99px",
-              backgroundColor: "#F59E0B",
-            }}
-          />
-        </div>
+          Please verify the information before finalizing the approval.
+        </p>
       </div>
 
       <div
@@ -185,16 +39,17 @@ export default function OCRResults({ submissionId, ocrConfidence = 100 }) {
             color: "#ffffff",
           }}
         >
-          Extracted Structured Data
+          Pending Structured Data
         </p>
       </div>
 
       <div
         style={{
           border: "1.5px solid #e5e7eb",
-          borderRadius: "0px",
+          borderRadius: "8px",
           padding: "24px",
           marginBottom: "28px",
+          backgroundColor: "#f8f9fc",
         }}
       >
         <div
@@ -226,7 +81,7 @@ export default function OCRResults({ submissionId, ocrConfidence = 100 }) {
                 backgroundColor: "#fff",
               }}
             >
-              {submissionData?.submitted_by_name || "Unknown"}
+              {summaryData?.submitted_by_name || "Unknown"}
             </div>
           </div>
 
@@ -252,9 +107,7 @@ export default function OCRResults({ submissionId, ocrConfidence = 100 }) {
                 backgroundColor: "#fff",
               }}
             >
-              {submissionData?.submitted_at
-                ? new Date(submissionData.submitted_at).toLocaleDateString()
-                : "Unknown"}
+              {new Date().toLocaleDateString()} (Today)
             </div>
           </div>
 
@@ -280,7 +133,7 @@ export default function OCRResults({ submissionId, ocrConfidence = 100 }) {
                 backgroundColor: "#fff",
               }}
             >
-              {submissionData?.doc_type_name || "Unknown"}
+              {summaryData?.doc_type_name || "Unknown"}
             </div>
           </div>
 
@@ -293,7 +146,7 @@ export default function OCRResults({ submissionId, ocrConfidence = 100 }) {
                 marginBottom: "6px",
               }}
             >
-              Reference ID
+              Attached File
             </p>
             <div
               style={{
@@ -304,50 +157,54 @@ export default function OCRResults({ submissionId, ocrConfidence = 100 }) {
                 fontFamily: "Inter, sans-serif",
                 color: "#111827",
                 backgroundColor: "#fff",
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
               }}
             >
-              {submissionData?.submission_id
-                ? submissionData.submission_id.slice(0, 8).toUpperCase()
-                : "Unknown"}
+              {summaryData?.file_name || "No File Attached"}
             </div>
           </div>
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
         <button
           type="button"
-          onClick={handleSaveToDrive}
-          className="font-inter font-bold uppercase tracking-wider transition hover:bg-[#e8b832] active:scale-95"
+          onClick={onRedo}
+          disabled={isSubmitting}
+          className="font-inter font-bold uppercase tracking-wider transition hover:bg-gray-100 active:scale-95 disabled:opacity-50"
           style={{
             fontSize: "12px",
-            padding: "10px 22px",
-            backgroundColor: "#FDC849",
-            color: "#6E5C00",
-            border: "2px solid #6E5C00",
-            borderRadius: "6px",
-            cursor: "pointer",
-            letterSpacing: "0.06em",
-          }}
-        >
-          Approve &amp; Save to Drive
-        </button>
-        <button
-          type="button"
-          onClick={() => window.history.back()}
-          className="font-inter font-bold uppercase tracking-wider transition hover:bg-gray-100 active:scale-95"
-          style={{
-            fontSize: "12px",
-            padding: "10px 22px",
+            padding: "10px 24px",
             backgroundColor: "#fff",
             color: "#142d55",
             border: "2px solid #142d55",
             borderRadius: "6px",
-            cursor: "pointer",
+            cursor: isSubmitting ? "not-allowed" : "pointer",
             letterSpacing: "0.06em",
           }}
         >
           Redo
+        </button>
+        <button
+          type="button"
+          onClick={onApprove}
+          disabled={isSubmitting}
+          className="inline-flex items-center gap-2 font-inter font-bold uppercase tracking-wider transition hover:bg-[#e8b832] active:scale-95 disabled:opacity-50"
+          style={{
+            fontSize: "12px",
+            padding: "10px 24px",
+            backgroundColor: "#FDC849",
+            color: "#6E5C00",
+            border: "2px solid #FDC849",
+            borderRadius: "6px",
+            cursor: isSubmitting ? "not-allowed" : "pointer",
+            letterSpacing: "0.06em",
+          }}
+        >
+          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+          {isSubmitting ? "Saving..." : "Approve"}
         </button>
       </div>
     </div>
