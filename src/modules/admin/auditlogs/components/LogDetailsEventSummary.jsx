@@ -60,7 +60,8 @@ export default function LogDetailsEventSummary({ log, actionDisplay }) {
             className="font-inter font-bold text-[#142d55]"
             style={{ fontSize: "16px", marginTop: "10px" }}
           >
-            {log.object_repr || `REF-${log.table_name?.toUpperCase()}-${log.object_id || "000"}`}
+            {log.object_repr ||
+              `REF-${log.table_name?.toUpperCase()}-${log.object_id || "000"}`}
           </p>
         </div>
       </div>

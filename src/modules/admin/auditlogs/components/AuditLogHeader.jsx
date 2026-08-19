@@ -1,17 +1,15 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import { Search, Download, Filter, Eye } from "lucide-react";
+import { Search, Download, Filter } from "lucide-react";
 import api from "../../../../lib/axios";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "30px";
 
-// Matched exactly to Django model ACTION_CHOICES
+// Matched exactly to Django model ACTION_CHOICES (removed login/logout)
 const ACTION_COLORS = {
   create: { bg: "#dcfce7", text: "#166534" },
   update: { bg: "#fef3c7", text: "#92400e" },
   delete: { bg: "#fee2e2", text: "#991b1b" },
-  login: { bg: "#cffafe", text: "#164e63" },
-  logout: { bg: "#f3f4f6", text: "#4b5563" },
   status_change: { bg: "#e9d5ff", text: "#6b21a8" },
   DEFAULT: { bg: "#f3f4f6", text: "#4b5563" },
 };
@@ -28,14 +26,12 @@ export default function AuditLogHistory({ onViewLog }) {
   const moreFiltersRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Match Django database choices
+  // Removed "login" and "logout" from the dropdown filters
   const ACTION_OPTIONS = [
     "All Actions",
     "create",
     "update",
     "delete",
-    "login",
-    "logout",
     "status_change",
   ];
 
@@ -43,15 +39,36 @@ export default function AuditLogHistory({ onViewLog }) {
     const fetchAuditLogs = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get("/audit-logs/");
-        // Safely extract from pagination if it exists
-        setLogs(response.data.results || response.data);
+        let allLogs = [];
+        let page = 1;
+        let hasNextPage = true;
+
+        // Loop through Django's paginated API until all logs are collected
+        while (hasNextPage) {
+          const response = await api.get(`/audit-logs/?page=${page}`);
+
+          if (response.data && response.data.results) {
+            allLogs = [...allLogs, ...response.data.results];
+
+            if (response.data.next) {
+              page++;
+            } else {
+              hasNextPage = false;
+            }
+          } else {
+            allLogs = response.data;
+            hasNextPage = false;
+          }
+        }
+
+        setLogs(allLogs);
       } catch (error) {
         console.error("Error fetching audit logs:", error);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchAuditLogs();
   }, []);
 
@@ -71,6 +88,11 @@ export default function AuditLogHistory({ onViewLog }) {
     const query = searchTerm.trim().toLowerCase();
 
     return logs.filter((log) => {
+      // STRICT FILTER: Completely hide login and logout actions from the UI
+      if (log.action === "login" || log.action === "logout") {
+        return false;
+      }
+
       // Map to Django serializer fields
       const userName = log.performed_by || "System/Unknown";
 
@@ -343,7 +365,8 @@ export default function AuditLogHistory({ onViewLog }) {
                 fontSize: "12px",
               }}
             >
-              <Download className="h-4 w-4" /> Export
+              <Download className="h-4 w-4" aria-hidden="true" />
+              Export
             </button>
           </div>
         </div>
@@ -351,25 +374,21 @@ export default function AuditLogHistory({ onViewLog }) {
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-                {[
-                  "TIMESTAMP",
-                  "USER/ENTITY",
-                  "ACTION",
-                  "ID/REFERENCE",
-                  "ACTION",
-                ].map((heading, idx) => (
-                  <th
-                    key={idx}
-                    className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
-                    style={
-                      heading === "TIMESTAMP"
-                        ? { paddingLeft: CONTENT_PADDING }
-                        : undefined
-                    }
-                  >
-                    {heading}
-                  </th>
-                ))}
+                {["TIMESTAMP", "USER/ENTITY", "ACTION", "DETAILS"].map(
+                  (heading) => (
+                    <th
+                      key={heading}
+                      className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
+                      style={
+                        heading === "TIMESTAMP"
+                          ? { paddingLeft: CONTENT_PADDING }
+                          : undefined
+                      }
+                    >
+                      {heading}
+                    </th>
+                  ),
+                )}
               </tr>
             </thead>
             <tbody>
@@ -395,24 +414,11 @@ export default function AuditLogHistory({ onViewLog }) {
                 paginatedLogs.map((log) => {
                   const actionColor =
                     ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
-                  const userName = log.performed_by || "System";
-                  const userEmail = log.performed_by_email || "System User";
-
-                  const getInitials = (name) => {
-                    if (!name || name === "System") return "SY";
-                    const parts = name.trim().split(" ");
-                    const first = parts[0] ? parts[0].charAt(0) : "";
-                    const last =
-                      parts.length > 1 ? parts[parts.length - 1].charAt(0) : "";
-                    return (first + last).toUpperCase() || "??";
-                  };
-                  const initials = getInitials(userName);
 
                   return (
                     <tr
                       key={log.audit_id}
-                      onClick={() => onViewLog && onViewLog(log)}
-                      className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff] cursor-pointer"
+                      className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
                     >
                       <td
                         className="px-5 py-2.5 font-inter font-medium text-gray-700"
@@ -424,32 +430,19 @@ export default function AuditLogHistory({ onViewLog }) {
                         {formatDate(log.performed_at)}
                       </td>
                       <td className="px-5 py-2.5">
-                        <div className="flex items-center gap-3 min-w-0">
-                          {log.performed_by_image ? (
-                            <img
-                              src={log.performed_by_image}
-                              alt=""
-                              className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-[#1f5cae] font-inter text-[11px] font-bold text-white uppercase">
-                              {initials}
-                            </div>
-                          )}
-                          <div className="flex flex-col">
-                            <p
-                              className="font-inter font-bold text-gray-900 leading-tight"
-                              style={{ fontSize: "14px" }}
-                            >
-                              {userName}
-                            </p>
-                            <p
-                              className="font-inter font-medium text-gray-400 mt-0.5"
-                              style={{ fontSize: "12px" }}
-                            >
-                              {userEmail}
-                            </p>
-                          </div>
+                        <div className="min-w-0">
+                          <p
+                            className="font-inter font-bold text-gray-900 leading-tight"
+                            style={{ fontSize: "15px" }}
+                          >
+                            {log.performed_by || "System"}
+                          </p>
+                          <p
+                            className="font-inter font-medium text-gray-400 mt-0.5"
+                            style={{ fontSize: "12px" }}
+                          >
+                            {log.performed_by_org || "System User"}
+                          </p>
                         </div>
                       </td>
                       <td className="px-5 py-2.5">
@@ -467,37 +460,22 @@ export default function AuditLogHistory({ onViewLog }) {
                         </span>
                       </td>
                       <td className="px-5 py-2.5">
-                        <div className="min-w-0">
-                          <p
-                            className="font-inter font-semibold text-gray-700 truncate max-w-[200px]"
-                            style={{ fontSize: "13px" }}
-                            title={log.audit_id}
-                          >
-                            {log.audit_id}
-                          </p>
-                          <p
-                            className="font-inter font-medium text-gray-400 mt-0.5"
-                            style={{ fontSize: "11px" }}
-                          >
-                            Table: {log.table_name}
-                          </p>
-                        </div>
-                      </td>
-                      <td className="px-5 py-2.5">
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (onViewLog) onViewLog(log);
+                          onClick={() => onViewLog && onViewLog(log)}
+                          className="font-inter font-bold uppercase tracking-wider transition hover:bg-gray-100 active:scale-95"
+                          style={{
+                            fontSize: "10px",
+                            padding: "6px 14px",
+                            backgroundColor: "#fff",
+                            color: "#142d55",
+                            border: "2px solid #142d55",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            letterSpacing: "0.04em",
                           }}
-                          className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50"
-                          style={{ padding: "4px 12px", fontSize: "12px" }}
                         >
-                          <Eye
-                            style={{ width: "12px", height: "12px" }}
-                            aria-hidden="true"
-                          />
-                          VIEW
+                          View Details
                         </button>
                       </td>
                     </tr>
