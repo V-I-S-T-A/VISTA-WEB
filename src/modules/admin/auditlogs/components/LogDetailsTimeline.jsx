@@ -2,7 +2,9 @@ import { Check } from "lucide-react";
 
 export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
   // Mock previous event to match design timeline
-  const previousEventTime = new Date(new Date(log.performed_at).getTime() - 133000);
+  const previousEventTime = new Date(
+    new Date(log.performed_at).getTime() - 133000,
+  );
 
   return (
     <div
@@ -32,7 +34,6 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
 
       {/* Timeline */}
       <div style={{ padding: "24px 28px" }}>
-        
         {/* Current Event */}
         <div className="flex gap-4" style={{ position: "relative" }}>
           <div
@@ -52,7 +53,14 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
                 zIndex: 10,
               }}
             >
-              <Check style={{ width: "12px", height: "12px", color: "#142d55", strokeWidth: 3 }} />
+              <Check
+                style={{
+                  width: "12px",
+                  height: "12px",
+                  color: "#142d55",
+                  strokeWidth: 3,
+                }}
+              />
             </div>
             <div
               style={{
@@ -70,7 +78,12 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
               className="font-inter font-bold text-gray-500"
               style={{ fontSize: "12px", marginBottom: "4px" }}
             >
-              {new Date(log.performed_at).toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {new Date(log.performed_at).toLocaleTimeString("en-US", {
+                hour12: false,
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
             </p>
             <h5
               className="font-inter font-bold text-[#142d55]"
@@ -129,7 +142,12 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
               className="font-inter font-bold text-gray-400"
               style={{ fontSize: "12px", marginBottom: "4px" }}
             >
-              {previousEventTime.toLocaleTimeString("en-US", { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+              {previousEventTime.toLocaleTimeString("en-US", {
+                hour12: false,
+                hour: "2-digit",
+                minute: "2-digit",
+                second: "2-digit",
+              })}
             </p>
             <h5
               className="font-inter font-medium text-gray-500"
@@ -139,7 +157,6 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
             </h5>
           </div>
         </div>
-
       </div>
     </div>
   );

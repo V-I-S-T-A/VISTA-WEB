@@ -1,24 +1,15 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import {
-  Search,
-  Download,
-  ChevronDown,
-  Check,
-  SlidersHorizontal,
-  Filter,
-} from "lucide-react";
+import { Search, Download, Filter } from "lucide-react";
 import api from "../../../../lib/axios";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "30px";
 
-// Matched exactly to Django model ACTION_CHOICES
+// Matched exactly to Django model ACTION_CHOICES (removed login/logout)
 const ACTION_COLORS = {
   create: { bg: "#dcfce7", text: "#166534" },
   update: { bg: "#fef3c7", text: "#92400e" },
   delete: { bg: "#fee2e2", text: "#991b1b" },
-  login: { bg: "#cffafe", text: "#164e63" },
-  logout: { bg: "#f3f4f6", text: "#4b5563" },
   status_change: { bg: "#e9d5ff", text: "#6b21a8" },
   DEFAULT: { bg: "#f3f4f6", text: "#4b5563" },
 };
@@ -35,14 +26,12 @@ export default function AuditLogHistory({ onViewLog }) {
   const moreFiltersRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Match Django database choices
+  // Removed "login" and "logout" from the dropdown filters
   const ACTION_OPTIONS = [
     "All Actions",
     "create",
     "update",
     "delete",
-    "login",
-    "logout",
     "status_change",
   ];
 
@@ -50,15 +39,36 @@ export default function AuditLogHistory({ onViewLog }) {
     const fetchAuditLogs = async () => {
       try {
         setIsLoading(true);
-        const response = await api.get("/audit-logs/");
-        // Safely extract from pagination if it exists
-        setLogs(response.data.results || response.data);
+        let allLogs = [];
+        let page = 1;
+        let hasNextPage = true;
+
+        // Loop through Django's paginated API until all logs are collected
+        while (hasNextPage) {
+          const response = await api.get(`/audit-logs/?page=${page}`);
+
+          if (response.data && response.data.results) {
+            allLogs = [...allLogs, ...response.data.results];
+
+            if (response.data.next) {
+              page++;
+            } else {
+              hasNextPage = false;
+            }
+          } else {
+            allLogs = response.data;
+            hasNextPage = false;
+          }
+        }
+
+        setLogs(allLogs);
       } catch (error) {
         console.error("Error fetching audit logs:", error);
       } finally {
         setIsLoading(false);
       }
     };
+
     fetchAuditLogs();
   }, []);
 
@@ -78,6 +88,11 @@ export default function AuditLogHistory({ onViewLog }) {
     const query = searchTerm.trim().toLowerCase();
 
     return logs.filter((log) => {
+      // STRICT FILTER: Completely hide login and logout actions from the UI
+      if (log.action === "login" || log.action === "logout") {
+        return false;
+      }
+
       // Map to Django serializer fields
       const userName = log.performed_by || "System/Unknown";
 

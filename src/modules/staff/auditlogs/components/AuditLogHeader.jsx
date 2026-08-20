@@ -1,139 +1,67 @@
 import { useState, useRef, useEffect, useMemo } from "react";
-import {
-  Search,
-  Download,
-  ChevronDown,
-  Check,
-  SlidersHorizontal,
-} from "lucide-react";
-import api from "./../../../lib/axios"; // Adjust path to your axios instance if needed
+import { Search, Download, Filter } from "lucide-react";
+import api from "../../../../lib/axios";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "30px";
 
+// Matched exactly to Django model ACTION_CHOICES (removed login/logout)
 const ACTION_COLORS = {
-  USER_CREATION: { bg: "#dbeafe", text: "#0369a1" },
-  USER_DELETION: { bg: "#fee2e2", text: "#991b1b" },
-  SUBMISSION_APPROVED: { bg: "#dcfce7", text: "#166534" },
-  REVISION: { bg: "#fef3c7", text: "#92400e" },
-  PENDING: { bg: "#fecaca", text: "#7c2d12" },
-  DOCUMENT_UPLOADED: { bg: "#e9d5ff", text: "#6b21a8" },
-  SYSTEM_CONFIG_CHANGED: { bg: "#d1d5db", text: "#374151" },
-  LOGIN: { bg: "#cffafe", text: "#164e63" },
-  BACKUP_COMPLETED: { bg: "#f3e8ff", text: "#5b21b6" },
-  // Add a default for unknown actions from the DB
+  create: { bg: "#dcfce7", text: "#166534" },
+  update: { bg: "#fef3c7", text: "#92400e" },
+  delete: { bg: "#fee2e2", text: "#991b1b" },
+  status_change: { bg: "#e9d5ff", text: "#6b21a8" },
   DEFAULT: { bg: "#f3f4f6", text: "#4b5563" },
 };
 
-function FilterDropdown({ label, options, value, onChange }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef(null);
-
-  useEffect(() => {
-    if (!isOpen) return;
-    function handleClickOutside(event) {
-      if (containerRef.current && !containerRef.current.contains(event.target))
-        setIsOpen(false);
-    }
-    function handleKeyDown(event) {
-      if (event.key === "Escape") setIsOpen(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
-
-  return (
-    <div className="relative" ref={containerRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        aria-haspopup="listbox"
-        aria-expanded={isOpen}
-        aria-label={label}
-        className="appearance-none bg-white font-inter font-semibold text-gray-700 outline-none cursor-pointer inline-flex items-center gap-6 hover:bg-gray-50 transition-colors whitespace-nowrap"
-        style={{
-          border: "1.5px solid #d1d5db",
-          borderRadius: "7px",
-          padding: "7px 11px",
-          fontSize: "12px",
-        }}
-      >
-        {value}
-        <ChevronDown
-          className="pointer-events-none h-4 w-4 flex-shrink-0 text-gray-500 transition-transform"
-          style={{ transform: isOpen ? "rotate(180deg)" : "none" }}
-          aria-hidden="true"
-        />
-      </button>
-
-      {isOpen && (
-        <div
-          role="listbox"
-          className="absolute left-0 top-full z-10 mt-1.5 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg"
-        >
-          {options.map((option) => {
-            const isSelected = option === value;
-            return (
-              <button
-                key={option}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                onClick={() => {
-                  onChange(option);
-                  setIsOpen(false);
-                }}
-                className={[
-                  "flex w-full items-center justify-between gap-2 px-3 py-2 text-left font-inter font-semibold transition-colors",
-                  isSelected
-                    ? "bg-[#eef2ff] text-[#1f5cae]"
-                    : "text-gray-700 hover:bg-gray-50",
-                ].join(" ")}
-                style={{ fontSize: "12px" }}
-              >
-                {option}
-                {isSelected && (
-                  <Check
-                    className="h-3.5 w-3.5 flex-shrink-0"
-                    aria-hidden="true"
-                  />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
-    </div>
-  );
-}
-
-export default function AuditLogHistory() {
+export default function AuditLogHistory({ onViewLog }) {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [actionFilter, setActionFilter] = useState("All Actions");
-  const [userTypeFilter, setUserTypeFilter] = useState("All Types");
 
-  // States for "More Filters" (Date/Calendar)
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [dateFilter, setDateFilter] = useState("");
   const moreFiltersRef = useRef(null);
-
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Fetch real data from Django Backend
+  // Removed "login" and "logout" from the dropdown filters
+  const ACTION_OPTIONS = [
+    "All Actions",
+    "create",
+    "update",
+    "delete",
+    "status_change",
+  ];
+
   useEffect(() => {
     const fetchAuditLogs = async () => {
       try {
         setIsLoading(true);
-        // Replace '/audit-logs/' with your actual Django API endpoint
-        const response = await api.get("/audit-logs/");
-        setLogs(response.data);
+        let allLogs = [];
+        let page = 1;
+        let hasNextPage = true;
+
+        // Loop through Django's paginated API until all logs are collected
+        while (hasNextPage) {
+          const response = await api.get(`/audit-logs/?page=${page}`);
+
+          if (response.data && response.data.results) {
+            allLogs = [...allLogs, ...response.data.results];
+
+            if (response.data.next) {
+              page++;
+            } else {
+              hasNextPage = false;
+            }
+          } else {
+            allLogs = response.data;
+            hasNextPage = false;
+          }
+        }
+
+        setLogs(allLogs);
       } catch (error) {
         console.error("Error fetching audit logs:", error);
       } finally {
@@ -144,52 +72,6 @@ export default function AuditLogHistory() {
     fetchAuditLogs();
   }, []);
 
-  const ACTION_OPTIONS = [
-    "All Actions",
-    "USER_CREATION",
-    "USER_DELETION",
-    "SUBMISSION_APPROVED",
-    "REVISION",
-    "PENDING",
-    "DOCUMENT_UPLOADED",
-    "SYSTEM_CONFIG_CHANGED",
-    "LOGIN",
-    "BACKUP_COMPLETED",
-  ];
-
-  const USER_TYPE_OPTIONS = [
-    "All Types",
-    "Admin",
-    "Staff",
-    "Student",
-    "Faculty",
-    "OSA Staff",
-    "Student Organization",
-  ];
-
-  // Handle click outside for More Filters
-  useEffect(() => {
-    if (!showMoreFilters) return;
-    function handleClickOutside(event) {
-      if (
-        moreFiltersRef.current &&
-        !moreFiltersRef.current.contains(event.target)
-      ) {
-        setShowMoreFilters(false);
-      }
-    }
-    function handleKeyDown(event) {
-      if (event.key === "Escape") setShowMoreFilters(false);
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [showMoreFilters]);
-
-  // Format date utility for the UI table display
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
     const options = {
@@ -202,50 +84,47 @@ export default function AuditLogHistory() {
     return new Date(dateString).toLocaleDateString("en-US", options);
   };
 
-  // Filter and search logic
   const filteredLogs = useMemo(() => {
     const query = searchTerm.trim().toLowerCase();
 
     return logs.filter((log) => {
-      // Map django nested user fields
-      const userName =
-        log.user?.username || log.user_id?.username || "System/Unknown";
-      const userType = log.user?.role || log.user_id?.role || "Unknown Role";
+      // STRICT FILTER: Completely hide login and logout actions from the UI
+      if (log.action === "login" || log.action === "logout") {
+        return false;
+      }
+
+      // Map to Django serializer fields
+      const userName = log.performed_by || "System/Unknown";
 
       const matchesSearch =
         !query ||
-        userName.toLowerCase().includes(query) ||
-        log.action.toLowerCase().includes(query) ||
-        log.audit_id.toLowerCase().includes(query) ||
-        log.table_name.toLowerCase().includes(query);
+        String(userName).toLowerCase().includes(query) ||
+        String(log.action || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(log.audit_id || "")
+          .toLowerCase()
+          .includes(query) ||
+        String(log.table_name || "")
+          .toLowerCase()
+          .includes(query);
 
       const matchesAction =
         actionFilter === "All Actions" || log.action === actionFilter;
 
-      const matchesUserType =
-        userTypeFilter === "All Types" || userType === userTypeFilter;
-
-      // Date Picker matching logic
       let matchesDate = true;
       if (dateFilter && log.performed_at) {
-        // Convert the Django DB timestamp to a YYYY-MM-DD string
         const logDateObj = new Date(log.performed_at);
-        const year = logDateObj.getFullYear();
-        const month = String(logDateObj.getMonth() + 1).padStart(2, "0");
-        const day = String(logDateObj.getDate()).padStart(2, "0");
-        const formattedLogDate = `${year}-${month}-${day}`;
-
+        const formattedLogDate = `${logDateObj.getFullYear()}-${String(logDateObj.getMonth() + 1).padStart(2, "0")}-${String(logDateObj.getDate()).padStart(2, "0")}`;
         matchesDate = formattedLogDate === dateFilter;
       }
 
-      return matchesSearch && matchesAction && matchesUserType && matchesDate;
+      return matchesSearch && matchesAction && matchesDate;
     });
-  }, [logs, searchTerm, actionFilter, userTypeFilter, dateFilter]);
+  }, [logs, searchTerm, actionFilter, dateFilter]);
 
-  // Pagination logic
   const totalPages = Math.max(1, Math.ceil(filteredLogs.length / PAGE_SIZE));
   const safeCurrentPage = Math.min(currentPage, totalPages);
-
   const paginatedLogs = useMemo(() => {
     const start = (safeCurrentPage - 1) * PAGE_SIZE;
     return filteredLogs.slice(start, start + PAGE_SIZE);
@@ -257,22 +136,19 @@ export default function AuditLogHistory() {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   }
 
-  // Export handler
   const handleExport = () => {
     const headers = ["TIMESTAMP", "USER/ENTITY", "ACTION", "TABLE", "AUDIT_ID"];
     const csvContent = [
       headers.join(","),
-      ...filteredLogs.map((log) => {
-        const userName =
-          log.user?.username || log.user_id?.username || "Unknown";
-        return [
+      ...filteredLogs.map((log) =>
+        [
           formatDate(log.performed_at),
-          userName,
+          log.performed_by || "Unknown",
           log.action,
           log.table_name,
           log.audit_id,
-        ].join(",");
-      }),
+        ].join(","),
+      ),
     ].join("\n");
 
     const blob = new Blob([csvContent], { type: "text/csv" });
@@ -299,7 +175,6 @@ export default function AuditLogHistory() {
 
   return (
     <>
-      {/* Page heading */}
       <div
         className="flex items-start justify-between w-full"
         style={{ marginBottom: "14px" }}
@@ -320,11 +195,9 @@ export default function AuditLogHistory() {
         </div>
       </div>
 
-      {/* Table shell */}
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
-        {/* Section header with controls */}
+      <section className="rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
         <div
-          className="bg-[#1f5cae] flex items-center justify-between px-4 py-3"
+          className="bg-[#1f5cae] flex items-center justify-between px-4 py-3 rounded-t-xl"
           style={{ minHeight: "64px" }}
         >
           <h3
@@ -333,12 +206,10 @@ export default function AuditLogHistory() {
           >
             Live Activity Stream
           </h3>
-
           <div
             className="flex items-center gap-3"
             style={{ paddingRight: "20px" }}
           >
-            {/* Search bar */}
             <div className="relative" style={{ width: "300px" }}>
               <Search
                 className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"
@@ -362,110 +233,128 @@ export default function AuditLogHistory() {
                 }}
               />
             </div>
-
-            {/* Action filter dropdown */}
-            <FilterDropdown
-              label="Filter by action"
-              options={ACTION_OPTIONS}
-              value={actionFilter}
-              onChange={(v) => {
-                setActionFilter(v);
-                setCurrentPage(1);
-              }}
-            />
-
-            {/* User type filter dropdown */}
-            <FilterDropdown
-              label="Filter by user type"
-              options={USER_TYPE_OPTIONS}
-              value={userTypeFilter}
-              onChange={(v) => {
-                setUserTypeFilter(v);
-                setCurrentPage(1);
-              }}
-            />
-
-            {/* More Filters button & Popover with Calendar */}
             <div className="relative" ref={moreFiltersRef}>
               <button
                 type="button"
-                onClick={() => setShowMoreFilters((prev) => !prev)}
-                className={`inline-flex items-center gap-1.5 font-inter font-semibold transition-colors whitespace-nowrap ${
-                  showMoreFilters || dateFilter
-                    ? "bg-[#eef2ff] text-[#1f5cae] border-[#1f5cae]"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border-[#d1d5db]"
-                }`}
+                onClick={() => setShowMoreFilters((p) => !p)}
+                className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
                 style={{
-                  borderWidth: "1.5px",
-                  borderStyle: "solid",
-                  borderRadius: "7px",
-                  padding: "7px 13px",
-                  fontSize: "12px",
+                  fontSize: "12.5px",
+                  padding: "7px 14px",
+                  backgroundColor: "#12345b",
                 }}
               >
-                <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-                More Filters
-                {/* Optional indicator if filter is active */}
-                {dateFilter && (
-                  <div className="w-2 h-2 rounded-full bg-blue-500 ml-1"></div>
+                <Filter
+                  style={{ width: "13px", height: "13px" }}
+                  aria-hidden="true"
+                />
+                Filter
+                {(actionFilter !== "All Actions" || dateFilter) && (
+                  <span
+                    className="inline-flex items-center justify-center font-bold"
+                    style={{
+                      width: "16px",
+                      height: "16px",
+                      borderRadius: "9999px",
+                      backgroundColor: "#ffffff",
+                      color: "#12345b",
+                      fontSize: "10px",
+                      marginLeft: "4px",
+                    }}
+                  >
+                    {(actionFilter !== "All Actions" ? 1 : 0) +
+                      (dateFilter ? 1 : 0)}
+                  </span>
                 )}
               </button>
 
-              {/* More Filters Dropdown Panel */}
               {showMoreFilters && (
-                <div className="absolute right-0 top-full z-10 mt-1.5 w-64 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg p-4">
-                  <h4 className="font-inter text-[13px] font-bold text-gray-800 mb-3">
-                    Additional Filters
-                  </h4>
+                <div
+                  className="absolute right-0 top-full z-20"
+                  style={{
+                    marginTop: "8px",
+                    width: "288px",
+                    borderRadius: "10px",
+                    border: "1px solid #e2e6ee",
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
+                    padding: "16px",
+                  }}
+                >
+                  <div style={{ marginBottom: "14px" }}>
+                    <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
+                      Action
+                    </label>
+                    <select
+                      value={actionFilter}
+                      onChange={(e) => {
+                        setActionFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
+                      className="w-full font-inter outline-none"
+                      style={{
+                        borderRadius: "8px",
+                        border: "1px solid #d1d5db",
+                        padding: "8px 10px",
+                        fontSize: "14px",
+                      }}
+                    >
+                      {ACTION_OPTIONS.map((o) => (
+                        <option key={o} value={o}>
+                          {o === "All Actions" ? o : String(o).toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                  {/* Calendar/Date Filter */}
-                  <div className="mb-4">
-                    <label className="block text-xs font-semibold text-gray-500 mb-1.5">
-                      Filter by Date
+                  <div style={{ marginBottom: "14px" }}>
+                    <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
+                      Date
                     </label>
                     <input
                       type="date"
                       value={dateFilter}
                       onChange={(e) => {
                         setDateFilter(e.target.value);
-                        setCurrentPage(1); // Reset to page 1 on filter
+                        setCurrentPage(1);
                       }}
-                      className="w-full bg-white font-inter text-gray-700 outline-none cursor-pointer"
+                      className="w-full font-inter outline-none cursor-pointer"
                       style={{
-                        height: "34px",
+                        borderRadius: "8px",
                         border: "1px solid #d1d5db",
-                        borderRadius: "6px",
-                        padding: "0 10px",
-                        fontSize: "13px",
+                        padding: "8px 10px",
+                        fontSize: "14px",
                       }}
                     />
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex justify-between items-center mt-2">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setDateFilter("");
-                        setCurrentPage(1);
-                      }}
-                      className="text-xs font-inter font-semibold text-red-600 hover:text-red-700 hover:underline"
-                    >
-                      Clear Filters
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowMoreFilters(false)}
-                      className="bg-[#1f5cae] text-white px-3 py-1.5 rounded-md text-xs font-inter font-semibold hover:bg-[#154685] transition-colors"
-                    >
-                      Done
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActionFilter("All Actions");
+                      setDateFilter("");
+                      setCurrentPage(1);
+                    }}
+                    className="w-full font-inter font-bold transition-colors"
+                    style={{
+                      backgroundColor: "#f3f4f6",
+                      color: "#4b5563",
+                      padding: "8px 0",
+                      borderRadius: "8px",
+                      fontSize: "13px",
+                    }}
+                    onMouseEnter={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#e5e7eb")
+                    }
+                    onMouseLeave={(e) =>
+                      (e.currentTarget.style.backgroundColor = "#f3f4f6")
+                    }
+                  >
+                    Clear Filters
+                  </button>
                 </div>
               )}
             </div>
-
-            {/* Export button */}
             <button
               onClick={handleExport}
               type="button"
@@ -481,16 +370,14 @@ export default function AuditLogHistory() {
             </button>
           </div>
         </div>
-
-        {/* Table */}
         <div className="overflow-x-auto">
           <table className="min-w-full border-collapse">
             <thead>
               <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
                 {["TIMESTAMP", "USER/ENTITY", "ACTION", "DETAILS"].map(
-                  (heading, index) => (
+                  (heading) => (
                     <th
-                      key={index}
+                      key={heading}
                       className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
                       style={
                         heading === "TIMESTAMP"
@@ -528,12 +415,6 @@ export default function AuditLogHistory() {
                   const actionColor =
                     ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
 
-                  // Map nested foreign key items safely
-                  const userName =
-                    log.user?.username || log.user_id?.username || "Unknown";
-                  const userType =
-                    log.user?.role || log.user_id?.role || "Unknown Role";
-
                   return (
                     <tr
                       key={log.audit_id}
@@ -554,13 +435,13 @@ export default function AuditLogHistory() {
                             className="font-inter font-bold text-gray-900 leading-tight"
                             style={{ fontSize: "15px" }}
                           >
-                            {userName}
+                            {log.performed_by || "System"}
                           </p>
                           <p
                             className="font-inter font-medium text-gray-400 mt-0.5"
                             style={{ fontSize: "12px" }}
                           >
-                            {userType}
+                            {log.performed_by_org || "System User"}
                           </p>
                         </div>
                       </td>
@@ -575,13 +456,13 @@ export default function AuditLogHistory() {
                             minHeight: "23px",
                           }}
                         >
-                          {log.action}
+                          {String(log.action).toUpperCase()}
                         </span>
                       </td>
                       <td className="px-5 py-2.5">
                         <button
                           type="button"
-                          onClick={() => console.log("View Details for", log)}
+                          onClick={() => onViewLog && onViewLog(log)}
                           className="font-inter font-bold uppercase tracking-wider transition hover:bg-gray-100 active:scale-95"
                           style={{
                             fontSize: "10px",
@@ -604,8 +485,6 @@ export default function AuditLogHistory() {
             </tbody>
           </table>
         </div>
-
-        {/* Footer */}
         <div
           className="flex items-center justify-between border-t border-gray-200 bg-white"
           style={{
@@ -626,7 +505,6 @@ export default function AuditLogHistory() {
             </span>{" "}
             entries
           </p>
-
           {showPagination && (
             <div className="flex items-center gap-2">
               <button

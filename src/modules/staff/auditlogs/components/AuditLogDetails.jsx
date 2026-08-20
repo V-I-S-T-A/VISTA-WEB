@@ -45,7 +45,7 @@ export default function AuditLogDetails({ log, onBack }) {
       ? String(log.action).toUpperCase().replace(/_/g, " ")
       : "UNKNOWN";
 
-    const humanTitle = `${formatTable(log.table_name)} ${normalizedAction.charAt(0) + normalizedAction.slice(1).toLowerCase()}`;
+    const humanTitle = `${normalizedAction.charAt(0) + normalizedAction.slice(1).toLowerCase()}`;
 
     let newData = log.new_data || changes.new_data || changes.new || null;
     let oldData = log.old_data || changes.old_data || changes.old || null;
@@ -83,44 +83,46 @@ export default function AuditLogDetails({ log, onBack }) {
 
     return {
       logId: shortLogId,
-      severity: "INFO",
       title: humanTitle,
       actor: log.performed_by || "System",
       timestamp: new Date(log.performed_at).toLocaleDateString("en-US", {
-        month: "short",
+        month: "long",
         day: "numeric",
         year: "numeric",
       }),
       time: new Date(log.performed_at).toLocaleTimeString("en-US", {
+        hour12: false,
         hour: "2-digit",
         minute: "2-digit",
+        second: "2-digit",
       }),
       actionCategory: formatTable(log.table_name),
       realSubmissionId: realSubmissionId,
       referenceId: shortRefId,
+      rawTableName: log.table_name,
+      action: normalizedAction,
+      newData: newData,
+      oldData: oldData,
+      rawChanges: changes,
       impactedEntities: [
         {
           id: shortRefId,
           name: fallbackName,
           label: "Affected Record",
-          type: "document",
         },
       ],
       timeline: [
         {
           time: new Date(log.performed_at).toLocaleTimeString("en-US", {
+            hour12: false,
             hour: "2-digit",
             minute: "2-digit",
+            second: "2-digit",
           }),
           label: `Event: ${normalizedAction}`,
           current: true,
         },
       ],
-      action: normalizedAction,
-      newData: newData,
-      oldData: oldData,
-      rawChanges: changes,
-      rawTableName: log.table_name,
     };
   }, [log]);
 
@@ -206,616 +208,662 @@ export default function AuditLogDetails({ log, onBack }) {
     );
   };
 
+  const previousEventTime = new Date(
+    new Date(log.performed_at).getTime() - 133000,
+  );
+
   return (
-    <div className="mx-4 sm:mx-6 lg:mx-8 my-4">
-      <div
-        className="flex items-center gap-3"
-        style={{ paddingBottom: "20px" }}
-      >
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center rounded-full transition hover:brightness-105 active:scale-95"
-          style={{
-            backgroundColor: "#FFE452",
-            padding: "3px",
-          }}
+    <div className="w-full pb-10">
+      <div style={{ marginBottom: "20px" }}>
+        <h2
+          className="font-inter font-bold text-[#142d55]"
+          style={{ fontSize: "28px", lineHeight: 1.15 }}
         >
-          <span
-            className="inline-flex items-center rounded-full font-inter font-medium text-[#1a1a1a]"
+          Audit Log History Details
+        </h2>
+        <p
+          className="font-inter text-gray-500 mt-1"
+          style={{ fontSize: "16px" }}
+        >
+          System-wide transparency of activities.
+        </p>
+
+        <div className="flex items-center gap-4 mt-5">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center justify-center transition hover:brightness-110 active:scale-95"
             style={{
-              backgroundColor: "#FFF2A8",
-              padding: "4px 14px",
-              fontSize: "13px",
+              borderRadius: "9999px",
+              backgroundColor: "#FFE452",
+              padding: "4px",
+              border: "none",
+              cursor: "pointer",
             }}
           >
-            <span
+            <div
+              className="flex items-center gap-1.5 font-inter text-[#1a1a1a]"
               style={{
-                fontSize: "16px",
-                lineHeight: "20px",
-                marginRight: "4px",
+                fontSize: "14px",
+                padding: "4px 16px",
+                borderRadius: "9999px",
+                backgroundColor: "#FFF2A8",
+                fontWeight: 500,
               }}
             >
-              ›
-            </span>
-            Back
+              <span style={{ fontSize: "16px", lineHeight: 1 }}>›</span> Back
+            </div>
+          </button>
+          <span
+            className="font-inter text-[#142d55]"
+            style={{ fontSize: "16px", fontWeight: 500 }}
+          >
+            Audit log history details.
           </span>
-        </button>
-        <span
-          className="font-inter font-medium text-gray-500"
-          style={{ fontSize: "13.5px" }}
-        >
-          Audit log history details.
-        </span>
+        </div>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-        <div style={{ padding: "24px 28px" }}>
-          <div className="flex items-center gap-3 mb-3">
-            <span
-              className="inline-flex items-center font-inter font-bold uppercase tracking-wide rounded-md"
+      <div style={{ marginBottom: "24px", marginTop: "32px" }}>
+        <h3
+          className="font-inter font-bold text-[#142d55]"
+          style={{ fontSize: "24px", textTransform: "capitalize" }}
+        >
+          {details.title}
+        </h3>
+        <p
+          className="font-inter text-gray-500 mt-2"
+          style={{ fontSize: "14px" }}
+        >
+          <span className="font-semibold text-gray-700">{details.actor}</span>
+          <span className="mx-2 text-gray-300">|</span>
+          {details.timestamp} · {details.time} GMT+8
+        </p>
+      </div>
+
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "4px",
+          border: "1px solid #e2e6ee",
+          overflow: "hidden",
+          marginBottom: "20px",
+        }}
+      >
+        <div
+          className="flex justify-between items-center"
+          style={{ backgroundColor: "#1A59A5", padding: "12px 24px" }}
+        >
+          <h4
+            className="font-inter font-bold uppercase tracking-wider"
+            style={{ fontSize: "13px", color: "#ffffff" }}
+          >
+            Event Summary
+          </h4>
+          <Info style={{ width: "16px", height: "16px", color: "#ffffff" }} />
+        </div>
+        <div className="flex gap-8" style={{ padding: "24px 28px" }}>
+          <div style={{ flex: 1 }}>
+            <p
+              className="font-inter font-bold uppercase tracking-wider"
               style={{
-                backgroundColor: "#e5e7eb",
-                color: "#374151",
                 fontSize: "11px",
-                padding: "4px 10px",
+                marginBottom: "8px",
+                color: "#6b7280",
               }}
             >
-              SEVERITY: {details.severity}
-            </span>
-            <span
-              className="font-inter text-gray-400"
-              style={{ fontSize: "12px" }}
-            >
-              Log ID: {details.logId}
-            </span>
-          </div>
-
-          <h3
-            className="font-inter font-extrabold text-[#0f1f3d]"
-            style={{ fontSize: "30px", lineHeight: 1.2 }}
-          >
-            {details.title}
-          </h3>
-
-          <div
-            className="flex flex-wrap items-center gap-4 mt-3"
-            style={{ fontSize: "14px" }}
-          >
-            <span className="inline-flex items-center gap-1.5 font-inter font-semibold text-gray-700">
-              <User className="h-4 w-4 text-gray-500" aria-hidden="true" />
-              {details.actor}
-            </span>
-            <span className="inline-flex items-center gap-1.5 font-inter text-gray-500">
-              <Calendar className="h-4 w-4 text-gray-400" aria-hidden="true" />
-              {details.timestamp} &middot; {details.time}
-            </span>
-          </div>
-
-          <div className="mt-6 overflow-hidden rounded-lg border border-gray-200">
+              Action Category
+            </p>
             <div
-              className="flex items-center justify-between bg-[#1f5cae]"
-              style={{ padding: "10px 18px" }}
+              className="inline-flex font-mono font-bold uppercase"
+              style={{
+                backgroundColor: "#edf2fb",
+                color: "#1A59A5",
+                padding: "10px 16px",
+                borderRadius: "6px",
+                fontSize: "14px",
+              }}
             >
-              <h4
-                className="font-inter font-bold text-white"
-                style={{ fontSize: "13px", letterSpacing: "0.04em" }}
-              >
-                EVENT SUMMARY
-              </h4>
-              <Info className="h-4 w-4 text-white/80" aria-hidden="true" />
+              {details.action}
             </div>
-            <div
-              className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4"
-              style={{ padding: "18px" }}
+          </div>
+          <div style={{ flex: 1 }}>
+            <p
+              className="font-inter font-bold uppercase tracking-wider"
+              style={{
+                fontSize: "11px",
+                marginBottom: "8px",
+                color: "#6b7280",
+              }}
             >
-              <div>
+              Reference ID
+            </p>
+            <p
+              className="font-inter font-bold text-[#142d55] font-mono"
+              style={{ fontSize: "16px", marginTop: "10px" }}
+            >
+              {log.object_repr ||
+                `REF-${details.rawTableName?.toUpperCase()}-${details.referenceId || "000"}`}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "4px",
+          border: "1px solid #e2e6ee",
+          overflow: "hidden",
+          marginBottom: "20px",
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "#f0f4fb",
+            padding: "12px 24px",
+            borderBottom: "1px solid #e2e6ee",
+          }}
+          className="flex items-center gap-2"
+        >
+          <Users className="w-4 h-4 text-[#142d55]" />
+          <h4
+            className="font-inter font-bold uppercase tracking-wider"
+            style={{ fontSize: "13px", color: "#142d55" }}
+          >
+            Impacted Entities
+          </h4>
+        </div>
+        <div style={{ padding: "24px 28px" }}>
+          {(details.impactedEntities || []).map((entity, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-4 rounded-md"
+              style={{
+                backgroundColor: "#f8f9fc",
+                padding: "14px 18px",
+                border: "1px solid #e2e6ee",
+              }}
+            >
+              <span
+                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md"
+                style={{ backgroundColor: "#1A59A5" }}
+              >
+                <FileText className="h-5 w-5 text-white" />
+              </span>
+              <div className="min-w-0">
                 <p
-                  className="font-inter font-semibold uppercase text-gray-400"
-                  style={{ fontSize: "11px", letterSpacing: "0.04em" }}
-                >
-                  ACTION CATEGORY
-                </p>
-                <span
-                  className="inline-flex items-center mt-1.5 rounded-md font-inter font-bold uppercase"
+                  className="font-inter font-semibold uppercase text-gray-500"
                   style={{
-                    backgroundColor: "#eef2ff",
-                    color: "#1f3a8a",
-                    fontSize: "13px",
-                    padding: "6px 12px",
+                    fontSize: "11px",
+                    letterSpacing: "0.04em",
+                    marginBottom: "2px",
                   }}
                 >
-                  {details.actionCategory}
-                </span>
-              </div>
-              <div>
-                <p
-                  className="font-inter font-semibold uppercase text-gray-400"
-                  style={{ fontSize: "11px", letterSpacing: "0.04em" }}
-                >
-                  REFERENCE ID
+                  {entity.label}
                 </p>
                 <p
-                  className="font-inter font-bold text-gray-800 mt-1.5"
-                  style={{ fontSize: "14px" }}
+                  className="font-inter font-bold text-[#142d55]"
+                  style={{ fontSize: "15px" }}
                 >
-                  {details.referenceId}
+                  {fetchedSubmission ? getDocumentName() : entity.name}
+                </p>
+                <p
+                  className="font-inter text-gray-400 font-mono"
+                  style={{ fontSize: "12px", marginTop: "2px" }}
+                >
+                  ID: {entity.id}
                 </p>
               </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "4px",
+          border: "1px solid #e2e6ee",
+          overflow: "hidden",
+          marginBottom: "20px",
+        }}
+      >
+        <div
+          style={{ backgroundColor: "#1A59A5", padding: "12px 24px" }}
+          className="flex justify-between items-center"
+        >
+          <h4
+            className="font-inter font-bold uppercase tracking-wider"
+            style={{ fontSize: "13px", color: "#ffffff" }}
+          >
+            {details.action.includes("CREATE")
+              ? "Created Record Snapshot"
+              : details.action.includes("DELETE")
+                ? "Deleted Record Snapshot"
+                : "Changes Made (Before & After)"}
+          </h4>
+        </div>
+        <div style={{ padding: "24px 28px" }}>
+          {details.action.includes("CREATE") && details.newData && (
+            <>
+              {details.rawTableName === "tbl_Submissions" ? (
+                <div>
+                  {isFetchingSub ? (
+                    <div className="flex items-center justify-center gap-2 font-inter text-[13px] text-gray-500 py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-[#1A59A5]" />{" "}
+                      Fetching submission payload...
+                    </div>
+                  ) : fetchedSubmission ? (
+                    <>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 mb-6">
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            <FileText className="w-3.5 h-3.5" /> Document Type
+                          </span>
+                          <span className="font-bold text-[#142d55] text-[15px]">
+                            {getDocumentName()}
+                          </span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            <Building2 className="w-3.5 h-3.5" /> Organization
+                          </span>
+                          <span className="font-medium text-gray-800 text-[14px]">
+                            {getOrganizationName()}
+                          </span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            <User className="w-3.5 h-3.5" /> Applicant
+                          </span>
+                          <span className="font-medium text-gray-800 text-[14px]">
+                            {getApplicantName()}
+                          </span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                            <Tag className="w-3.5 h-3.5" /> Category
+                          </span>
+                          <span className="font-medium text-gray-800 text-[14px]">
+                            {getCategoryName()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {Array.isArray(fetchedSubmission?.documents) &&
+                        fetchedSubmission.documents.length > 0 && (
+                          <div
+                            style={{
+                              backgroundColor: "#f0f4fb",
+                              border: "1px solid #e2e6ee",
+                              borderRadius: "6px",
+                              padding: "16px",
+                            }}
+                          >
+                            <span className="block text-[11px] font-bold text-[#142d55] uppercase tracking-wider mb-3">
+                              Attached Files (
+                              {fetchedSubmission.documents.length})
+                            </span>
+                            <div className="flex flex-col gap-3">
+                              {fetchedSubmission.documents.map((doc, idx) => (
+                                <div
+                                  key={doc.id || idx}
+                                  className="flex items-center justify-between rounded bg-white p-3 border border-gray-200 shadow-sm"
+                                >
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="w-8 h-8 flex-shrink-0 rounded bg-[#edf2fb] flex items-center justify-center">
+                                      <FileText className="w-4 h-4 text-[#1A59A5]" />
+                                    </div>
+                                    <span className="font-semibold text-[#142d55] text-[13px] truncate">
+                                      {doc.file_name ||
+                                        `Attached File ${idx + 1}`}
+                                    </span>
+                                  </div>
+                                  <a
+                                    href={doc.file_url || "#"}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="inline-flex flex-shrink-0 items-center gap-1.5 rounded bg-gray-50 px-3 py-1.5 font-inter text-[11px] font-bold text-[#142d55] border border-gray-200 transition-colors hover:bg-gray-100"
+                                  >
+                                    <Download className="w-3.5 h-3.5" /> VIEW
+                                  </a>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                    </>
+                  ) : (
+                    <div>
+                      <p className="text-xs font-medium text-red-500 bg-red-50 px-3 py-2 rounded mb-4 border border-red-100">
+                        Record deleted or unavailable. Displaying raw audit
+                        payload.
+                      </p>
+                      <ul className="space-y-3 text-sm">
+                        {Object.entries(details.newData || {}).map(
+                          ([key, val]) => {
+                            if (
+                              typeof val === "object" ||
+                              [
+                                "password",
+                                "created_at",
+                                "updated_at",
+                                "id",
+                              ].includes(key)
+                            )
+                              return null;
+                            return (
+                              <li
+                                key={key}
+                                className="flex gap-3 border-b border-gray-100 pb-2 last:border-0 last:pb-0"
+                              >
+                                <span className="font-semibold text-gray-500 capitalize w-1/3">
+                                  {key.replace(/_/g, " ")}:
+                                </span>
+                                <span className="text-[#142d55] font-medium w-2/3">
+                                  {String(val)}
+                                </span>
+                              </li>
+                            );
+                          },
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ) : details.rawTableName === "tbl_Users" ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8">
+                  <div className="flex flex-col">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                      <User className="w-3.5 h-3.5" /> Full Name
+                    </span>
+                    <span className="font-bold text-[#142d55] text-[15px]">
+                      {details.newData.first_name} {details.newData.last_name}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                      <Mail className="w-3.5 h-3.5" /> Email Address
+                    </span>
+                    <span className="font-medium text-gray-800 text-[14px]">
+                      {details.newData.email || "N/A"}
+                    </span>
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="flex items-center gap-1.5 text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+                      <Tag className="w-3.5 h-3.5" /> System Role
+                    </span>
+                    <span className="font-medium text-gray-800 text-[14px] capitalize">
+                      {details.newData.role ||
+                        details.newData.user_type ||
+                        "N/A"}
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <ul className="space-y-3 text-sm">
+                  {Object.entries(details.newData || {}).map(([key, val]) => {
+                    if (
+                      typeof val === "object" ||
+                      ["password", "created_at", "updated_at", "id"].includes(
+                        key,
+                      )
+                    )
+                      return null;
+                    return (
+                      <li
+                        key={key}
+                        className="flex gap-2 border-b border-gray-100 pb-2 last:border-0 last:pb-0"
+                      >
+                        <span className="font-semibold text-gray-500 capitalize w-1/3">
+                          {key.replace(/_/g, " ")}:
+                        </span>
+                        <span className="text-[#142d55] font-medium w-2/3">
+                          {String(val)}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </>
+          )}
+
+          {(details.action.includes("UPDATE") ||
+            details.action.includes("CHANGE")) &&
+            (details.newData || details.oldData) && (
+              <ul className="space-y-4 text-sm">
+                {Object.keys(
+                  { ...details.oldData, ...details.newData } || {},
+                ).map((key) => {
+                  const oldVal = details.oldData?.[key];
+                  const newVal = details.newData?.[key];
+                  if (oldVal === newVal && oldVal !== undefined) return null;
+                  if (
+                    typeof newVal === "object" ||
+                    typeof oldVal === "object" ||
+                    ["updated_at", "password"].includes(key)
+                  )
+                    return null;
+                  return (
+                    <li
+                      key={key}
+                      className="flex items-center gap-3 border-b border-gray-100 pb-4 last:border-0 last:pb-0"
+                    >
+                      <span className="font-semibold text-gray-500 capitalize w-1/4 text-[12px] tracking-wide">
+                        {key.replace(/_/g, " ")}
+                      </span>
+                      <div className="w-3/4 flex items-center gap-3 flex-wrap">
+                        <span className="text-red-600 line-through bg-red-50 px-3 py-1.5 rounded text-[13px] border border-red-100">
+                          {String(oldVal ?? "None")}
+                        </span>
+                        <span className="text-gray-400 font-bold">→</span>
+                        <span className="text-green-700 font-bold bg-green-50 px-3 py-1.5 rounded text-[13px] border border-green-100">
+                          {String(newVal ?? "None")}
+                        </span>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+          {details.action.includes("DELETE") && details.oldData && (
+            <ul className="space-y-3 text-sm">
+              {Object.entries(details.oldData || {}).map(([key, val]) => {
+                if (typeof val === "object" || ["password"].includes(key))
+                  return null;
+                return (
+                  <li
+                    key={key}
+                    className="flex gap-3 border-b border-gray-100 pb-2 last:border-0 last:pb-0"
+                  >
+                    <span className="font-semibold text-gray-500 capitalize w-1/3 text-[12px] tracking-wide">
+                      {key.replace(/_/g, " ")}
+                    </span>
+                    <span className="text-red-600 font-medium w-2/3">
+                      {String(val)}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+
+          {!details.newData &&
+            !details.oldData &&
+            Object.keys(details.rawChanges).length > 0 &&
+            !details.action.includes("CREATE") &&
+            !details.action.includes("DELETE") && (
+              <ul className="space-y-3 text-sm">
+                {Object.entries(details.rawChanges || {}).map(([key, val]) => {
+                  if (
+                    typeof val === "object" ||
+                    ["password", "created_at", "updated_at"].includes(key)
+                  )
+                    return null;
+                  return (
+                    <li
+                      key={key}
+                      className="flex gap-3 border-b border-gray-100 pb-2 last:border-0 last:pb-0"
+                    >
+                      <span className="font-semibold text-gray-500 capitalize w-1/3">
+                        {key.replace(/_/g, " ")}:
+                      </span>
+                      <span className="text-[#142d55] font-medium w-2/3">
+                        {String(val)}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+        </div>
+      </div>
+
+      <div
+        style={{
+          backgroundColor: "#ffffff",
+          borderRadius: "4px",
+          border: "1px solid #e2e6ee",
+          overflow: "hidden",
+          marginBottom: "20px",
+        }}
+      >
+        <div
+          style={{
+            backgroundColor: "#f0f4fb",
+            padding: "12px 24px",
+            borderBottom: "1px solid #e2e6ee",
+          }}
+        >
+          <h4
+            className="font-inter font-bold uppercase tracking-wider"
+            style={{ fontSize: "13px", color: "#142d55" }}
+          >
+            Context Timeline
+          </h4>
+        </div>
+
+        <div style={{ padding: "24px 28px" }}>
+          <div className="flex gap-4" style={{ position: "relative" }}>
+            <div
+              className="flex flex-col items-center"
+              style={{ minWidth: "16px" }}
+            >
+              <div
+                className="flex items-center justify-center"
+                style={{
+                  width: "20px",
+                  height: "20px",
+                  borderRadius: "9999px",
+                  backgroundColor: "#FFE452",
+                  border: "2px solid #142d55",
+                  marginTop: "2px",
+                  flexShrink: 0,
+                  zIndex: 10,
+                }}
+              >
+                <Check
+                  style={{
+                    width: "12px",
+                    height: "12px",
+                    color: "#142d55",
+                    strokeWidth: 3,
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  width: "2px",
+                  flex: 1,
+                  backgroundColor: "#e2e6ee",
+                  marginTop: "4px",
+                  marginBottom: "4px",
+                }}
+              />
+            </div>
+
+            <div style={{ paddingBottom: "32px" }}>
+              <p
+                className="font-inter font-bold text-gray-500"
+                style={{ fontSize: "12px", marginBottom: "4px" }}
+              >
+                {details.time}
+              </p>
+              <h5
+                className="font-inter font-bold text-[#142d55]"
+                style={{ fontSize: "16px", lineHeight: 1.3 }}
+              >
+                {details.action}
+              </h5>
+              <span
+                className="inline-flex font-inter font-bold uppercase tracking-wider"
+                style={{
+                  marginTop: "10px",
+                  backgroundColor: "#1A59A5",
+                  color: "#ffffff",
+                  padding: "4px 8px",
+                  borderRadius: "4px",
+                  fontSize: "10px",
+                }}
+              >
+                This Event
+              </span>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-5">
-            <div className="rounded-lg border border-gray-200 overflow-hidden flex flex-col">
+          <div className="flex gap-4" style={{ position: "relative" }}>
+            <div
+              className="flex flex-col items-center"
+              style={{ minWidth: "16px" }}
+            >
               <div
-                className="flex items-center gap-2 bg-gray-50 border-b border-gray-200"
-                style={{ padding: "10px 16px" }}
+                className="flex items-center justify-center"
+                style={{
+                  width: "16px",
+                  height: "16px",
+                  borderRadius: "9999px",
+                  backgroundColor: "#f7f9fc",
+                  border: "2px solid #e2e6ee",
+                  marginTop: "4px",
+                  flexShrink: 0,
+                  marginLeft: "2px",
+                }}
               >
-                <Users className="h-4 w-4 text-gray-500" aria-hidden="true" />
-                <h4
-                  className="font-inter font-bold text-gray-700 uppercase"
-                  style={{ fontSize: "12px", letterSpacing: "0.04em" }}
-                >
-                  Impacted Entities
-                </h4>
-              </div>
-              <div
-                className="flex flex-col gap-2.5"
-                style={{ padding: "14px" }}
-              >
-                {details.impactedEntities.map((entity, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center gap-3 rounded-md bg-[#f7f9ff]"
-                    style={{ padding: "10px 12px" }}
-                  >
-                    <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-md bg-[#1f5cae]">
-                      <FileText
-                        className="h-4.5 w-4.5 text-white"
-                        aria-hidden="true"
-                      />
-                    </span>
-                    <div className="min-w-0">
-                      <p
-                        className="font-inter font-semibold uppercase text-gray-400"
-                        style={{ fontSize: "10px", letterSpacing: "0.04em" }}
-                      >
-                        {entity.label}
-                      </p>
-                      <p
-                        className="font-inter font-bold text-gray-900"
-                        style={{ fontSize: "14px" }}
-                      >
-                        {fetchedSubmission ? getDocumentName() : entity.name}
-                      </p>
-                      <p
-                        className="font-inter text-gray-400"
-                        style={{ fontSize: "11px" }}
-                      >
-                        ID: {entity.id}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* DYNAMIC CHANGES BLOCK */}
-              <div
-                className="flex-1 mt-auto border-t border-gray-200 bg-[#f7f9ff]"
-                style={{ padding: "14px 16px" }}
-              >
-                <p
-                  className="font-inter font-bold text-gray-500 uppercase tracking-wider mb-3"
-                  style={{ fontSize: "11px", letterSpacing: "0.04em" }}
-                >
-                  {details.action.includes("CREATE")
-                    ? "Created Record Snapshot"
-                    : details.action.includes("DELETE")
-                      ? "Deleted Record Snapshot"
-                      : "Changes Made (Before & After)"}
-                </p>
-
-                {/* --- SPECIALIZED CREATION CARDS --- */}
-                {details.action.includes("CREATE") && details.newData && (
-                  <>
-                    {details.rawTableName === "tbl_Submissions" ? (
-                      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                        {isFetchingSub ? (
-                          <div className="flex items-center justify-center gap-2 font-inter text-[13px] text-gray-500 py-8">
-                            <Loader2 className="h-5 w-5 animate-spin text-[#1f5cae]" />
-                            Loading submission payload...
-                          </div>
-                        ) : fetchedSubmission ? (
-                          <>
-                            <div className="bg-[#f8f9fc] border-b border-gray-200 px-5 py-3 flex items-center justify-between">
-                              <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                                  <Check className="w-4 h-4" />
-                                </div>
-                                <h5 className="font-inter font-bold text-gray-800 text-[13px] uppercase tracking-wide">
-                                  Submission Created
-                                </h5>
-                              </div>
-                              <span className="font-semibold text-[#1d4ed8] bg-[#eaf1ff] px-2.5 py-1 rounded text-[11px] border border-blue-100 tracking-wider">
-                                #
-                                {String(
-                                  fetchedSubmission.id || details.referenceId,
-                                ).slice(0, 8)}
-                              </span>
-                            </div>
-
-                            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-6">
-                              <div className="flex flex-col">
-                                <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                                  <FileText className="w-3.5 h-3.5" /> Document
-                                  Type
-                                </span>
-                                <span className="font-bold text-gray-900 text-[14px] leading-tight">
-                                  {getDocumentName()}
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                                  <Building2 className="w-3.5 h-3.5" />{" "}
-                                  Organization
-                                </span>
-                                <span className="font-medium text-gray-800 text-[13px]">
-                                  {getOrganizationName()}
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                                  <User className="w-3.5 h-3.5" /> Applicant
-                                </span>
-                                <span className="font-medium text-gray-800 text-[13px]">
-                                  {getApplicantName()}
-                                </span>
-                              </div>
-                              <div className="flex flex-col">
-                                <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                                  <Tag className="w-3.5 h-3.5" /> Category
-                                </span>
-                                <span className="font-medium text-gray-800 text-[13px]">
-                                  {getCategoryName()}
-                                </span>
-                              </div>
-                            </div>
-
-                            {fetchedSubmission.documents &&
-                              fetchedSubmission.documents.length > 0 && (
-                                <div className="bg-gray-50 border-t border-gray-200 px-5 py-4">
-                                  <span className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-3">
-                                    Attached Files (
-                                    {fetchedSubmission.documents.length})
-                                  </span>
-                                  <div className="flex flex-col gap-2.5">
-                                    {fetchedSubmission.documents.map(
-                                      (doc, idx) => (
-                                        <div
-                                          key={doc.id || idx}
-                                          className="flex items-center justify-between rounded-lg border border-gray-200 bg-white p-2.5 shadow-sm transition-shadow hover:shadow"
-                                        >
-                                          <div className="flex items-center gap-3 min-w-0">
-                                            <div className="w-8 h-8 flex-shrink-0 rounded bg-[#eaf1ff] flex items-center justify-center">
-                                              <FileText className="w-4 h-4 text-[#1d4ed8]" />
-                                            </div>
-                                            <span className="font-semibold text-gray-800 text-[13px] truncate">
-                                              {doc.file_name ||
-                                                `Attached File ${idx + 1}`}
-                                            </span>
-                                          </div>
-                                          <a
-                                            href={doc.file_url || "#"}
-                                            onClick={(e) => {
-                                              if (!doc.file_url) {
-                                                e.preventDefault();
-                                                alert(
-                                                  "Error: This files URL is missing from the database.",
-                                                );
-                                              }
-                                            }}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex flex-shrink-0 items-center gap-1.5 rounded-md bg-white px-3 py-1.5 font-inter text-[11px] font-bold text-[#1f5cae] border border-gray-200 transition-colors hover:bg-gray-50"
-                                          >
-                                            <Download className="w-3.5 h-3.5" />
-                                            VIEW
-                                          </a>
-                                        </div>
-                                      ),
-                                    )}
-                                  </div>
-                                </div>
-                              )}
-                          </>
-                        ) : (
-                          <div className="p-5">
-                            <p className="text-xs font-medium text-red-500 bg-red-50 px-3 py-2 rounded-md mb-4 border border-red-100">
-                              Record deleted or unavailable. Displaying raw
-                              audit payload.
-                            </p>
-                            <ul className="space-y-2 text-sm">
-                              {Object.entries(details.newData).map(
-                                ([key, val]) => {
-                                  if (
-                                    typeof val === "object" ||
-                                    [
-                                      "password",
-                                      "created_at",
-                                      "updated_at",
-                                      "id",
-                                    ].includes(key)
-                                  )
-                                    return null;
-                                  return (
-                                    <li key={key} className="flex gap-3">
-                                      <span className="font-semibold text-gray-500 capitalize w-1/3">
-                                        {key.replace(/_/g, " ")}:
-                                      </span>
-                                      <span className="text-gray-900 font-medium w-2/3">
-                                        {String(val)}
-                                      </span>
-                                    </li>
-                                  );
-                                },
-                              )}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
-                    ) : details.rawTableName === "tbl_Users" ? (
-                      <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
-                        <div className="bg-[#f8f9fc] border-b border-gray-200 px-5 py-3 flex items-center justify-between">
-                          <div className="flex items-center gap-2.5">
-                            <div className="w-7 h-7 rounded-full bg-green-100 flex items-center justify-center text-green-600">
-                              <UserPlus className="w-4 h-4" />
-                            </div>
-                            <h5 className="font-inter font-bold text-gray-800 text-[13px] uppercase tracking-wide">
-                              Account Created
-                            </h5>
-                          </div>
-                        </div>
-                        <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-6">
-                          <div className="flex flex-col">
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                              <User className="w-3.5 h-3.5" /> Full Name
-                            </span>
-                            <span className="font-bold text-gray-900 text-[14px]">
-                              {details.newData.first_name}{" "}
-                              {details.newData.last_name}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                              <Mail className="w-3.5 h-3.5" /> Email Address
-                            </span>
-                            <span className="font-medium text-gray-800 text-[13px]">
-                              {details.newData.email || "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                              <Tag className="w-3.5 h-3.5" /> System Role
-                            </span>
-                            <span className="font-medium text-gray-800 text-[13px] capitalize">
-                              {details.newData.role ||
-                                details.newData.user_type ||
-                                "N/A"}
-                            </span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
-                              <Calendar className="w-3.5 h-3.5" /> Date Created
-                            </span>
-                            <span className="font-medium text-gray-800 text-[13px]">
-                              {details.timestamp}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <ul className="space-y-2 text-sm bg-white border border-gray-200 rounded-lg p-5 shadow-sm">
-                        {Object.entries(details.newData).map(([key, val]) => {
-                          if (
-                            typeof val === "object" ||
-                            [
-                              "password",
-                              "created_at",
-                              "updated_at",
-                              "id",
-                            ].includes(key)
-                          )
-                            return null;
-                          return (
-                            <li key={key} className="flex gap-2">
-                              <span className="font-semibold text-gray-600 capitalize w-1/3">
-                                {key.replace(/_/g, " ")}:
-                              </span>
-                              <span className="text-gray-900 font-medium w-2/3">
-                                {String(val)}
-                              </span>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    )}
-                  </>
-                )}
-
-                {/* --- UPDATES LOGIC (Before & After) --- */}
-                {(details.action.includes("UPDATE") ||
-                  details.action.includes("CHANGE")) &&
-                  (details.newData || details.oldData) && (
-                    <ul className="space-y-3 text-sm bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                      {Object.keys({
-                        ...details.oldData,
-                        ...details.newData,
-                      }).map((key) => {
-                        const oldVal = details.oldData?.[key];
-                        const newVal = details.newData?.[key];
-
-                        if (oldVal === newVal && oldVal !== undefined)
-                          return null;
-                        if (
-                          typeof newVal === "object" ||
-                          typeof oldVal === "object" ||
-                          ["updated_at", "password"].includes(key)
-                        )
-                          return null;
-
-                        return (
-                          <li
-                            key={key}
-                            className="flex items-center gap-3 border-b border-gray-50 pb-3 last:border-0 last:pb-0"
-                          >
-                            <span className="font-semibold text-gray-500 capitalize w-1/4 text-[12px] tracking-wide">
-                              {key.replace(/_/g, " ")}
-                            </span>
-                            <div className="w-3/4 flex items-center gap-2.5 flex-wrap">
-                              <span className="text-red-600 line-through bg-red-50 px-2.5 py-1 rounded text-[13px] border border-red-100">
-                                {String(oldVal ?? "None")}
-                              </span>
-                              <span className="text-gray-300 font-bold">→</span>
-                              <span className="text-green-700 font-bold bg-green-50 px-2.5 py-1 rounded text-[13px] border border-green-100">
-                                {String(newVal ?? "None")}
-                              </span>
-                            </div>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
-
-                {/* --- DELETION LOGIC (What was removed) --- */}
-                {details.action.includes("DELETE") && details.oldData && (
-                  <div className="bg-white border border-red-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="bg-red-50 border-b border-red-100 px-5 py-3">
-                      <h5 className="font-inter font-bold text-red-800 text-[13px] uppercase tracking-wide">
-                        Deleted Properties
-                      </h5>
-                    </div>
-                    <ul className="p-5 space-y-2 text-sm">
-                      {Object.entries(details.oldData).map(([key, val]) => {
-                        if (
-                          typeof val === "object" ||
-                          ["password"].includes(key)
-                        )
-                          return null;
-                        return (
-                          <li
-                            key={key}
-                            className="flex gap-3 border-b border-gray-50 pb-2 last:border-0 last:pb-0"
-                          >
-                            <span className="font-semibold text-gray-500 capitalize w-1/3 text-[12px] tracking-wide">
-                              {key.replace(/_/g, " ")}
-                            </span>
-                            <span className="text-gray-900 font-medium w-2/3">
-                              {String(val)}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-
-                {/* --- EMERGENCY FALLBACK --- */}
-                {!details.newData &&
-                  !details.oldData &&
-                  Object.keys(details.rawChanges).length > 0 &&
-                  !details.action.includes("CREATE") &&
-                  !details.action.includes("DELETE") && (
-                    <ul className="space-y-2 text-sm bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
-                      {Object.entries(details.rawChanges).map(([key, val]) => {
-                        if (
-                          typeof val === "object" ||
-                          ["password", "created_at", "updated_at"].includes(key)
-                        )
-                          return null;
-                        return (
-                          <li key={key} className="flex gap-3">
-                            <span className="font-semibold text-gray-500 capitalize w-1/3">
-                              {key.replace(/_/g, " ")}:
-                            </span>
-                            <span className="text-gray-900 font-medium w-2/3">
-                              {String(val)}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+                <div
+                  style={{
+                    width: "6px",
+                    height: "6px",
+                    borderRadius: "9999px",
+                    backgroundColor: "#9ca3af",
+                  }}
+                />
               </div>
             </div>
 
-            <div className="rounded-lg border border-gray-200 overflow-hidden">
-              <div
-                className="flex items-center gap-2 bg-gray-50 border-b border-gray-200"
-                style={{ padding: "10px 16px" }}
+            <div style={{ paddingBottom: "0" }}>
+              <p
+                className="font-inter font-bold text-gray-400"
+                style={{ fontSize: "12px", marginBottom: "4px" }}
               >
-                <Calendar
-                  className="h-4 w-4 text-gray-500"
-                  aria-hidden="true"
-                />
-                <h4
-                  className="font-inter font-bold text-gray-700 uppercase"
-                  style={{ fontSize: "12px", letterSpacing: "0.04em" }}
-                >
-                  Context Timeline
-                </h4>
-              </div>
-              <div style={{ padding: "16px" }}>
-                {details.timeline.map((item, idx) => (
-                  <div key={idx} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <span
-                        className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full"
-                        style={{
-                          backgroundColor: item.current ? "#fbbf24" : "#e5e7eb",
-                        }}
-                      >
-                        <Check
-                          className="h-3.5 w-3.5"
-                          style={{
-                            color: item.current ? "#78350f" : "#9ca3af",
-                          }}
-                        />
-                      </span>
-                    </div>
-                    <div style={{ paddingBottom: "18px" }}>
-                      <p
-                        className="font-inter text-gray-400"
-                        style={{ fontSize: "11px" }}
-                      >
-                        {item.time}
-                      </p>
-                      <p
-                        className="font-inter font-bold text-gray-900"
-                        style={{ fontSize: "14px" }}
-                      >
-                        {item.label}
-                      </p>
-                      {item.current && (
-                        <span
-                          className="inline-flex items-center mt-1 rounded font-inter font-bold uppercase"
-                          style={{
-                            backgroundColor: "#1f5cae",
-                            color: "#fff",
-                            fontSize: "10px",
-                            padding: "2px 8px",
-                          }}
-                        >
-                          THIS EVENT
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
+                {previousEventTime.toLocaleTimeString("en-US", {
+                  hour12: false,
+                  hour: "2-digit",
+                  minute: "2-digit",
+                  second: "2-digit",
+                })}
+              </p>
+              <h5
+                className="font-inter font-medium text-gray-500"
+                style={{ fontSize: "15px", lineHeight: 1.3 }}
+              >
+                Validation Passed
+              </h5>
             </div>
           </div>
         </div>
-      </section>
+      </div>
     </div>
   );
 }
