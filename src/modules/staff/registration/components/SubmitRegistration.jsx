@@ -58,9 +58,9 @@ export default function SubmitRegistration({
           }}
           onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#1f5cae")}
           onMouseLeave={(e) =>
-          (e.currentTarget.style.borderColor = isDragging
-            ? "#1f5cae"
-            : "#d1d5db")
+            (e.currentTarget.style.borderColor = isDragging
+              ? "#1f5cae"
+              : "#d1d5db")
           }
         >
           <CloudUpload
@@ -183,7 +183,7 @@ export default function SubmitRegistration({
           }}
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-          {isLoading ? "Submitting..." : "Submit Registration"}
+          {isLoading ? "Processing..." : "Next: Final Review"}
         </button>
       </div>
     </div>
