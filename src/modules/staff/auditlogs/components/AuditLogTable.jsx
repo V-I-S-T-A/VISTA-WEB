@@ -14,7 +14,7 @@ const ACTION_COLORS = {
   DEFAULT: { bg: "#f3f4f6", text: "#4b5563" },
 };
 
-export default function AuditLogHistory({ onViewLog }) {
+export default function AuditLogTable({ onViewLog }) {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -88,8 +88,17 @@ export default function AuditLogHistory({ onViewLog }) {
     const query = searchTerm.trim().toLowerCase();
 
     return logs.filter((log) => {
-      // STRICT FILTER: Completely hide login and logout actions from the UI
+      // STRICT FILTER 1: Completely hide login and logout actions from the UI
       if (log.action === "login" || log.action === "logout") {
+        return false;
+      }
+
+      // STRICT FILTER 2: Hide student logs
+      // Note: Make sure your backend serializer returns 'user_type', 'role', or 'performed_by_role'
+      const role = String(
+        log.user_type || log.role || log.performed_by_role || "",
+      ).toLowerCase();
+      if (role === "student") {
         return false;
       }
 
@@ -365,8 +374,7 @@ export default function AuditLogHistory({ onViewLog }) {
                 fontSize: "12px",
               }}
             >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Export
+              <Download className="h-4 w-4" aria-hidden="true" /> Export
             </button>
           </div>
         </div>
@@ -468,8 +476,8 @@ export default function AuditLogHistory({ onViewLog }) {
                             fontSize: "10px",
                             padding: "6px 14px",
                             backgroundColor: "#fff",
-                            color: "#142d55",
-                            border: "2px solid #142d55",
+                            color: "#1f5cae",
+                            border: "2px solid #1f5cae",
                             borderRadius: "6px",
                             cursor: "pointer",
                             letterSpacing: "0.04em",

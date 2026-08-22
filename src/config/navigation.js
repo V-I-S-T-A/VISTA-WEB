@@ -10,6 +10,11 @@ export const headerConfig = {
     title: "Admin Dashboard",
     avatar: defaultUser,
   },
+  registrationConfig: {
+    type: "dashboard",
+    title: "Registration Configuration",
+    avatar: defaultUser,
+  },
   auditlog: {
     type: "dashboard",
     title: "Audit Log",
@@ -58,6 +63,12 @@ export const sidebarConfig = {
         icon: "Users",
         path: "/admin/dashboard",
         active: true,
+      },
+      {
+        label: "REGISTRATION CONFIG",
+        icon: "Settings",
+        path: "/admin/registration-config",
+        active: false,
       },
       {
         label: "AUDIT LOGS",
