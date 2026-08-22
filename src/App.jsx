@@ -5,6 +5,7 @@ import AdminDashboard from "./modules/admin/Dashboard";
 import AdminRegisteredOrg from "./modules/admin/dashboard/RegisteredOrg";
 import AdminAuditLogs from "./modules/admin/AuditLogs";
 import AdminProfile from "./modules/admin/Profile";
+import AdminRegistrationConfig from "./modules/admin/RegistrationConfig"; // Added Import
 import StaffDashboard from "./modules/staff/Dashboard";
 import StaffRegistration from "./modules/staff/Registration";
 import StaffAnalysisResults from "./modules/staff/registration/AnalysisResults";
@@ -26,9 +27,16 @@ function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/admin/dashboard/registeredorg" element={<AdminRegisteredOrg />} />
+        <Route
+          path="/admin/dashboard/registeredorg"
+          element={<AdminRegisteredOrg />}
+        />
         <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
         <Route path="/admin/profile" element={<AdminProfile />} />
+        <Route
+          path="/admin/registration-config"
+          element={<AdminRegistrationConfig />}
+        />{" "}
         <Route path="/staff/dashboard" element={<StaffDashboard />} />
         <Route path="/staff/registration" element={<StaffRegistration />} />
         <Route
@@ -39,7 +47,10 @@ function App() {
         <Route path="/staff/profile" element={<StaffProfile />} />
         <Route path="/staff/review-panel" element={<StaffReviewPanel />} />
         <Route path="/staff/gdrive-sync" element={<StaffGdrive />} />
-        <Route path="/staff/gdrive-sync/callback" element={<StaffGdriveCallback />} />
+        <Route
+          path="/staff/gdrive-sync/callback"
+          element={<StaffGdriveCallback />}
+        />
         <Route path="/student/dashboard" element={<StudentDashboard />} />
         <Route
           path="/student/review-tracker"
