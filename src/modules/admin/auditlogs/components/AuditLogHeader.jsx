@@ -5,8 +5,9 @@ import api from "../../../../lib/axios";
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "30px";
 
-// Matched exactly to Django model ACTION_CHOICES (removed login/logout)
 const ACTION_COLORS = {
+  login: { bg: "#dbeafe", text: "#1e40af" },
+  logout: { bg: "#f3f4f6", text: "#374151" },
   create: { bg: "#dcfce7", text: "#166534" },
   update: { bg: "#fef3c7", text: "#92400e" },
   delete: { bg: "#fee2e2", text: "#991b1b" },
@@ -14,7 +15,7 @@ const ACTION_COLORS = {
   DEFAULT: { bg: "#f3f4f6", text: "#4b5563" },
 };
 
-export default function AuditLogHistory({ onViewLog }) {
+export default function AuditLogTable({ onViewLog }) {
   const [logs, setLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -26,9 +27,10 @@ export default function AuditLogHistory({ onViewLog }) {
   const moreFiltersRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Removed "login" and "logout" from the dropdown filters
   const ACTION_OPTIONS = [
     "All Actions",
+    "login",
+    "logout",
     "create",
     "update",
     "delete",
@@ -43,7 +45,6 @@ export default function AuditLogHistory({ onViewLog }) {
         let page = 1;
         let hasNextPage = true;
 
-        // Loop through Django's paginated API until all logs are collected
         while (hasNextPage) {
           const response = await api.get(`/audit-logs/?page=${page}`);
 
@@ -88,12 +89,6 @@ export default function AuditLogHistory({ onViewLog }) {
     const query = searchTerm.trim().toLowerCase();
 
     return logs.filter((log) => {
-      // STRICT FILTER: Completely hide login and logout actions from the UI
-      if (log.action === "login" || log.action === "logout") {
-        return false;
-      }
-
-      // Map to Django serializer fields
       const userName = log.performed_by || "System/Unknown";
 
       const matchesSearch =
@@ -365,8 +360,7 @@ export default function AuditLogHistory({ onViewLog }) {
                 fontSize: "12px",
               }}
             >
-              <Download className="h-4 w-4" aria-hidden="true" />
-              Export
+              <Download className="h-4 w-4" aria-hidden="true" /> Export
             </button>
           </div>
         </div>

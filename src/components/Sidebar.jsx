@@ -7,6 +7,7 @@ import {
   ClipboardList,
   ClipboardCheck,
   CloudUpload,
+  Settings,
 } from "lucide-react";
 import { getSidebarConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
@@ -18,6 +19,7 @@ const ICON_MAP = {
   ClipboardList,
   ClipboardCheck,
   CloudUpload,
+  Settings,
 };
 
 export default function Sidebar({ role = "admin" }) {
