@@ -66,7 +66,7 @@ const STATUS_OPTIONS = [
   "Flagged",
 ];
 
-const CATEGORY_OPTIONS = ["All Categories", "Inbound", "Outbound"];
+const CATEGORY_OPTIONS = ["All Categories", "Off-Campus", "In-Campus"];
 
 function downloadCsv(rows) {
   const headers = [
@@ -116,9 +116,12 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Completed tab always filters by approved; Active tab uses user's status filter
-  const apiStatus = activeTab === "completed"
-    ? "approved"
-    : statusFilter === "All Status" ? "" : API_STATUS_MAP[statusFilter];
+  const apiStatus =
+    activeTab === "completed"
+      ? "approved"
+      : statusFilter === "All Status"
+        ? ""
+        : API_STATUS_MAP[statusFilter];
 
   // Fetch real data from backend
   const { data, isLoading } = useSubmissions({
@@ -171,7 +174,11 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
           >
             <button
               type="button"
-              onClick={() => { setActiveTab("active"); setCurrentPage(1); setStatusFilter("All Status"); }}
+              onClick={() => {
+                setActiveTab("active");
+                setCurrentPage(1);
+                setStatusFilter("All Status");
+              }}
               style={{
                 padding: "5px 14px",
                 borderRadius: "6px",
@@ -180,8 +187,10 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                 fontFamily: "Inter, sans-serif",
                 fontSize: "12px",
                 fontWeight: "700",
-                backgroundColor: activeTab === "active" ? "#ffffff" : "transparent",
-                color: activeTab === "active" ? "#1f5cae" : "rgba(255,255,255,0.8)",
+                backgroundColor:
+                  activeTab === "active" ? "#ffffff" : "transparent",
+                color:
+                  activeTab === "active" ? "#1f5cae" : "rgba(255,255,255,0.8)",
                 transition: "all 0.15s ease",
               }}
             >
@@ -189,7 +198,11 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
             </button>
             <button
               type="button"
-              onClick={() => { setActiveTab("completed"); setCurrentPage(1); setStatusFilter("All Status"); }}
+              onClick={() => {
+                setActiveTab("completed");
+                setCurrentPage(1);
+                setStatusFilter("All Status");
+              }}
               style={{
                 padding: "5px 14px",
                 borderRadius: "6px",
@@ -201,8 +214,12 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
-                backgroundColor: activeTab === "completed" ? "#ffffff" : "transparent",
-                color: activeTab === "completed" ? "#15803d" : "rgba(255,255,255,0.8)",
+                backgroundColor:
+                  activeTab === "completed" ? "#ffffff" : "transparent",
+                color:
+                  activeTab === "completed"
+                    ? "#15803d"
+                    : "rgba(255,255,255,0.8)",
                 transition: "all 0.15s ease",
               }}
             >

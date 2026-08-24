@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import ProfileAvatarUpload from "./ProfileAvatarUpload";
 import osaLogo from "../../../../assets/shared/osa_logo.png";
+import ChangePasswordSection from "../../../../components/ChangePasswordSection";
 import { useProfile, useUpdateProfile } from "../../../../hooks/useProfile";
 
 const GENDER_OPTIONS = ["Male", "Female", "Prefer not to say"];
@@ -145,6 +146,8 @@ export default function ProfileForm() {
               style={{ fontSize: "14px" }}
             />
           </div>
+
+          <ChangePasswordSection />
 
           {/* Date of Birth + Gender */}
           <div className="grid grid-cols-2" style={{ gap: "12px" }}>
