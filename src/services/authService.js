@@ -31,4 +31,23 @@ export const authService = {
     const resp = await apiClient.patch(API_ENDPOINTS.AUTH.ME, data, config);
     return resp.data;
   },
+
+  async requestPasswordChangeCode() {
+    const resp = await apiClient.post(
+      API_ENDPOINTS.AUTH.REQUEST_PASSWORD_CHANGE_CODE,
+    );
+    return resp.data;
+  },
+
+  async confirmPasswordChange({ old_password, new_password, code }) {
+    const resp = await apiClient.post(
+      API_ENDPOINTS.AUTH.CONFIRM_PASSWORD_CHANGE,
+      {
+        old_password,
+        new_password,
+        code,
+      },
+    );
+    return resp.data;
+  },
 };

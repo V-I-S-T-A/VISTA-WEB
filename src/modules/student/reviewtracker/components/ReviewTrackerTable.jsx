@@ -180,7 +180,7 @@ export default function ReviewTrackerTable() {
                 setCurrentPage(1);
               }}
               placeholder="Search submissions..."
-              className="font-inter outline-none text-black"
+              className="font-inter font-medium text-gray-700 placeholder-gray-400 outline-none rounded-md bg-white"
               style={{
                 width: "230px",
                 borderRadius: "8px",
