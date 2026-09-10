@@ -2,7 +2,6 @@ import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
 import RegisteredOrgHeader from "./components/RegisteredOrgHeader";
 import RegisteredOrgTable from "./components/RegisteredOrgTable";
-import systemScopeBanner from "../../../assets/shared/systemscope.png";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../../../hooks/useAuth";
@@ -35,13 +34,6 @@ export default function RegisteredOrg() {
           <div className="w-full">
             <RegisteredOrgHeader />
             <RegisteredOrgTable />
-            <div style={{ paddingTop: "48px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="w-3/4 h-auto"
-              />
-            </div>
           </div>
         </main>
       </div>

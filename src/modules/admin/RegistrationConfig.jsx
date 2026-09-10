@@ -5,15 +5,13 @@ import {
   FileText,
   Tag,
   Plus,
-  Settings,
 } from "lucide-react";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
+import { PageHeader } from "../../components";
 import ConfigTable from "./registrationconfig/components/ConfigTable";
 import ConfigEntryModal from "./registrationconfig/modals/ConfigEntryModal";
-import DeleteConfirmModal from "./registrationconfig/modals/DeleteConfirmModal"; // <-- Import added
-
-const CONTENT_PADDING = "30px";
+import DeleteConfirmModal from "./registrationconfig/modals/DeleteConfirmModal";
 
 export default function RegistrationConfig() {
   const [activeTab, setActiveTab] = useState("organizations");
@@ -53,60 +51,47 @@ export default function RegistrationConfig() {
     setRefreshTrigger((prev) => prev + 1);
   };
 
+  const currentTabLabel =
+    tabs.find((t) => t.id === activeTab)?.label || "Entries";
+
   return (
-    <div className="flex min-h-screen bg-[#f8f9fc]">
+    <div className="flex min-h-screen bg-white">
       <Sidebar role="admin" />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header layout="registrationConfig" profilePath="/admin/profile" />
 
-        <main className="flex-1 overflow-y-auto bg-white">
-          <div style={{ paddingTop: "20px" }}>
-            <div
-              className="flex items-start justify-between w-full"
-              style={{
-                marginBottom: "14px",
-                paddingLeft: "32px",
-                paddingRight: "32px",
-              }}
+        <main
+          className="flex-1 overflow-y-auto"
+          style={{ padding: "20px 24px" }}
+        >
+          <div className="w-full">
+            <PageHeader
+              title="Registration Configuration"
+              subtitle="Manage dynamic dropdown options for document entry forms."
             >
-              <div>
-                <h2
-                  className="font-inter font-bold text-[#142d55]"
-                  style={{ fontSize: "26px", lineHeight: 1.15 }}
-                >
-                  Registration Configuration
-                </h2>
-                <p
-                  className="font-inter text-gray-500 mt-0.5 flex items-center gap-1.5"
-                  style={{ fontSize: "13px" }}
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                  Manage dynamic dropdown options for document entry forms.
-                </p>
-              </div>
               <button
                 type="button"
                 onClick={handleAddNew}
-                className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-bold text-gray-900 transition-colors uppercase tracking-wider"
+                className="inline-flex items-center gap-1.5 rounded border border-gray-800 bg-[#ffe100] font-inter font-bold text-black transition-colors hover:bg-[#e6c900]"
                 style={{
-                  borderRadius: "6px",
-                  padding: "8px 16px",
                   fontSize: "12px",
-                  border: "2px solid #fbbf24",
+                  padding: "8px 14px",
+                  marginTop: "2px",
                 }}
               >
-                <Plus className="h-4 w-4" aria-hidden="true" />
+                <Plus
+                  style={{ width: "13px", height: "13px" }}
+                  strokeWidth={2.5}
+                  aria-hidden="true"
+                />
                 Add New Entry
               </button>
-            </div>
+            </PageHeader>
 
+            {/* Tab Navigation */}
             <div
               className="flex gap-2 border-b border-gray-200"
-              style={{
-                paddingLeft: "32px",
-                paddingRight: "32px",
-                marginBottom: "16px",
-              }}
+              style={{ marginBottom: "16px" }}
             >
               {tabs.map((tab) => {
                 const Icon = tab.icon;
@@ -133,40 +118,13 @@ export default function RegistrationConfig() {
               })}
             </div>
 
-            <section className="rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
-              <div
-                className="bg-[#1f5cae] flex items-center justify-between px-4 py-3 rounded-t-xl"
-                style={{ minHeight: "64px" }}
-              >
-                <h3
-                  className="font-inter text-[18px] font-bold text-white uppercase tracking-wide"
-                  style={{ paddingLeft: CONTENT_PADDING }}
-                >
-                  {tabs.find((t) => t.id === activeTab)?.label} Database
-                </h3>
-              </div>
-
-              <ConfigTable
-                activeTab={activeTab}
-                refreshTrigger={refreshTrigger}
-                onEdit={handleEdit}
-                onDelete={handleDeleteClick} // <-- Passed to table
-              />
-
-              <div
-                className="flex items-center justify-between border-t border-gray-200 bg-[#f8f9fc] rounded-b-xl"
-                style={{
-                  paddingLeft: CONTENT_PADDING,
-                  paddingRight: CONTENT_PADDING,
-                  paddingTop: "12px",
-                  paddingBottom: "12px",
-                }}
-              >
-                <p className="font-inter text-[13px] font-bold text-gray-400 uppercase tracking-wider">
-                  Configuring {activeTab.replace("_", " ")}
-                </p>
-              </div>
-            </section>
+            <ConfigTable
+              activeTab={activeTab}
+              tabLabel={currentTabLabel}
+              refreshTrigger={refreshTrigger}
+              onEdit={handleEdit}
+              onDelete={handleDeleteClick}
+            />
           </div>
         </main>
       </div>

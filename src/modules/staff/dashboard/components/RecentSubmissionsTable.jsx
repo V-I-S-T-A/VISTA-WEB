@@ -502,7 +502,9 @@ export default function RecentSubmissionsTable() {
                 (heading) => (
                   <th
                     key={heading}
-                    className="text-left font-inter font-bold uppercase tracking-wider text-gray-500"
+                    className={`text-left font-inter font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${
+                      heading === "ACTIONS" ? "pl-6 w-[170px]" : ""
+                    } ${heading === "STATUS" ? "min-w-[120px]" : ""}`}
                     style={{
                       padding: "12px 20px",
                       fontSize: "13px",
@@ -624,10 +626,10 @@ export default function RecentSubmissionsTable() {
                         },
                       )}
                     </td>
-                    <td style={{ padding: "12px 20px" }}>
+                    <td className="whitespace-nowrap min-w-[120px]" style={{ padding: "12px 20px" }}>
                       <StatusLabel status={submission.status} />
                     </td>
-                    <td style={{ padding: "12px 20px" }}>
+                    <td className="pl-6 whitespace-nowrap w-[170px]" style={{ padding: "12px 20px" }}>
                       {!primary ? (
                         <span className="font-inter text-xs text-gray-400">
                           No action needed

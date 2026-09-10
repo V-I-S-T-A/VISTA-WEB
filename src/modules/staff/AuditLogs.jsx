@@ -6,7 +6,6 @@ import Sidebar from "../../components/Sidebar";
 import AuditLogTable from "./auditlogs/components/AuditLogTable";
 import AuditLogDetails from "./auditlogs/components/AuditLogDetails";
 import { useCurrentUser } from "../../hooks/useAuth";
-import systemScopeBanner from "../../assets/shared/systemscope.png";
 
 export default function AuditLogs() {
   const navigate = useNavigate();

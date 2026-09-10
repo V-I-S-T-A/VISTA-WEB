@@ -4,16 +4,15 @@ import {
   Info,
   Users,
   FileText,
-  Calendar,
   User,
   Loader2,
   Download,
   Building2,
   Mail,
   Tag,
-  UserPlus,
 } from "lucide-react";
 import { submissionService } from "../../../../services/submissionService";
+import { BackButton } from "../../../../components";
 
 const formatTable = (tbl) => {
   const map = {
@@ -187,15 +186,6 @@ export default function AuditLogDetails({ log, onBack }) {
     );
   };
 
-  const getSubmissionDate = () => {
-    if (!fetchedSubmission) return details.timestamp;
-    return (
-      fetchedSubmission.submittedDate ||
-      (fetchedSubmission.submitted_at
-        ? new Date(fetchedSubmission.submitted_at).toLocaleDateString()
-        : details.timestamp)
-    );
-  };
 
   const previousEventTime = new Date(
     new Date(log.performed_at).getTime() - 133000,
@@ -219,31 +209,7 @@ export default function AuditLogDetails({ log, onBack }) {
         </p>
 
         <div className="flex items-center gap-4 mt-5">
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center justify-center transition hover:brightness-110 active:scale-95"
-            style={{
-              borderRadius: "9999px",
-              backgroundColor: "#FFE452",
-              padding: "4px",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            <div
-              className="flex items-center gap-1.5 font-inter text-[#1a1a1a]"
-              style={{
-                fontSize: "14px",
-                padding: "4px 16px",
-                borderRadius: "9999px",
-                backgroundColor: "#FFF2A8",
-                fontWeight: 500,
-              }}
-            >
-              <span style={{ fontSize: "16px", lineHeight: 1 }}>›</span> Back
-            </div>
-          </button>
+          <BackButton onClick={onBack} />
           <span
             className="font-inter text-[#0a1e3f]"
             style={{ fontSize: "16px", fontWeight: 500 }}
