@@ -2,7 +2,6 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import ProfileBanner from "./profile/components/ProfileBanner";
 import ProfileForm from "./profile/components/ProfileForm";
-import systemScopeBanner from "../../assets/shared/systemscope.png";
 import {useCurrentUser} from "../../hooks/useAuth";
 import {useNavigate} from "react-router-dom";
 import {useEffect} from "react";
