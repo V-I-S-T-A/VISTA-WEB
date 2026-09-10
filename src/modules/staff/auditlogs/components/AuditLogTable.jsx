@@ -1,6 +1,18 @@
-import { useState, useRef, useEffect, useMemo } from "react";
-import { Search, Download, Filter } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Eye } from "lucide-react";
 import api from "../../../../lib/axios";
+import defaultUser from "../../../../assets/shared/default_user.jpg";
+import {
+  PageHeader,
+  TableContainer,
+  TableSearchBar,
+  FilterButton,
+  FilterPopover,
+  FilterPopoverRow,
+  FilterSelect,
+  FilterDateInput,
+  ExportButton,
+} from "../../../../components";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "30px";
@@ -23,7 +35,6 @@ export default function AuditLogTable({ onViewLog }) {
 
   const [showMoreFilters, setShowMoreFilters] = useState(false);
   const [dateFilter, setDateFilter] = useState("");
-  const moreFiltersRef = useRef(null);
   const [currentPage, setCurrentPage] = useState(1);
 
   // Removed "login" and "logout" from the dropdown filters
@@ -94,7 +105,6 @@ export default function AuditLogTable({ onViewLog }) {
       }
 
       // STRICT FILTER 2: Hide student logs
-      // Note: Make sure your backend serializer returns 'user_type', 'role', or 'performed_by_role'
       const role = String(
         log.user_type || log.role || log.performed_by_role || "",
       ).toLowerCase();
@@ -146,26 +156,25 @@ export default function AuditLogTable({ onViewLog }) {
   }
 
   const handleExport = () => {
+    if (!filteredLogs.length) return;
     const headers = ["TIMESTAMP", "USER/ENTITY", "ACTION", "TABLE", "AUDIT_ID"];
-    const csvContent = [
-      headers.join(","),
-      ...filteredLogs.map((log) =>
-        [
-          formatDate(log.performed_at),
-          log.performed_by || "Unknown",
-          log.action,
-          log.table_name,
-          log.audit_id,
-        ].join(","),
-      ),
-    ].join("\n");
+    const rows = filteredLogs.map((log) => [
+      `"${formatDate(log.performed_at)}"`,
+      `"${(log.performed_by || "Unknown").replace(/"/g, '""')}"`,
+      `"${(log.action || "").replace(/"/g, '""')}"`,
+      `"${(log.table_name || "").replace(/"/g, '""')}"`,
+      `"${(log.audit_id || "").replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv" });
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
     a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
   };
 
@@ -184,128 +193,47 @@ export default function AuditLogTable({ onViewLog }) {
 
   return (
     <>
-      <div
-        className="flex items-start justify-between w-full"
-        style={{ marginBottom: "14px" }}
-      >
-        <div>
-          <h2
-            className="font-inter font-bold text-[#142d55]"
-            style={{ fontSize: "26px", lineHeight: 1.15 }}
-          >
-            Audit Log History
-          </h2>
-          <p
-            className="font-inter text-gray-500 mt-0.5"
-            style={{ fontSize: "13px" }}
-          >
-            System-wide transparency of activities.
-          </p>
-        </div>
-      </div>
+      <PageHeader
+        title="Audit Log History"
+        subtitle="System-wide transparency of activities."
+      />
 
-      <section className="rounded-xl border border-gray-200 bg-white mx-4 sm:mx-6 lg:mx-8 my-4">
-        <div
-          className="bg-[#1f5cae] flex items-center justify-between px-4 py-3 rounded-t-xl"
-          style={{ minHeight: "64px" }}
-        >
-          <h3
-            className="font-inter text-[18px] font-bold text-white"
-            style={{ paddingLeft: CONTENT_PADDING }}
-          >
-            Live Activity Stream
-          </h3>
-          <div
-            className="flex items-center gap-3"
-            style={{ paddingRight: "20px" }}
-          >
-            <div className="relative" style={{ width: "300px" }}>
-              <Search
-                className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"
-                style={{ width: "16px", height: "16px" }}
-              />
-              <input
-                type="search"
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setCurrentPage(1);
-                }}
-                placeholder="Search user, action, ID..."
-                className="w-full bg-white font-inter text-gray-600 placeholder:text-gray-400 outline-none"
-                style={{
-                  height: "36px",
-                  border: "1.5px solid #d1d5db",
-                  borderRadius: "8px",
-                  padding: "0 12px 0 40px",
-                  fontSize: "13px",
-                }}
-              />
-            </div>
-            <div className="relative" ref={moreFiltersRef}>
-              <button
-                type="button"
+      <TableContainer
+        title="Live Activity Stream"
+        headerRight={
+          <>
+            <TableSearchBar
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setCurrentPage(1);
+              }}
+              placeholder="Search user, action, ID..."
+            />
+
+            <div className="relative">
+              <FilterButton
                 onClick={() => setShowMoreFilters((p) => !p)}
-                className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
-                style={{
-                  fontSize: "12.5px",
-                  padding: "7px 14px",
-                  backgroundColor: "#12345b",
-                }}
-              >
-                <Filter
-                  style={{ width: "13px", height: "13px" }}
-                  aria-hidden="true"
-                />
-                Filter
-                {(actionFilter !== "All Actions" || dateFilter) && (
-                  <span
-                    className="inline-flex items-center justify-center font-bold"
-                    style={{
-                      width: "16px",
-                      height: "16px",
-                      borderRadius: "9999px",
-                      backgroundColor: "#ffffff",
-                      color: "#12345b",
-                      fontSize: "10px",
-                      marginLeft: "4px",
-                    }}
-                  >
-                    {(actionFilter !== "All Actions" ? 1 : 0) +
-                      (dateFilter ? 1 : 0)}
-                  </span>
-                )}
-              </button>
+                activeCount={
+                  (actionFilter !== "All Actions" ? 1 : 0) + (dateFilter ? 1 : 0)
+                }
+              />
 
               {showMoreFilters && (
-                <div
-                  className="absolute right-0 top-full z-20"
-                  style={{
-                    marginTop: "8px",
-                    width: "288px",
-                    borderRadius: "10px",
-                    border: "1px solid #e2e6ee",
-                    backgroundColor: "#ffffff",
-                    boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
-                    padding: "16px",
+                <FilterPopover
+                  onClear={() => {
+                    setActionFilter("All Actions");
+                    setDateFilter("");
+                    setCurrentPage(1);
                   }}
+                  onClose={() => setShowMoreFilters(false)}
                 >
-                  <div style={{ marginBottom: "14px" }}>
-                    <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
-                      Action
-                    </label>
-                    <select
+                  <FilterPopoverRow label="Action">
+                    <FilterSelect
                       value={actionFilter}
                       onChange={(e) => {
                         setActionFilter(e.target.value);
                         setCurrentPage(1);
-                      }}
-                      className="w-full font-inter outline-none"
-                      style={{
-                        borderRadius: "8px",
-                        border: "1px solid #d1d5db",
-                        padding: "8px 10px",
-                        fontSize: "14px",
                       }}
                     >
                       {ACTION_OPTIONS.map((o) => (
@@ -313,131 +241,107 @@ export default function AuditLogTable({ onViewLog }) {
                           {o === "All Actions" ? o : String(o).toUpperCase()}
                         </option>
                       ))}
-                    </select>
-                  </div>
+                    </FilterSelect>
+                  </FilterPopoverRow>
 
-                  <div style={{ marginBottom: "14px" }}>
-                    <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
-                      Date
-                    </label>
-                    <input
-                      type="date"
+                  <FilterPopoverRow label="Date">
+                    <FilterDateInput
                       value={dateFilter}
                       onChange={(e) => {
                         setDateFilter(e.target.value);
                         setCurrentPage(1);
                       }}
-                      className="w-full font-inter outline-none cursor-pointer"
-                      style={{
-                        borderRadius: "8px",
-                        border: "1px solid #d1d5db",
-                        padding: "8px 10px",
-                        fontSize: "14px",
-                      }}
                     />
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setActionFilter("All Actions");
-                      setDateFilter("");
-                      setCurrentPage(1);
-                    }}
-                    className="w-full font-inter font-bold transition-colors"
-                    style={{
-                      backgroundColor: "#f3f4f6",
-                      color: "#4b5563",
-                      padding: "8px 0",
-                      borderRadius: "8px",
-                      fontSize: "13px",
-                    }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#e5e7eb")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#f3f4f6")
-                    }
-                  >
-                    Clear Filters
-                  </button>
-                </div>
+                  </FilterPopoverRow>
+                </FilterPopover>
               )}
             </div>
-            <button
-              onClick={handleExport}
-              type="button"
-              className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap"
-              style={{
-                borderRadius: "6px",
-                padding: "6px 12px",
-                fontSize: "12px",
-              }}
-            >
-              <Download className="h-4 w-4" aria-hidden="true" /> Export
-            </button>
-          </div>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full border-collapse">
-            <thead>
-              <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-                {["TIMESTAMP", "USER/ENTITY", "ACTION", "DETAILS"].map(
-                  (heading) => (
-                    <th
-                      key={heading}
-                      className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
-                      style={
-                        heading === "TIMESTAMP"
-                          ? { paddingLeft: CONTENT_PADDING }
-                          : undefined
-                      }
-                    >
-                      {heading}
-                    </th>
-                  ),
-                )}
-              </tr>
-            </thead>
-            <tbody>
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-                  >
-                    Loading audit logs...
-                  </td>
-                </tr>
-              ) : paginatedLogs.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-                  >
-                    No audit logs match your search.
-                  </td>
-                </tr>
-              ) : (
-                paginatedLogs.map((log) => {
-                  const actionColor =
-                    ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
 
-                  return (
-                    <tr
-                      key={log.audit_id}
-                      className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
+            <ExportButton onClick={handleExport} />
+          </>
+        }
+        totalCount={filteredLogs.length}
+        shownCount={paginatedLogs.length}
+        recordLabel="entries"
+        showPagination={showPagination}
+        currentPage={safeCurrentPage}
+        totalPages={totalPages}
+        pageNumbers={pageNumbers}
+        onGoToPage={goToPage}
+      >
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
+              <th
+                className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap w-[220px] min-w-[220px]"
+                style={{ paddingLeft: CONTENT_PADDING }}
+              >
+                TIMESTAMP
+              </th>
+              <th className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap min-w-[260px]">
+                USER/ENTITY
+              </th>
+              <th className="px-5 py-2.5 text-center font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap w-[200px] min-w-[200px]">
+                ACTION
+              </th>
+              <th
+                className="px-5 py-2.5 pl-6 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap w-[180px] min-w-[180px]"
+                style={{ paddingRight: CONTENT_PADDING }}
+              >
+                DETAILS
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {isLoading ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
+                >
+                  Loading audit logs...
+                </td>
+              </tr>
+            ) : paginatedLogs.length === 0 ? (
+              <tr>
+                <td
+                  colSpan={4}
+                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
+                >
+                  No audit logs match your search.
+                </td>
+              </tr>
+            ) : (
+              paginatedLogs.map((log) => {
+                const actionColor =
+                  ACTION_COLORS[log.action] || ACTION_COLORS.DEFAULT;
+
+                return (
+                  <tr
+                    key={log.audit_id}
+                    className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
+                  >
+                    <td
+                      className="px-5 py-2.5 font-inter font-medium text-gray-700 w-[220px] min-w-[220px] whitespace-nowrap"
+                      style={{
+                        paddingLeft: CONTENT_PADDING,
+                        fontSize: "13px",
+                      }}
                     >
-                      <td
-                        className="px-5 py-2.5 font-inter font-medium text-gray-700"
-                        style={{
-                          paddingLeft: CONTENT_PADDING,
-                          fontSize: "13px",
-                        }}
-                      >
-                        {formatDate(log.performed_at)}
-                      </td>
-                      <td className="px-5 py-2.5">
+                      {formatDate(log.performed_at)}
+                    </td>
+                    <td className="px-5 py-2.5 min-w-[260px]">
+                      <div className="flex items-center gap-3">
+                        <img
+                          src={log.performed_by_image || defaultUser}
+                          alt=""
+                          className="flex-shrink-0 rounded-full object-cover"
+                          style={{ width: "40px", height: "40px" }}
+                          onError={(e) => {
+                            e.currentTarget.src = defaultUser;
+                          }}
+                          aria-hidden="true"
+                        />
                         <div className="min-w-0">
                           <p
                             className="font-inter font-bold text-gray-900 leading-tight"
@@ -446,134 +350,47 @@ export default function AuditLogTable({ onViewLog }) {
                             {log.performed_by || "System"}
                           </p>
                           <p
-                            className="font-inter font-medium text-gray-400 mt-0.5"
+                            className="max-w-[220px] truncate font-inter font-medium text-gray-400 mt-0.5"
                             style={{ fontSize: "12px" }}
                           >
                             {log.performed_by_org || "System User"}
                           </p>
                         </div>
-                      </td>
-                      <td className="px-5 py-2.5">
-                        <span
-                          className="inline-flex items-center justify-center rounded-full px-8 py-3 font-inter font-semibold whitespace-nowrap"
-                          style={{
-                            fontSize: "13px",
-                            backgroundColor: actionColor.bg,
-                            color: actionColor.text,
-                            minWidth: "200px",
-                            minHeight: "23px",
-                          }}
-                        >
-                          {String(log.action).toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-5 py-2.5">
-                        <button
-                          type="button"
-                          onClick={() => onViewLog && onViewLog(log)}
-                          className="font-inter font-bold uppercase tracking-wider transition hover:bg-gray-100 active:scale-95"
-                          style={{
-                            fontSize: "10px",
-                            padding: "6px 14px",
-                            backgroundColor: "#fff",
-                            color: "#1f5cae",
-                            border: "2px solid #1f5cae",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            letterSpacing: "0.04em",
-                          }}
-                        >
-                          View Details
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
-        <div
-          className="flex items-center justify-between border-t border-gray-200 bg-white"
-          style={{
-            paddingLeft: CONTENT_PADDING,
-            paddingRight: CONTENT_PADDING,
-            paddingTop: "12px",
-            paddingBottom: "12px",
-          }}
-        >
-          <p className="font-inter text-[14px] font-medium text-gray-500">
-            Showing{" "}
-            <span className="font-semibold text-gray-700">
-              {paginatedLogs.length}
-            </span>{" "}
-            of{" "}
-            <span className="font-semibold text-gray-700">
-              {filteredLogs.length}
-            </span>{" "}
-            entries
-          </p>
-          {showPagination && (
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => goToPage(safeCurrentPage - 1)}
-                disabled={safeCurrentPage === 1}
-                className="font-inter font-semibold border rounded-md transition"
-                style={{
-                  height: "30px",
-                  padding: "0 14px",
-                  fontSize: "13px",
-                  borderColor: "#d1d5db",
-                  backgroundColor: "#f9fafb",
-                  color: safeCurrentPage === 1 ? "#9ca3af" : "#374151",
-                  cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
-                }}
-              >
-                Previous
-              </button>
-              {pageNumbers.map((page) => (
-                <button
-                  key={page}
-                  type="button"
-                  onClick={() => goToPage(page)}
-                  className="font-inter font-semibold border rounded-md transition"
-                  style={{
-                    width: "34px",
-                    height: "30px",
-                    fontSize: "13px",
-                    borderColor:
-                      page === safeCurrentPage ? "#002b5c" : "#d1d5db",
-                    backgroundColor:
-                      page === safeCurrentPage ? "#002b5c" : "#ffffff",
-                    color: page === safeCurrentPage ? "#ffffff" : "#374151",
-                  }}
-                >
-                  {page}
-                </button>
-              ))}
-              <button
-                type="button"
-                onClick={() => goToPage(safeCurrentPage + 1)}
-                disabled={safeCurrentPage >= totalPages}
-                className="font-inter font-semibold border rounded-md transition"
-                style={{
-                  height: "30px",
-                  padding: "0 14px",
-                  fontSize: "13px",
-                  borderColor: "#d1d5db",
-                  backgroundColor: "#ffffff",
-                  color: safeCurrentPage >= totalPages ? "#9ca3af" : "#374151",
-                  cursor:
-                    safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
-                }}
-              >
-                Next
-              </button>
-            </div>
-          )}
-        </div>
-      </section>
+                      </div>
+                    </td>
+                    <td className="px-5 py-2.5 whitespace-nowrap w-[200px] min-w-[200px] text-center">
+                      <span
+                        className="inline-flex items-center justify-center rounded-full px-5 py-2 font-inter font-semibold whitespace-nowrap w-[150px] text-center"
+                        style={{
+                          fontSize: "12.5px",
+                          backgroundColor: actionColor.bg,
+                          color: actionColor.text,
+                        }}
+                      >
+                        {String(log.action).toUpperCase()}
+                      </span>
+                    </td>
+                    <td
+                      className="px-5 py-2.5 pl-6 whitespace-nowrap w-[180px] min-w-[180px]"
+                      style={{ paddingRight: CONTENT_PADDING }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => onViewLog && onViewLog(log)}
+                        className="inline-flex items-center gap-1.5 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50"
+                        style={{ fontSize: "12px", padding: "6px 14px" }}
+                      >
+                        <Eye style={{ width: "13px", height: "13px" }} aria-hidden="true" />
+                        VIEW DETAILS
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </TableContainer>
     </>
   );
 }
