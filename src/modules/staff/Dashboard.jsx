@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import SubmissionSummaryCards from "./dashboard/components/UserSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
+import SubmissionReviewDetails from "./review-panel/components/SubmissionReviewDetails";
 import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
 import AuditLogWidget from "./dashboard/components/AuditLogWidget";
 import { useCurrentUser } from "../../hooks/useAuth";
@@ -12,6 +13,7 @@ import systemScopeBanner from "../../assets/shared/systemscope.png";
 export default function Dashboard() {
   const navigate = useNavigate();
   const { data: currentUser, isLoading } = useCurrentUser();
+  const [selectedSubmission, setSelectedSubmission] = useState(null);
 
   useEffect(() => {
     if (!isLoading) {
@@ -35,30 +37,40 @@ export default function Dashboard() {
           style={{ padding: "24px 28px" }}
         >
           <div className="w-full">
-            <SubmissionSummaryCards />
-
-            <div style={{ marginTop: "20px" }}>
-              <RecentSubmissionsTable />
-            </div>
-
-            <div
-              className="grid grid-cols-2"
-              style={{ gap: "16px", marginTop: "20px" }}
-            >
-              <InstitutionalPulse />
-              <AuditLogWidget />
-            </div>
-
-            <div style={{ paddingTop: "32px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="w-full h-auto rounded-xl"
+            {selectedSubmission ? (
+              <SubmissionReviewDetails
+                submission={selectedSubmission}
+                onBack={() => setSelectedSubmission(null)}
               />
-            </div>
+            ) : (
+              <>
+                <SubmissionSummaryCards />
+
+                <div style={{ marginTop: "20px" }}>
+                  <RecentSubmissionsTable onViewReview={setSelectedSubmission} />
+                </div>
+
+                <div
+                  className="grid grid-cols-2"
+                  style={{ gap: "16px", marginTop: "20px" }}
+                >
+                  <InstitutionalPulse />
+                  <AuditLogWidget />
+                </div>
+
+                <div style={{ paddingTop: "32px" }}>
+                  <img
+                    src={systemScopeBanner}
+                    alt="System Scope"
+                    className="w-full h-auto rounded-xl"
+                  />
+                </div>
+              </>
+            )}
           </div>
         </main>
       </div>
     </div>
   );
 }
+
