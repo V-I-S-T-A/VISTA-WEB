@@ -14,6 +14,7 @@ import {
   UserPlus,
 } from "lucide-react";
 import { submissionService } from "../../../../services/submissionService";
+import { getOptimizedViewUrl } from "../../../../utils/fileOptimizer";
 
 const formatTable = (tbl) => {
   const map = {
@@ -520,7 +521,7 @@ export default function AuditLogDetails({ log, onBack }) {
                                     </span>
                                   </div>
                                   <a
-                                    href={doc.file_url || "#"}
+                                    href={getOptimizedViewUrl(doc.file_url) || "#"}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="inline-flex flex-shrink-0 items-center gap-1.5 rounded bg-gray-50 px-3 py-1.5 font-inter text-[11px] font-bold text-[#142d55] border border-gray-200 transition-colors hover:bg-gray-100"
