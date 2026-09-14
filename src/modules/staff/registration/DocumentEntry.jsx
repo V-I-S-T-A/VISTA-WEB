@@ -10,6 +10,7 @@ import SubmitRegistration from "./components/SubmitRegistration";
 import OCRResults from "./components/OCRResults";
 import registrationSider from "../../assets/registration_sider.png";
 import StatusModal from "../../../components/StatusModal";
+import { convertImageToWebP } from "../../../utils/fileOptimizer";
 
 export default function DocumentEntry() {
   const navigate = useNavigate();
@@ -108,15 +109,20 @@ export default function DocumentEntry() {
   };
 
   const handleFileUpload = async (uploadedFile) => {
-    setFile(uploadedFile);
-    if (!uploadedFile) return;
+    if (!uploadedFile) {
+      setFile(null);
+      return;
+    }
 
     setIsScanning(true);
     setError("");
 
     try {
+      const optimizedFile = await convertImageToWebP(uploadedFile);
+      setFile(optimizedFile);
+
       const fd = new FormData();
-      fd.append("file", uploadedFile);
+      fd.append("file", optimizedFile);
       const res = await api.post("/submissions/autofill/", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -203,8 +209,9 @@ export default function DocumentEntry() {
       // Step B: Upload to Cloudinary
       if (file) {
         try {
+          const uploadFile = await convertImageToWebP(file);
           const cloudinaryData = new FormData();
-          cloudinaryData.append("file", file);
+          cloudinaryData.append("file", uploadFile);
           cloudinaryData.append("upload_preset", "vista_uploads");
 
           const cloudName = "djtdar2ex";
@@ -218,10 +225,10 @@ export default function DocumentEntry() {
           if (cloudinaryJson.secure_url) {
             await api.post("/documents/", {
               submission_id: subId,
-              file_name: file.name,
+              file_name: uploadFile.name,
               file_url: cloudinaryJson.secure_url,
-              mime_type: file.type || "application/pdf",
-              file_size_kb: Math.max(1, Math.round(file.size / 1024)),
+              mime_type: uploadFile.type || "application/pdf",
+              file_size_kb: Math.max(1, Math.round(uploadFile.size / 1024)),
             });
           } else {
             throw new Error(JSON.stringify(cloudinaryJson));
