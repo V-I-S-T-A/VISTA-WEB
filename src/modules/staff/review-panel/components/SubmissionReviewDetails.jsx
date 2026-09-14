@@ -13,6 +13,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { submissionService } from "../../../../services/submissionService";
 import { reviewLogService } from "../../../../services/reviewLogService";
 import ConfirmDriveSyncModal from "./modals/ConfirmDriveSyncModal";
+import StatusModal from "../../../../components/StatusModal";
+
 
 const STATUS_ACTIONS = [
   "Select Action...",
@@ -41,11 +43,47 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const [priorityEscalation, setPriorityEscalation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
 
   const [submissionDetails, setSubmissionDetails] = useState(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
   const [reviewLogs, setReviewLogs] = useState([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+
+  const showNotification = (
+    title,
+    message,
+    type = "success",
+    onConfirm = null,
+  ) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      onConfirm,
+    });
+  };
+
+  const closeNotification = () => {
+    const callback = modalConfig.onConfirm;
+    setModalConfig({
+      isOpen: false,
+      type: "success",
+      title: "",
+      message: "",
+      onConfirm: null,
+    });
+    if (callback) {
+      callback();
+    }
+  };
 
   useEffect(() => {
     async function fetchFullDetails() {
@@ -86,7 +124,11 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
   function handleOpenConfirmModal() {
     if (statusAction === STATUS_ACTIONS[0]) {
-      alert("Please select a valid action from the dropdown.");
+      showNotification(
+        "Action Required",
+        "Please select a valid action from the dropdown.",
+        "warning",
+      );
       return;
     }
     // Only show Drive folder modal when marking as Verified (approved)
@@ -100,6 +142,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   async function invalidateAndGoBack() {
     // Invalidate all submission-related queries so Recent Submissions & Review Panel refresh
     await queryClient.invalidateQueries({ queryKey: ["submissions"] });
+    await queryClient.invalidateQueries({ queryKey: ["submission", submission?.id] });
     await queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
     onBack();
   }
@@ -113,14 +156,20 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         backendStatus,
         remarks,
       );
-      alert("Decision submitted successfully!");
-      await invalidateAndGoBack();
+      showNotification(
+        "Decision Submitted",
+        "Decision submitted successfully!",
+        "success",
+        async () => {
+          await invalidateAndGoBack();
+        },
+      );
     } catch (error) {
       console.error("Submission error:", error);
       const backendError = error.response?.data
         ? JSON.stringify(error.response.data, null, 2)
-        : error.message;
-      alert(`Backend Error:\n\n${backendError}`);
+        : error.message || "Failed to submit decision.";
+      showNotification("Submission Error", backendError, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -134,20 +183,33 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         submission.id,
         backendStatus,
         remarks,
+        driveFolderData?.finalFile || null,
+        driveFolderData?.folder_id || "",
       );
-      alert("Submission verified and synced to Google Drive!");
+      const successMsg = driveFolderData?.finalFile
+        ? "Final PDF uploaded, old document replaced in system, and archived to Google Drive!"
+        : "Submission verified and synced to Google Drive!";
       setShowConfirmModal(false);
-      await invalidateAndGoBack();
+      showNotification(
+        "Verification & Drive Sync Successful",
+        successMsg,
+        "success",
+        async () => {
+          await invalidateAndGoBack();
+        },
+      );
     } catch (error) {
       console.error("Submission error:", error);
       const backendError = error.response?.data
         ? JSON.stringify(error.response.data, null, 2)
-        : error.message;
-      alert(`Backend Error:\n\n${backendError}`);
+        : error.message || "Failed to sync submission to Google Drive.";
+      showNotification("Drive Sync Error", backendError, "error");
     } finally {
       setIsSubmitting(false);
     }
   }
+
+
 
   return (
     <div className="w-full">
@@ -335,8 +397,10 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                     onClick={(e) => {
                       if (!doc.file_url) {
                         e.preventDefault();
-                        alert(
-                          "Error: This file's URL is missing from the database.",
+                        showNotification(
+                          "Document Unavailable",
+                          "This file's URL is missing from the database.",
+                          "error",
                         );
                       }
                     }}
@@ -478,6 +542,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         onConfirm={handleFinalSubmitDecision}
         isSubmitting={isSubmitting}
         submission={submission}
+        submissionDetails={submissionDetails}
         statusAction={statusAction}
         remarks={remarks}
       />
@@ -688,6 +753,17 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           </div>
         </div>
       )}
+
+      {/* Notification / Alert Modal (Table palette styled) */}
+      <StatusModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeNotification}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText="OK"
+        onConfirm={closeNotification}
+      />
     </div>
   );
 }
