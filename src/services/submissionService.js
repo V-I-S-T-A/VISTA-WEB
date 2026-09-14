@@ -44,21 +44,27 @@ export const submissionService = {
     return response.data;
   },
 
-  async updateStatus(submissionId, status, remarksText = "") {
+  async updateStatus(
+    submissionId,
+    status,
+    remarksText = "",
+    finalFile = null,
+    driveFolderId = "",
+  ) {
     const mappedStatus = STATUS_API_MAP[status] || status;
 
-    // Use FormData instead of a standard JS object.
-    // This perfectly mimics a form submission and bypasses all JSON parsing errors in Django.
+    // Use FormData so both JSON-like fields and multipart files are supported.
     const formData = new FormData();
     formData.append("status", mappedStatus);
 
     if (remarksText) {
       formData.append("remarks_text", remarksText);
     }
-
-    console.log("SENDING PATCH PAYLOAD VIA FORMDATA");
-    for (let [key, value] of formData.entries()) {
-      console.log(`${key}: ${value}`);
+    if (finalFile) {
+      formData.append("file", finalFile);
+    }
+    if (driveFolderId) {
+      formData.append("drive_folder_id", driveFolderId);
     }
 
     const response = await apiClient.patch(
@@ -72,6 +78,7 @@ export const submissionService = {
     );
     return response.data;
   },
+
 
   /**
    * Streams the server-generated PDF as a blob. All filtering (status,

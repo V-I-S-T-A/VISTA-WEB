@@ -1,20 +1,17 @@
-import { useState, useEffect } from "react";
+import { useState, useRef } from "react";
 import {
   X,
   HardDrive,
   Folder,
-  FolderPlus,
-  Search,
   CheckCircle2,
   Loader2,
   AlertCircle,
+  UploadCloud,
+  FileText,
+  Trash2,
 } from "lucide-react";
-import {
-  useDriveConnection,
-  useDriveFolders,
-  useSelectDriveFolder,
-  useCreateDriveFolder,
-} from "../../../../../hooks/useDrive";
+
+import { useDriveConnection } from "../../../../../hooks/useDrive";
 
 export default function ConfirmDriveSyncModal({
   isOpen,
@@ -22,67 +19,51 @@ export default function ConfirmDriveSyncModal({
   onConfirm,
   isSubmitting = false,
   submission,
+  submissionDetails,
   statusAction,
   remarks,
 }) {
   const { data: driveConn, isLoading: isLoadingConn } = useDriveConnection();
-  const [folderMode, setFolderMode] = useState("browse"); // browse | create
-  const [search, setSearch] = useState("");
-  const [newFolderName, setNewFolderName] = useState("");
-  const [selectedFolder, setSelectedFolder] = useState(null);
+  const [finalFile, setFinalFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [fileError, setFileError] = useState("");
+  const fileInputRef = useRef(null);
 
-  const { data: folderData, isLoading: isLoadingFolders, isFetching } =
-    useDriveFolders(search);
-  const selectFolderMutation = useSelectDriveFolder();
-  const createFolderMutation = useCreateDriveFolder();
-
-  const folders = folderData?.folders ?? [];
   const isDriveConnected = driveConn?.connected ?? false;
+  const rootFolderName =
+    driveConn?.folder_name ||
+    driveConn?.target_folder_name ||
+    "Google Drive (Root)";
 
-  useEffect(() => {
-    if (driveConn?.target_folder_name) {
-      setSelectedFolder({
-        id: driveConn.target_folder_id,
-        name: driveConn.target_folder_name,
-      });
-    }
-  }, [driveConn]);
+  const academicYear =
+    submissionDetails?.academic_year ||
+    submissionDetails?.academic_year_name ||
+    submission?.academic_year ||
+    "2026-2027";
+  const orgName =
+    submissionDetails?.org_name ||
+    submission?.org_name ||
+    submission?.site ||
+    "Organization";
+  const docTypeName =
+    submissionDetails?.doc_type_name ||
+    submission?.doc_type_name ||
+    submission?.documentType ||
+    "Document Type";
+  const displayFileName = finalFile
+    ? finalFile.name
+    : `${submissionDetails?.title || submission?.title || "Submission_Document"}.pdf`;
 
   if (!isOpen) return null;
 
-  const handleSelectFolder = async (folder) => {
-    try {
-      await selectFolderMutation.mutateAsync({
-        folder_id: folder.id,
-        folder_name: folder.name,
-      });
-      setSelectedFolder(folder);
-    } catch (err) {
-      console.error("Failed to select folder:", err);
-    }
-  };
-
-  const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) return;
-    try {
-      const res = await createFolderMutation.mutateAsync(newFolderName.trim());
-      setSelectedFolder({
-        id: res.id || res.folder_id,
-        name: res.name || newFolderName.trim(),
-      });
-      setNewFolderName("");
-      setFolderMode("browse");
-    } catch (err) {
-      console.error("Failed to create folder:", err);
-    }
-  };
-
   const handleFinalSubmit = () => {
     onConfirm({
-      folder_id: selectedFolder?.id,
-      folder_name: selectedFolder?.name,
+      finalFile,
+      folder_name: rootFolderName,
+      folder_id: driveConn?.folder_id || driveConn?.target_folder_id,
     });
   };
+
 
   return (
     <div
@@ -303,7 +284,252 @@ export default function ConfirmDriveSyncModal({
             )}
           </div>
 
-          {/* Drive Storage Folder Section */}
+          {/* Drop PDF Section (Final Paper Replacement) */}
+          <div
+            style={{
+              border: "1.5px solid #e5e7eb",
+              borderRadius: "10px",
+              padding: "16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px",
+              background: "#ffffff",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <label
+                style={{
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "11px",
+                  fontWeight: "700",
+                  color: "#374151",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                  margin: 0,
+                }}
+              >
+                Drop PDF (Final Version for Drive)
+              </label>
+              <span
+                style={{
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "10px",
+                  fontWeight: "700",
+                  color: finalFile ? "#15803d" : "#6b7280",
+                  background: finalFile ? "#f0fdf4" : "#f3f4f6",
+                  padding: "2px 8px",
+                  borderRadius: "99px",
+                }}
+              >
+                {finalFile ? "New File Selected" : "Replaces Old Document"}
+              </span>
+            </div>
+
+            {!finalFile ? (
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDragging(true);
+                }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDragging(false);
+                  const dropped = e.dataTransfer.files?.[0];
+                  if (dropped) {
+                    if (
+                      dropped.type === "application/pdf" ||
+                      dropped.name.toLowerCase().endsWith(".pdf")
+                    ) {
+                      setFinalFile(dropped);
+                      setFileError("");
+                    } else {
+                      setFileError("Only PDF files (.pdf) are accepted.");
+                    }
+                  }
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                style={{
+                  border: isDragging
+                    ? "2px dashed #1f5cae"
+                    : "2px dashed #cbd5e1",
+                  backgroundColor: isDragging ? "#f0f5fc" : "#f8fafd",
+                  borderRadius: "8px",
+                  padding: "18px 14px",
+                  textAlign: "center",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "6px",
+                }}
+              >
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  onChange={(e) => {
+                    const selected = e.target.files?.[0];
+                    if (selected) {
+                      if (
+                        selected.type === "application/pdf" ||
+                        selected.name.toLowerCase().endsWith(".pdf")
+                      ) {
+                        setFinalFile(selected);
+                        setFileError("");
+                      } else {
+                        setFileError("Only PDF files (.pdf) are accepted.");
+                      }
+                    }
+                  }}
+                  style={{ display: "none" }}
+                />
+                <div
+                  style={{
+                    background: "#eaf1ff",
+                    borderRadius: "50%",
+                    width: "36px",
+                    height: "36px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "#1f5cae",
+                  }}
+                >
+                  <UploadCloud style={{ width: "18px", height: "18px" }} />
+                </div>
+                <div>
+                  <p
+                    style={{
+                      fontFamily: "Inter, sans-serif",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      color: "#1e3a8a",
+                      margin: 0,
+                    }}
+                  >
+                    Click to browse or drop final PDF here
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: "Inter, sans-serif",
+                      fontSize: "11px",
+                      color: "#64748b",
+                      margin: "3px 0 0",
+                    }}
+                  >
+                    Old file will be removed from system &amp; new PDF will be uploaded to Drive
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  background: "#f0fdf4",
+                  border: "1.5px solid #86efac",
+                  borderRadius: "8px",
+                  padding: "10px 14px",
+                }}
+              >
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "10px",
+                    minWidth: 0,
+                  }}
+                >
+                  <div
+                    style={{
+                      background: "#dcfce7",
+                      borderRadius: "6px",
+                      width: "32px",
+                      height: "32px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      flexShrink: 0,
+                    }}
+                  >
+                    <FileText
+                      style={{ width: "16px", height: "16px", color: "#15803d" }}
+                    />
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontSize: "12.5px",
+                        fontWeight: "700",
+                        color: "#14532d",
+                        margin: 0,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {finalFile.name}
+                    </p>
+                    <p
+                      style={{
+                        fontFamily: "Inter, sans-serif",
+                        fontSize: "11px",
+                        color: "#16a34a",
+                        margin: "1px 0 0",
+                      }}
+                    >
+                      {(finalFile.size / 1024).toFixed(1)} KB · Will replace initial document
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setFinalFile(null)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    padding: "4px",
+                    color: "#dc2626",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  title="Remove replacement PDF"
+                >
+                  <Trash2 style={{ width: "16px", height: "16px" }} />
+                </button>
+              </div>
+            )}
+
+            {fileError && (
+              <p
+                style={{
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "11px",
+                  color: "#dc2626",
+                  margin: 0,
+                  fontWeight: "600",
+                }}
+              >
+                {fileError}
+              </p>
+            )}
+          </div>
+
+          {/* Automated Drive Storage Hierarchy Section */}
           <div
             style={{
               border: "1.5px solid #e5e7eb",
@@ -333,9 +559,9 @@ export default function ConfirmDriveSyncModal({
                   margin: 0,
                 }}
               >
-                Google Drive Storage Folder
+                Google Drive Storage Hierarchy
               </label>
-              {isDriveConnected && (
+              {isDriveConnected ? (
                 <span
                   style={{
                     display: "inline-flex",
@@ -353,355 +579,205 @@ export default function ConfirmDriveSyncModal({
                   <CheckCircle2 style={{ width: "12px", height: "12px", color: "#16a34a" }} />
                   Connected
                 </span>
+              ) : (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: "#b45309",
+                    background: "#fffbeb",
+                    padding: "2px 8px",
+                    borderRadius: "99px",
+                  }}
+                >
+                  <AlertCircle style={{ width: "12px", height: "12px", color: "#d97706" }} />
+                  Not Connected
+                </span>
               )}
             </div>
 
-            {!isDriveConnected && !isLoadingConn ? (
-              <div
-                style={{
-                  background: "#fffbeb",
-                  border: "1px solid #fef3c7",
-                  borderRadius: "8px",
-                  padding: "12px 14px",
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: "10px",
-                }}
-              >
-                <AlertCircle
+            {/* Root Folder Banner */}
+            <div
+              style={{
+                background: "#f0f7ff",
+                border: "1px solid #bfdbfe",
+                borderRadius: "8px",
+                padding: "10px 14px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: "10px",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+                <div
                   style={{
-                    width: "18px",
-                    height: "18px",
-                    color: "#d97706",
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "6px",
+                    backgroundColor: "#dbeafe",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                     flexShrink: 0,
-                    marginTop: "1px",
                   }}
-                />
-                <div>
-                  <p
+                >
+                  <HardDrive style={{ width: "16px", height: "16px", color: "#1f5cae" }} />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <span
                     style={{
                       fontFamily: "Inter, sans-serif",
-                      fontSize: "12px",
+                      fontSize: "10.5px",
                       fontWeight: "700",
-                      color: "#92400e",
-                      margin: 0,
+                      color: "#6b7280",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.03em",
+                      display: "block",
                     }}
                   >
-                    Google Drive Not Connected
-                  </p>
+                    Root Storage Folder
+                  </span>
                   <p
                     style={{
                       fontFamily: "Inter, sans-serif",
-                      fontSize: "12px",
-                      color: "#b45309",
-                      margin: "2px 0 0",
-                      lineHeight: "1.3",
+                      fontSize: "13px",
+                      fontWeight: "700",
+                      color: "#1e3a8a",
+                      margin: 0,
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    You can still submit your decision to the database now. Connect your Google Drive in staff settings to sync files automatically.
+                    {rootFolderName}
                   </p>
                 </div>
               </div>
-            ) : (
-              <>
-                {/* Active Folder Pill */}
-                {selectedFolder && (
-                  <div
-                    style={{
-                      background: "#f0f7ff",
-                      border: "1px solid #cce3ff",
-                      borderRadius: "8px",
-                      padding: "8px 12px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: "8px",
-                        overflow: "hidden",
-                      }}
-                    >
-                      <Folder
-                        style={{
-                          width: "16px",
-                          height: "16px",
-                          color: "#f59e0b",
-                          flexShrink: 0,
-                        }}
-                      />
-                      <span
-                        style={{
-                          fontFamily: "Inter, sans-serif",
-                          fontSize: "12px",
-                          fontWeight: "700",
-                          color: "#1e3a8a",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
-                        {selectedFolder.name}
-                      </span>
-                    </div>
-                    <span
-                      style={{
-                        fontFamily: "Inter, sans-serif",
-                        fontSize: "10px",
-                        fontWeight: "700",
-                        color: "#1d4ed8",
-                        background: "#ffffff",
-                        padding: "2px 6px",
-                        borderRadius: "4px",
-                        border: "1px solid #bfdbfe",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      Active Target
-                    </span>
-                  </div>
-                )}
 
-                {/* Mode Selector Tabs */}
-                <div
+              <span
+                style={{
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "10px",
+                  fontWeight: "700",
+                  color: "#1d4ed8",
+                  background: "#ffffff",
+                  padding: "3px 8px",
+                  borderRadius: "4px",
+                  border: "1px solid #bfdbfe",
+                  whiteSpace: "nowrap",
+                  flexShrink: 0,
+                }}
+              >
+                Configured in GDrive Sync
+              </span>
+            </div>
+
+            {/* Automated Subfolders Visualizer (Akane's Hierarchy) */}
+            <div
+              style={{
+                background: "#f8fafc",
+                border: "1px solid #e2e8f0",
+                borderRadius: "8px",
+                padding: "14px 16px",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  marginBottom: "12px",
+                }}
+              >
+                <span
                   style={{
-                    display: "flex",
-                    background: "#f3f4f6",
-                    padding: "3px",
-                    borderRadius: "8px",
-                    gap: "4px",
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "11px",
+                    fontWeight: "700",
+                    color: "#475569",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
                   }}
                 >
-                  <button
-                    type="button"
-                    onClick={() => setFolderMode("browse")}
-                    style={{
-                      flex: 1,
-                      padding: "7px 0",
-                      borderRadius: "6px",
-                      border: "none",
-                      cursor: "pointer",
-                      fontFamily: "Inter, sans-serif",
-                      fontSize: "12px",
-                      fontWeight: "700",
-                      backgroundColor: folderMode === "browse" ? "#ffffff" : "transparent",
-                      color: folderMode === "browse" ? "#111827" : "#6b7280",
-                      boxShadow: folderMode === "browse" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    Select Existing Folder
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFolderMode("create")}
-                    style={{
-                      flex: 1,
-                      padding: "7px 0",
-                      borderRadius: "6px",
-                      border: "none",
-                      cursor: "pointer",
-                      fontFamily: "Inter, sans-serif",
-                      fontSize: "12px",
-                      fontWeight: "700",
-                      backgroundColor: folderMode === "create" ? "#ffffff" : "transparent",
-                      color: folderMode === "create" ? "#111827" : "#6b7280",
-                      boxShadow: folderMode === "create" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                      transition: "all 0.15s ease",
-                    }}
-                  >
-                    Create New Folder
-                  </button>
+                  Automated Subfolder Path
+                </span>
+                <span
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "10.5px",
+                    color: "#64748b",
+                    fontStyle: "italic",
+                  }}
+                >
+                  Auto-created if not existing
+                </span>
+              </div>
+
+              {/* Hierarchy Tree */}
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "9px",
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "12.5px",
+                }}
+              >
+                {/* Level 0: Root */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#1e3a8a", fontWeight: "600" }}>
+                  <Folder style={{ width: "15px", height: "15px", color: "#3b82f6", flexShrink: 0 }} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rootFolderName}</span>
+                  <span style={{ fontSize: "10px", color: "#64748b", background: "#e2e8f0", padding: "1px 6px", borderRadius: "4px" }}>Root</span>
                 </div>
 
-                {folderMode === "browse" ? (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    <div style={{ position: "relative" }}>
-                      <Search
-                        style={{
-                          position: "absolute",
-                          left: "12px",
-                          top: "50%",
-                          transform: "translateY(-50%)",
-                          width: "14px",
-                          height: "14px",
-                          color: "#9ca3af",
-                        }}
-                      />
-                      <input
-                        type="text"
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                        placeholder="Search Drive folders…"
-                        style={{
-                          width: "100%",
-                          border: "1.5px solid #d1d5db",
-                          borderRadius: "8px",
-                          padding: "8px 12px 8px 34px",
-                          fontSize: "12px",
-                          fontFamily: "Inter, sans-serif",
-                          outline: "none",
-                          boxSizing: "border-box",
-                        }}
-                      />
-                    </div>
+                {/* Level 1: Academic Year */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "16px", borderLeft: "2px solid #cbd5e1", marginLeft: "7px", color: "#334155", fontWeight: "600" }}>
+                  <Folder style={{ width: "15px", height: "15px", color: "#f59e0b", flexShrink: 0 }} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{academicYear}</span>
+                  <span style={{ fontSize: "10px", color: "#d97706", background: "#fef3c7", padding: "1px 6px", borderRadius: "4px" }}>Year</span>
+                </div>
 
-                    {isLoadingFolders ? (
-                      <div style={{ padding: "16px 0", textAlign: "center" }}>
-                        <Loader2
-                          className="animate-spin"
-                          style={{ width: "18px", height: "18px", color: "#1f5cae", margin: "0 auto" }}
-                        />
-                      </div>
-                    ) : folders.length === 0 ? (
-                      <p
-                        style={{
-                          fontFamily: "Inter, sans-serif",
-                          fontSize: "12px",
-                          color: "#9ca3af",
-                          textAlign: "center",
-                          padding: "14px 0",
-                          margin: 0,
-                        }}
-                      >
-                        {isFetching ? "Searching…" : "No folders found."}
-                      </p>
-                    ) : (
-                      <div
-                        style={{
-                          maxHeight: "150px",
-                          overflowY: "auto",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: "6px",
-                        }}
-                      >
-                        {folders.map((folder) => {
-                          const isSelected = selectedFolder?.id === folder.id;
-                          return (
-                            <button
-                              key={folder.id}
-                              type="button"
-                              onClick={() => handleSelectFolder(folder)}
-                              disabled={selectFolderMutation.isPending}
-                              style={{
-                                width: "100%",
-                                textAlign: "left",
-                                padding: "8px 12px",
-                                borderRadius: "7px",
-                                border: isSelected ? "1.5px solid #f59e0b" : "1px solid #e5e7eb",
-                                backgroundColor: isSelected ? "#fffbeb" : "#f9fafb",
-                                cursor: "pointer",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "space-between",
-                                transition: "all 0.15s ease",
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: "8px",
-                                  overflow: "hidden",
-                                }}
-                              >
-                                <Folder
-                                  style={{
-                                    width: "15px",
-                                    height: "15px",
-                                    color: "#f59e0b",
-                                    flexShrink: 0,
-                                  }}
-                                />
-                                <span
-                                  style={{
-                                    fontFamily: "Inter, sans-serif",
-                                    fontSize: "12px",
-                                    fontWeight: "600",
-                                    color: isSelected ? "#92400e" : "#111827",
-                                    overflow: "hidden",
-                                    textOverflow: "ellipsis",
-                                    whiteSpace: "nowrap",
-                                  }}
-                                >
-                                  {folder.name}
-                                </span>
-                              </div>
-                              {isSelected && (
-                                <CheckCircle2
-                                  style={{
-                                    width: "14px",
-                                    height: "14px",
-                                    color: "#d97706",
-                                    flexShrink: 0,
-                                  }}
-                                />
-                              )}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    <input
-                      type="text"
-                      value={newFolderName}
-                      onChange={(e) => setNewFolderName(e.target.value)}
-                      placeholder="Folder name (e.g. SARF Submissions 2026)"
-                      style={{
-                        width: "100%",
-                        border: "1.5px solid #d1d5db",
-                        borderRadius: "8px",
-                        padding: "8px 12px",
-                        fontSize: "12px",
-                        fontFamily: "Inter, sans-serif",
-                        outline: "none",
-                        boxSizing: "border-box",
-                      }}
-                    />
-                    <button
-                      type="button"
-                      onClick={handleCreateFolder}
-                      disabled={createFolderMutation.isPending || !newFolderName.trim()}
-                      style={{
-                        width: "100%",
-                        padding: "9px 0",
-                        borderRadius: "8px",
-                        border: "none",
-                        backgroundColor: "#ffc700",
-                        color: "#031c36",
-                        fontFamily: "Inter, sans-serif",
-                        fontSize: "12px",
-                        fontWeight: "700",
-                        cursor:
-                          createFolderMutation.isPending || !newFolderName.trim()
-                            ? "not-allowed"
-                            : "pointer",
-                        opacity:
-                          createFolderMutation.isPending || !newFolderName.trim() ? 0.6 : 1,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "6px",
-                      }}
-                    >
-                      {createFolderMutation.isPending ? (
-                        <Loader2 className="animate-spin" style={{ width: "14px", height: "14px" }} />
-                      ) : (
-                        <FolderPlus style={{ width: "14px", height: "14px" }} />
-                      )}
-                      {createFolderMutation.isPending ? "Creating…" : "Create & Select Folder"}
-                    </button>
-                  </div>
-                )}
-              </>
-            )}
+                {/* Level 2: Organization */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "32px", borderLeft: "2px solid #cbd5e1", marginLeft: "7px", color: "#334155", fontWeight: "600" }}>
+                  <Folder style={{ width: "15px", height: "15px", color: "#f59e0b", flexShrink: 0 }} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{orgName}</span>
+                  <span style={{ fontSize: "10px", color: "#1d4ed8", background: "#e0e7ff", padding: "1px 6px", borderRadius: "4px" }}>Organization</span>
+                </div>
+
+                {/* Level 3: Document Type */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "48px", borderLeft: "2px solid #cbd5e1", marginLeft: "7px", color: "#334155", fontWeight: "600" }}>
+                  <Folder style={{ width: "15px", height: "15px", color: "#f59e0b", flexShrink: 0 }} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{docTypeName}</span>
+                  <span style={{ fontSize: "10px", color: "#7c3aed", background: "#f3e8ff", padding: "1px 6px", borderRadius: "4px" }}>File Type</span>
+                </div>
+
+                {/* Level 4: Final File */}
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "64px", borderLeft: "2px solid #cbd5e1", marginLeft: "7px", color: "#0f172a", fontWeight: "700" }}>
+                  <FileText style={{ width: "15px", height: "15px", color: "#15803d", flexShrink: 0 }} />
+                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#15803d" }}>{displayFileName}</span>
+                  <span style={{ fontSize: "10px", color: "#15803d", background: "#dcfce7", padding: "1px 6px", borderRadius: "4px" }}>
+                    {finalFile ? "New Final PDF" : "System PDF"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <p
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontSize: "11px",
+                color: "#64748b",
+                margin: 0,
+                lineHeight: "1.4",
+              }}
+            >
+              💡 This nested hierarchy is automatically resolved on Google Drive. The new paper will be archived directly inside the <strong>{docTypeName}</strong> subfolder.
+            </p>
           </div>
         </div>
 

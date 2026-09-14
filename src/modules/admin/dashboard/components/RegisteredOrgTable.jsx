@@ -273,16 +273,14 @@ export default function RegisteredOrgTable() {
         org.is_active ? "Active" : "Inactive",
         `"${org.created_at || ""}"`,
       ]);
-      const csvContent = [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const url = URL.createObjectURL(blob);
+      const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+      const encodedUri = encodeURI(csvContent);
       const link = document.createElement("a");
-      link.setAttribute("href", url);
+      link.setAttribute("href", encodedUri);
       link.setAttribute("download", `registered_organizations_${new Date().toISOString().slice(0, 10)}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Error exporting organizations:", err);
       setExportError("Failed to export organizations. Please try again.");
@@ -375,12 +373,10 @@ export default function RegisteredOrgTable() {
               ].map((heading) => (
                 <th
                   key={heading}
-                  className={`px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${
-                    heading === "ACTION" ? "pl-6 w-[170px]" : ""
-                  } ${heading === "STATUS" ? "min-w-[120px]" : ""}`}
+                  className="px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
                   style={
                     heading === "ORGANIZATION NAME"
-                      ? { paddingLeft: CONTENT_PADDING, minWidth: "240px" }
+                      ? { paddingLeft: CONTENT_PADDING }
                       : undefined
                   }
                 >

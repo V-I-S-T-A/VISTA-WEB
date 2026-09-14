@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import SystemSubmissionsPanel from "./review-panel/components/SystemSubmissionsPanel";
@@ -8,8 +8,17 @@ import { useCurrentUser } from "../../hooks/useAuth";
 
 export default function ReviewPanel() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { data: currentUser, isLoading } = useCurrentUser();
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const [selectedSubmission, setSelectedSubmission] = useState(
+    location.state?.selectedSubmission || null
+  );
+
+  useEffect(() => {
+    if (location.state?.selectedSubmission) {
+      setSelectedSubmission(location.state.selectedSubmission);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
@@ -20,6 +29,7 @@ export default function ReviewPanel() {
       else navigate("/login");
     }
   }, [isLoading, currentUser, navigate]);
+
 
   if (isLoading) return null;
 
