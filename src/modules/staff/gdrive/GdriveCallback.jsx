@@ -17,9 +17,25 @@ export default function GdriveCallback() {
     const state = searchParams.get("state");
     const scope = searchParams.get("scope");
     const errorParam = searchParams.get("error");
+    const statusParam = searchParams.get("status");
+    const detailParam = searchParams.get("detail");
 
-    // Idempotency guard that survives StrictMode's double-invoke AND
-    // accidental page refreshes on this same URL (auth codes are one-time use).
+    // 1. Backend already processed the OAuth code and redirected with status=success
+    if (statusParam === "success") {
+      queryClient.invalidateQueries({ queryKey: ["drive-connection"] });
+      setStatus("success");
+      const timer = setTimeout(() => navigate("/staff/gdrive-sync"), 1200);
+      return () => clearTimeout(timer);
+    }
+
+    // 2. Backend redirected with error or user cancelled
+    if (statusParam === "error" || errorParam) {
+      setStatus("error");
+      setMessage(detailParam || "Google sign-in was cancelled or denied.");
+      return;
+    }
+
+    // 3. Fallback: Code returned directly to frontend
     const consumedKey = `gdrive_oauth_consumed_${code}`;
     if (hasRun.current || (code && sessionStorage.getItem(consumedKey))) {
       return;
@@ -27,11 +43,6 @@ export default function GdriveCallback() {
     hasRun.current = true;
     if (code) sessionStorage.setItem(consumedKey, "1");
 
-    if (errorParam) {
-      setStatus("error");
-      setMessage("Google sign-in was cancelled or denied.");
-      return;
-    }
     if (!code || !state) {
       setStatus("error");
       setMessage("Missing authorization details from Google.");
