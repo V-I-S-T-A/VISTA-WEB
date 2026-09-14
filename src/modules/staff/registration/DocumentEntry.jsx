@@ -9,6 +9,7 @@ import DocumentEntryHeader from "./components/DocumentEntryHeader";
 import SubmitRegistration from "./components/SubmitRegistration";
 import OCRResults from "./components/OCRResults";
 import registrationSider from "../../assets/registration_sider.png";
+import StatusModal from "../../../components/StatusModal";
 
 export default function DocumentEntry() {
   const navigate = useNavigate();
@@ -17,6 +18,40 @@ export default function DocumentEntry() {
   const [isScanning, setIsScanning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
+
+  const showNotification = (
+    title,
+    message,
+    type = "success",
+    onConfirm = null,
+  ) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      onConfirm,
+    });
+  };
+
+  const closeNotification = () => {
+    const callback = modalConfig.onConfirm;
+    setModalConfig({
+      isOpen: false,
+      type: "success",
+      title: "",
+      message: "",
+      onConfirm: null,
+    });
+    if (callback) callback();
+  };
 
   const [organizations, setOrganizations] = useState([]);
   const [users, setUsers] = useState([]);
@@ -193,9 +228,13 @@ export default function DocumentEntry() {
           }
         } catch (docErr) {
           console.error("Cloudinary upload failed:", docErr);
-          alert(
-            "Submission created but file failed to upload to Cloudinary. Check your upload preset.",
+          showNotification(
+            "Upload Warning",
+            "Submission created, but file failed to upload to Cloudinary. Check your upload preset.",
+            "warning",
+            () => navigate("/staff/dashboard"),
           );
+          return;
         }
       }
 
@@ -550,6 +589,16 @@ export default function DocumentEntry() {
           </div>
         </main>
       </div>
+
+      <StatusModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeNotification}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText="OK"
+        onConfirm={closeNotification}
+      />
     </div>
   );
 }
