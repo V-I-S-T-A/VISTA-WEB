@@ -14,6 +14,7 @@ import { submissionService } from "../../../../services/submissionService";
 import { reviewLogService } from "../../../../services/reviewLogService";
 import ConfirmDriveSyncModal from "./modals/ConfirmDriveSyncModal";
 import StatusModal from "../../../../components/StatusModal";
+import { getOptimizedViewUrl, isPdfUrl } from "../../../../utils/fileOptimizer";
 
 
 const STATUS_ACTIONS = [
@@ -391,26 +392,41 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                       {doc.file_name || `Document ${idx + 1}`}
                     </span>
                   </div>
-                  {/* FIXED: Uses doc.file_url */}
-                  <a
-                    href={doc.file_url || "#"}
-                    onClick={(e) => {
-                      if (!doc.file_url) {
-                        e.preventDefault();
-                        showNotification(
-                          "Document Unavailable",
-                          "This file's URL is missing from the database.",
-                          "error",
-                        );
-                      }
-                    }}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded bg-white px-3 py-1.5 font-inter text-[11.5px] font-bold text-[#1f5cae] border border-gray-200 transition hover:bg-gray-100 active:scale-95 flex-shrink-0"
-                  >
-                    <Download className="h-3.5 w-3.5" />
-                    VIEW FILE
-                  </a>
+                  {/* FIXED: Uses doc.file_url with WebP CDN acceleration & PDF archive link */}
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <a
+                      href={getOptimizedViewUrl(doc.file_url) || "#"}
+                      onClick={(e) => {
+                        if (!doc.file_url) {
+                          e.preventDefault();
+                          showNotification(
+                            "Document Unavailable",
+                            "This file's URL is missing from the database.",
+                            "error",
+                          );
+                        }
+                      }}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      title="Fast WebP preview (CDN accelerated)"
+                      className="inline-flex items-center gap-1.5 rounded bg-white px-3 py-1.5 font-inter text-[11.5px] font-bold text-[#1f5cae] border border-gray-200 transition hover:bg-gray-100 active:scale-95 flex-shrink-0"
+                    >
+                      <Download className="h-3.5 w-3.5" />
+                      VIEW FILE
+                    </a>
+                    {isPdfUrl(doc.file_url, doc.file_name) && (
+                      <a
+                        href={doc.file_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download={doc.file_name || "document.pdf"}
+                        title="Download original uncompressed PDF document"
+                        className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1.5 font-inter text-[11px] font-semibold text-gray-600 border border-gray-200 transition hover:bg-gray-200 active:scale-95 flex-shrink-0"
+                      >
+                        PDF
+                      </a>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
