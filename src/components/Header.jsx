@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Download } from "lucide-react";
+import { ArrowRight, Download, Menu } from "lucide-react";
 import vistaLogo from "../assets/shared/vista_logo.png";
 import { getHeaderConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
 
-export default function Header({ layout = "public", profilePath }) {
+export default function Header({ layout = "public", profilePath, onMenuToggle }) {
   const navigate = useNavigate();
   const config = getHeaderConfig(layout);
   const { data: currentUser } = useCurrentUser();
@@ -43,9 +43,21 @@ export default function Header({ layout = "public", profilePath }) {
           paddingRight: "24px",
         }}
       >
-        <h1 className="font-inter text-sm font-medium text-[#1a51a5]">
-          {config.title}
-        </h1>
+        <div className="flex items-center">
+          {/* Hamburger — visible only on mobile via CSS */}
+          <button
+            type="button"
+            className="hamburger-btn"
+            onClick={onMenuToggle}
+            aria-label="Open menu"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+
+          <h1 className="font-inter text-sm font-medium text-[#1a51a5]">
+            {config.title}
+          </h1>
+        </div>
 
         {profilePath ? (
           <div className="relative" ref={dropdownRef}>

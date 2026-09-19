@@ -162,7 +162,8 @@ body {
   z-index: 2;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  gap: clamp(2rem, 6vh, 4rem);
   padding: clamp(1.25rem, 4vh, 2.5rem) 5% clamp(1rem, 3vh, 2rem);
 }
 
@@ -451,18 +452,31 @@ body {
 
 @media (max-width: 768px) {
   .header {
-    padding: 1rem 5%;
-    flex-wrap: wrap;
-    gap: 1rem;
+    padding: 0.75rem 5%;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+  }
+
+  .header-left {
+    flex: 1;
+    min-width: 0;
   }
 
   .header-right {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 8px;
+    flex-shrink: 0;
   }
 
   .btn {
-    padding: 8px 16px;
-    font-size: 0.875rem;
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    gap: 5px;
+  }
+
+  /* Hide 'Get the app' button on mobile to save space */
+  .header-right .btn-outline {
+    display: none;
   }
 
   .login-hero {
@@ -502,5 +516,60 @@ body {
   .header-profile-icon {
     height: 32px;
     width: 32px;
+  }
+
+  /* Hero adjustments for small phones */
+  .hero-section {
+    height: calc(100vh - 56px);
+    max-height: none;
+    min-height: 500px;
+  }
+
+  .hero-gradient {
+    background: linear-gradient(
+      to bottom,
+      rgba(17, 58, 110, 0.85) 0%,
+      rgba(17, 58, 110, 0.80) 60%,
+      rgba(17, 58, 110, 0.55) 100%
+    );
+  }
+
+  .hero-content {
+    justify-content: flex-end;
+    gap: 1.5rem;
+    padding-bottom: clamp(1.5rem, 5vh, 3rem);
+  }
+
+  .hero-text h1 {
+    font-size: clamp(1.45rem, 7vw, 2rem);
+  }
+
+  .hero-features {
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+}
+
+@media (min-width: 481px) and (max-width: 768px) {
+  /* Tablet portrait */
+  .hero-section {
+    max-height: none;
+    height: calc(100vh - 56px);
+    min-height: 480px;
+  }
+
+  .hero-gradient {
+    background: linear-gradient(
+      to right,
+      #113a6e 0%,
+      rgba(17, 58, 110, 0.88) 50%,
+      rgba(17, 58, 110, 0.45) 80%,
+      transparent 100%
+    );
+  }
+
+  .hero-content {
+    justify-content: center;
+    gap: 2rem;
   }
 }

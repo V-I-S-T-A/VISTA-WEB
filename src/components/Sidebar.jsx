@@ -8,6 +8,7 @@ import {
   ClipboardCheck,
   CloudUpload,
   Settings,
+  X,
 } from "lucide-react";
 import { getSidebarConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
@@ -22,7 +23,7 @@ const ICON_MAP = {
   Settings,
 };
 
-export default function Sidebar({ role = "admin" }) {
+export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
   const config = getSidebarConfig(role);
   const navigate = useNavigate();
   const location = useLocation();
@@ -32,8 +33,23 @@ export default function Sidebar({ role = "admin" }) {
   if (!config) return null;
 
   return (
-    <aside className="sticky top-0 flex h-screen w-[275px] flex-col bg-[#1f5cae] text-white justify-between">
+    <aside
+      className={[
+        "vista-sidebar sticky top-0 flex h-screen w-[275px] flex-col bg-[#1f5cae] text-white justify-between",
+        isOpen ? "sidebar--open" : "",
+      ].join(" ")}
+    >
       <div className="flex flex-col flex-1">
+        {/* Mobile close button — hidden on big screens via CSS */}
+        <button
+          type="button"
+          onClick={onClose}
+          className="sidebar-close-btn absolute top-3 right-3 items-center justify-center w-8 h-8 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
+          aria-label="Close menu"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
         {/* Header */}
         <div style={{ paddingTop: "38px" }}>
           <div
