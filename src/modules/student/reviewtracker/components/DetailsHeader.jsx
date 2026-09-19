@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { BackButton } from "../../../../components";
 
 export default function DetailsHeader({ submission }) {
   const navigate = useNavigate();
@@ -19,32 +20,7 @@ export default function DetailsHeader({ submission }) {
       </p>
 
       <div className="flex items-center gap-4 mt-5">
-        <button
-          type="button"
-          onClick={() => navigate("/student/review-tracker")}
-          className="inline-flex items-center justify-center transition hover:brightness-110 active:scale-95"
-          style={{
-            borderRadius: "9999px",
-            backgroundColor: "#FFE452",
-            padding: "4px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <div
-            className="flex items-center gap-1.5 font-inter text-[#1a1a1a]"
-            style={{
-              fontSize: "14px",
-              padding: "4px 16px",
-              borderRadius: "9999px",
-              backgroundColor: "#FFF2A8",
-              fontWeight: 500,
-            }}
-          >
-            <span style={{ fontSize: "16px", lineHeight: 1 }}>›</span>
-            Back
-          </div>
-        </button>
+        <BackButton onClick={() => navigate("/student/review-tracker")} />
         <span
           className="font-inter text-[#0a1e3f]"
           style={{ fontSize: "16px", fontWeight: 500 }}

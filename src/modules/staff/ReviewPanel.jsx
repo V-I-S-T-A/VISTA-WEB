@@ -5,20 +5,16 @@ import Sidebar from "../../components/Sidebar";
 import SystemSubmissionsPanel from "./review-panel/components/SystemSubmissionsPanel";
 import SubmissionReviewDetails from "./review-panel/components/SubmissionReviewDetails";
 import { useCurrentUser } from "../../hooks/useAuth";
+import { useSidebar } from "../../hooks/useSidebar";
 
 export default function ReviewPanel() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: currentUser, isLoading } = useCurrentUser();
   const [selectedSubmission, setSelectedSubmission] = useState(
-    location.state?.selectedSubmission || null
+    location.state?.submission || null
   );
-
-  useEffect(() => {
-    if (location.state?.selectedSubmission) {
-      setSelectedSubmission(location.state.selectedSubmission);
-    }
-  }, [location.state]);
+  const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
@@ -35,17 +31,22 @@ export default function ReviewPanel() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="staff" />
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <Sidebar role="staff" isOpen={isOpen} onClose={close} />
+
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
         <Header
           layout="staff"
           profilePath="/staff/profile"
           breadcrumb="Review Panel"
+          onMenuToggle={open}
         />
 
         <main
-          className="flex-1 overflow-y-auto"
+          className="dashboard-main flex-1 overflow-y-auto"
           style={{ padding: "20px 24px" }}
         >
           <div className="w-full">
@@ -67,7 +68,12 @@ export default function ReviewPanel() {
             {selectedSubmission ? (
               <SubmissionReviewDetails
                 submission={selectedSubmission}
-                onBack={() => setSelectedSubmission(null)}
+                onBack={() => {
+                  setSelectedSubmission(null);
+                  if (location.state?.submission) {
+                    window.history.replaceState({}, document.title);
+                  }
+                }}
               />
             ) : (
               <SystemSubmissionsPanel onViewReview={setSelectedSubmission} />

@@ -11,6 +11,7 @@ import FolderPicker from "./gdrive/components/FolderPicker";
 import ConnectedStatusCard from "./gdrive/components/ConnectedStatusCard";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useDriveConnection } from "../../hooks/useDrive";
+import { useSidebar } from "../../hooks/useSidebar";
 
 import registrationSider from "../assets/registration_sider.png";
 
@@ -20,6 +21,7 @@ export default function Gdrive() {
   const { data: connection, isLoading: isLoadingConnection } =
     useDriveConnection();
   const [pickingFolder, setPickingFolder] = useState(false);
+  const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {
     if (!isLoading) {
@@ -36,12 +38,16 @@ export default function Gdrive() {
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-white">
-      <Sidebar role="staff" />
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="gdrive" profilePath="/staff/profile" />
+      <Sidebar role="staff" isOpen={isOpen} onClose={close} />
 
-        <main className="flex-1 overflow-y-auto overflow-x-hidden">
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="gdrive" profilePath="/staff/profile" onMenuToggle={open} />
+
+        <main className="dashboard-main flex-1 overflow-y-auto overflow-x-hidden">
           <div style={{ padding: "20px 24px" }}>
             <GdriveHeader />
 

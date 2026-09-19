@@ -12,10 +12,12 @@ import { PageHeader } from "../../components";
 import ConfigTable from "./registrationconfig/components/ConfigTable";
 import ConfigEntryModal from "./registrationconfig/modals/ConfigEntryModal";
 import DeleteConfirmModal from "./registrationconfig/modals/DeleteConfirmModal";
+import { useSidebar } from "../../hooks/useSidebar";
 
 export default function RegistrationConfig() {
   const [activeTab, setActiveTab] = useState("organizations");
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const { isOpen, open, close } = useSidebar();
 
   // Entry Modal State (Add/Edit)
   const [isEntryModalOpen, setIsEntryModalOpen] = useState(false);
@@ -56,12 +58,16 @@ export default function RegistrationConfig() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="admin" />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="registrationConfig" profilePath="/admin/profile" />
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
+
+      <Sidebar role="admin" isOpen={isOpen} onClose={close} />
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="registrationConfig" profilePath="/admin/profile" onMenuToggle={open} />
 
         <main
-          className="flex-1 overflow-y-auto"
+          className="dashboard-main flex-1 overflow-y-auto"
           style={{ padding: "20px 24px" }}
         >
           <div className="w-full">

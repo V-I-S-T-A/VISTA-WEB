@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
-import { Eye } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
-import { TableContainer, SubmissionStatusLabel } from "../../../../components";
+import { TableContainer, SubmissionStatusLabel, ActionButton } from "../../../../components";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "28px";
@@ -59,23 +58,28 @@ export default function RecentSubmissionsTable() {
       <table className="min-w-full border-collapse">
         <thead>
           <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
-            {["ID", "APPLICANT", "CATEGORY", "DATE", "STATUS", "ACTIONS"].map(
-              (heading) => (
-                <th
-                  key={heading}
-                  className={`px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${
-                    heading === "ACTIONS" ? "pl-6 w-[170px]" : ""
-                  } ${heading === "STATUS" ? "min-w-[120px]" : ""}`}
-                  style={
-                    heading === "ID"
-                      ? { paddingLeft: CONTENT_PADDING }
-                      : undefined
-                  }
-                >
-                  {heading}
-                </th>
-              ),
-            )}
+            {[
+              "ID",
+              "DOCUMENT / APPLICANT",
+              "CATEGORY",
+              "DATE",
+              "STATUS",
+              "ACTIONS",
+            ].map((heading) => (
+              <th
+                key={heading}
+                className={`px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${
+                  heading === "ACTIONS" ? "pl-6 w-[170px]" : ""
+                } ${heading === "STATUS" ? "min-w-[120px]" : ""}`}
+                style={
+                  heading === "ID"
+                    ? { paddingLeft: CONTENT_PADDING }
+                    : undefined
+                }
+              >
+                {heading}
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>
@@ -123,33 +127,25 @@ export default function RecentSubmissionsTable() {
                     <div className="min-w-0">
                       <p
                         className="font-inter font-bold text-gray-900 leading-tight"
-                        style={{ fontSize: "14px" }}
+                        style={{ fontSize: "13.5px" }}
+                      >
+                        {submission.title || "Untitled Document"}
+                      </p>
+                      <p
+                        className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
+                        style={{ fontSize: "12px" }}
                       >
                         {submission.org_name ||
                           submission.submitted_by_name ||
-                          "Unknown Organization"}
+                          "Unknown Applicant"}
                       </p>
-                      {submission.submitted_by_email && (
-                        <p
-                          className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
-                          style={{ fontSize: "12px" }}
-                        >
-                          {submission.submitted_by_email}
-                        </p>
-                      )}
                     </div>
                   </div>
                 </td>
                 <td className="px-5 py-2.5">
                   <span
-                    className="inline-flex items-center justify-center font-inter font-semibold"
-                    style={{
-                      fontSize: "12px",
-                      padding: "5px 14px",
-                      borderRadius: "9999px",
-                      backgroundColor: "#eef1f8",
-                      color: "#4b5b78",
-                    }}
+                    className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
+                    style={{ fontSize: "12px", padding: "4px 12px" }}
                   >
                     {submission.category_name || "N/A"}
                   </span>
@@ -167,20 +163,10 @@ export default function RecentSubmissionsTable() {
                   <SubmissionStatusLabel status={submission.status} />
                 </td>
                 <td className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
-                  <button
-                    type="button"
+                  <ActionButton
                     onClick={() => handleView(submission)}
-                    className="inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
-                    style={{
-                      fontSize: "12px",
-                      padding: "7px 16px",
-                      borderRadius: "9999px",
-                      backgroundColor: "#FFE452",
-                    }}
-                  >
-                    <Eye style={{ width: "13px", height: "13px" }} />
-                    VIEW
-                  </button>
+                    label="VIEW"
+                  />
                 </td>
               </tr>
             ))

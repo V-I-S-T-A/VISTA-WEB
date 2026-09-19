@@ -8,12 +8,13 @@ import SubmissionReviewDetails from "./review-panel/components/SubmissionReviewD
 import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
 import AuditLogWidget from "./dashboard/components/AuditLogWidget";
 import { useCurrentUser } from "../../hooks/useAuth";
+import { useSidebar } from "../../hooks/useSidebar";
 import systemScopeBanner from "../../assets/shared/systemscope.png";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { data: currentUser, isLoading } = useCurrentUser();
-  const [selectedSubmission, setSelectedSubmission] = useState(null);
+  const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {
     if (!isLoading) {
@@ -27,13 +28,18 @@ export default function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="staff" />
+      {/* Mobile backdrop */}
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="staff" profilePath="/staff/profile" />
+      <Sidebar role="staff" isOpen={isOpen} onClose={close} />
+
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="staff" profilePath="/staff/profile" onMenuToggle={open} />
 
         <main
-          className="flex-1 overflow-y-auto bg-[#f7f9fc]"
+          className="dashboard-main flex-1 overflow-y-auto bg-[#f7f9fc]"
           style={{ padding: "24px 28px" }}
         >
           <div className="w-full">
@@ -50,13 +56,13 @@ export default function Dashboard() {
                   <RecentSubmissionsTable onViewReview={setSelectedSubmission} />
                 </div>
 
-                <div
-                  className="grid grid-cols-2"
-                  style={{ gap: "16px", marginTop: "20px" }}
-                >
-                  <InstitutionalPulse />
-                  <AuditLogWidget />
-                </div>
+            <div
+              className="dashboard-bottom-grid grid grid-cols-2"
+              style={{ gap: "16px", marginTop: "20px" }}
+            >
+              <InstitutionalPulse />
+              <AuditLogWidget />
+            </div>
 
                 <div style={{ paddingTop: "32px" }}>
                   <img

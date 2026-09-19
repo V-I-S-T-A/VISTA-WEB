@@ -21,7 +21,7 @@ export default function TableSearchBar({
   width = "300px",
 }) {
   return (
-    <div className="relative" style={{ width }}>
+    <div className="table-search-bar relative" style={{ width, maxWidth: "100%" }}>
       <Search
         className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-300"
         style={{ width: "16px", height: "16px" }}

@@ -5,24 +5,27 @@ import {
   Download,
   ImageIcon,
   Loader2,
-  ArrowRight,
+  ImageIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
+import { ActionButton } from "../../../../components";
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 5;
 const CONTENT_PADDING = "24px";
 
-// Map frontend UI names to backend database statuses for filtering
-const API_STATUS_MAP = {
-  New: "pending",
-  Reviewing: "under_review",
-  Verified: "approved",
-  Flagged: "rejected",
+const COLORS = {
+  navy: "#12345b",
+  navyHover: "#1d4ed8",
+  amber: "#ffc700",
+  amberHover: "#e6b800",
+  headerBg: "#1f5cae",
+  border: "#e2e6ee",
 };
 
-// Map backend database statuses to frontend UI names for display
 const UI_STATUS_MAP = {
   pending: "New",
   under_review: "Reviewing",
@@ -40,7 +43,7 @@ const STATUS_CONFIG = {
 };
 
 function StatusDot({ status }) {
-  const uiStatus = UI_STATUS_MAP[status] || status || "New";
+  const uiStatus = UI_STATUS_MAP[status] || "New";
   const config = STATUS_CONFIG[uiStatus] ?? { dot: "#9ca3af", text: "#6b7280" };
 
   return (
@@ -59,11 +62,71 @@ function StatusDot({ status }) {
 
 const STATUS_OPTIONS = [
   "All Status",
-  "Reviewing",
-  "New",
-  "Verified",
-  "Flagged",
+  "Pending",
+  "Under Review",
+  "Approved",
+  "Rejected",
+  "Resubmission Required",
 ];
+
+function FilterPopover({
+  status,
+  onStatusChange,
+  dateFrom,
+  dateTo,
+  onDateFromChange,
+  onDateToChange,
+  onClear,
+  onClose,
+}) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (ref.current && !ref.current.contains(event.target)) {
+        onClose();
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      className="absolute right-0 top-full z-20"
+      style={{
+        marginTop: "8px",
+        width: "288px",
+        borderRadius: "10px",
+        border: `1px solid ${COLORS.border}`,
+        backgroundColor: "#ffffff",
+        boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
+        padding: "16px",
+      }}
+    >
+      <div style={{ marginBottom: "14px" }}>
+        <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
+          Status
+        </label>
+        <select
+          value={status}
+          onChange={(e) => onStatusChange(e.target.value)}
+          className="w-full font-inter outline-none"
+          style={{
+            borderRadius: "8px",
+            border: "1px solid #d1d5db",
+            padding: "8px 10px",
+            fontSize: "14px",
+          }}
+        >
+          {STATUS_OPTIONS.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </div>
 
 const CATEGORY_OPTIONS = ["All Categories", "Off-Campus", "In-Campus"];
 
@@ -113,56 +176,82 @@ function downloadCsv(rows) {
 export default function RecentSubmissionsTable({ onViewReview }) {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [categoryFilter, setCategoryFilter] = useState("All Categories");
-  const [filterOpen, setFilterOpen] = useState(false);
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
-  const apiStatus =
-    statusFilter === "All Status" ? "" : API_STATUS_MAP[statusFilter] || "";
-
-  // Fetch recent 1-15 submissions from backend
   const { data, isLoading } = useSubmissions({
-    page: 1,
+    page: currentPage,
     pageSize: PAGE_SIZE,
     search: searchTerm,
     status: apiStatus,
   });
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const submissions = data?.results ?? [];
   const totalCount = data?.count ?? 0;
 
-  // Client-side category filtering if active
-  const filteredSubmissions = useMemo(() => {
-    if (categoryFilter === "All Categories") return submissions;
-    return submissions.filter((s) => s.category_name?.includes(categoryFilter));
-  }, [submissions, categoryFilter]);
-
-  function handleViewReview(submission) {
-    const formatted = {
-      id: submission.submission_id,
-      title: submission.title || "Untitled Document",
-      site: submission.org_name || "Unknown Organization",
-      contactEmail: submission.submitted_by_email
-        ? `${submission.submitted_by_name || ""} (${submission.submitted_by_email})`.trim()
-        : submission.submitted_by_name || "N/A",
-      documentType: submission.doc_type_name || "N/A",
-      submittedDate: submission.submitted_at
-        ? new Date(submission.submitted_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })
-        : "N/A",
-    };
-
-    if (onViewReview) {
-      onViewReview(formatted);
-    } else {
-      navigate("/staff/review-panel", {
-        state: { selectedSubmission: formatted },
-      });
-    }
+  function goToPage(page) {
+    setCurrentPage(Math.min(Math.max(page, 1), totalPages));
   }
+
+  function clearFilters() {
+    setStatusFilter("All Status");
+    setDateFrom("");
+    setDateTo("");
+    setCurrentPage(1);
+  }
+
+  // Frontend CSV Exporter
+  const handleExportCSV = () => {
+    if (!submissions || submissions.length === 0) {
+      alert("No submissions to export.");
+      return;
+    }
+
+    const headers = [
+      "ID",
+      "DOCUMENT / APPLICANT",
+      "CATEGORY",
+      "DATE",
+      "STATUS",
+    ];
+    const csvContent = [
+      headers.join(","),
+      ...submissions.map((sub) => {
+        const id = sub.submission_id;
+        const title = (sub.title || "Untitled Document").replace(/"/g, '""');
+        const applicant = (
+          sub.org_name ||
+          sub.submitted_by_name ||
+          "Unknown"
+        ).replace(/"/g, '""');
+        const category = sub.category_name || "N/A";
+        const date = sub.submitted_at
+          ? new Date(sub.submitted_at).toLocaleDateString("en-US")
+          : "N/A";
+        const status = sub.status || "Unknown";
+
+        return `"${id}","${title} (${applicant})","${category}","${date}","${status}"`;
+      }),
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `recent_submissions_export_${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  };
 
   const activeFilterCount =
     (statusFilter !== "All Status" ? 1 : 0) +
@@ -170,9 +259,9 @@ export default function RecentSubmissionsTable({ onViewReview }) {
 
   return (
     <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
-      {/* Toolbar / Header */}
+      {/* Toolbar */}
       <div
-        className="flex flex-wrap items-center justify-between gap-3 bg-[#1f5cae]"
+        className="flex items-center justify-between gap-3 flex-wrap bg-[#1f5cae]"
         style={{
           paddingLeft: CONTENT_PADDING,
           paddingRight: CONTENT_PADDING,
@@ -188,7 +277,15 @@ export default function RecentSubmissionsTable({ onViewReview }) {
           {/* Search */}
           <div className="relative">
             <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
+              className="pointer-events-none absolute"
+              style={{
+                left: "10px",
+                top: "50%",
+                transform: "translateY(-50%)",
+                height: "14px",
+                width: "14px",
+                color: "#9ca3af",
+              }}
               aria-hidden="true"
             />
             <input
@@ -198,9 +295,12 @@ export default function RecentSubmissionsTable({ onViewReview }) {
               placeholder="Search submissions..."
               className="font-inter font-medium text-gray-700 placeholder-gray-400 outline-none rounded-md bg-white"
               style={{
-                fontSize: "12.5px",
-                padding: "7px 12px 7px 30px",
-                width: "190px",
+                width: "220px",
+                borderRadius: "6px",
+                border: "1px solid #d1d5db",
+                backgroundColor: "#ffffff",
+                padding: "8px 12px 8px 32px",
+                fontSize: "13px",
               }}
             />
           </div>
@@ -209,18 +309,16 @@ export default function RecentSubmissionsTable({ onViewReview }) {
           <div className="relative">
             <button
               type="button"
-              onClick={() => setFilterOpen((p) => !p)}
-              className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-white transition hover:brightness-110 active:scale-95 cursor-pointer"
+              onClick={() => setIsFilterOpen((open) => !open)}
+              className="inline-flex items-center gap-1.5 font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
               style={{
-                fontSize: "12.5px",
-                padding: "7px 14px",
+                borderRadius: "6px",
                 backgroundColor: "#12345b",
+                padding: "7px 14px",
+                fontSize: "12.5px",
               }}
             >
-              <Filter
-                style={{ width: "13px", height: "13px" }}
-                aria-hidden="true"
-              />
+              <Filter style={{ width: "13px", height: "13px" }} aria-hidden="true" />
               Filter
               {activeFilterCount > 0 && (
                 <span
@@ -232,6 +330,7 @@ export default function RecentSubmissionsTable({ onViewReview }) {
                     backgroundColor: "#ffffff",
                     color: "#12345b",
                     fontSize: "10px",
+                    marginLeft: "2px",
                   }}
                 >
                   {activeFilterCount}
@@ -329,18 +428,17 @@ export default function RecentSubmissionsTable({ onViewReview }) {
           {/* Export CSV */}
           <button
             type="button"
-            onClick={() => downloadCsv(filteredSubmissions)}
-            className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 cursor-pointer"
+            onClick={handleExportCSV}
+            className="inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
             style={{
-              fontSize: "12.5px",
-              padding: "7px 14px",
+              borderRadius: "6px",
               backgroundColor: "#ffc700",
+              padding: "6px 14px",
+              fontSize: "12px",
+              boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
             }}
           >
-            <Download
-              style={{ width: "13px", height: "13px" }}
-              aria-hidden="true"
-            />
+            <Download style={{ width: "13px", height: "13px" }} aria-hidden="true" />
             Export
           </button>
         </div>
@@ -361,9 +459,7 @@ export default function RecentSubmissionsTable({ onViewReview }) {
               ].map((heading) => (
                 <th
                   key={heading}
-                  className={`px-5 py-2 text-left font-inter text-[12px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${
-                    heading === "ACTIONS" ? "pl-6 w-[170px]" : ""
-                  }`}
+                  className="px-5 py-2 text-left font-inter text-[12px] font-bold uppercase tracking-wider text-gray-500"
                   style={
                     heading === "ID"
                       ? { paddingLeft: CONTENT_PADDING }
@@ -396,7 +492,7 @@ export default function RecentSubmissionsTable({ onViewReview }) {
                 </td>
               </tr>
             ) : (
-              filteredSubmissions.map((submission) => (
+              submissions.map((submission) => (
                 <tr
                   key={submission.submission_id}
                   className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
@@ -455,41 +551,47 @@ export default function RecentSubmissionsTable({ onViewReview }) {
                     className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
                     style={{ fontSize: "13px" }}
                   >
-                    {submission.submitted_at
-                      ? new Date(submission.submitted_at).toLocaleDateString(
-                          "en-US",
-                          {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          },
-                        )
-                      : "N/A"}
+                    {new Date(submission.submitted_at).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      },
+                    )}
                   </td>
 
                   {/* Status */}
-                  <td className="px-5 py-2.5 whitespace-nowrap">
+                  <td className="px-5 py-2.5">
                     <StatusDot status={submission.status} />
                   </td>
 
                   {/* Actions */}
-                  <td className="px-5 py-2.5 pl-6 whitespace-nowrap">
-                    <button
-                      type="button"
-                      onClick={() => handleViewReview(submission)}
-                      className="inline-flex items-center gap-1.5 rounded font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 whitespace-nowrap cursor-pointer"
-                      style={{
-                        fontSize: "12px",
-                        padding: "6px 14px",
-                        backgroundColor: "#ffc700",
+                  <td className="px-5 py-2.5">
+                    <ActionButton
+                      onClick={() => {
+                        const submissionData = {
+                          id: submission.submission_id,
+                          title: submission.title || "Untitled Document",
+                          site: submission.org_name || "Unknown Organization",
+                          contactEmail: submission.submitted_by_email
+                            ? `${submission.submitted_by_name || ""} (${submission.submitted_by_email})`.trim()
+                            : submission.submitted_by_name || "N/A",
+                          documentType: submission.doc_type_name || "N/A",
+                          submittedDate: new Date(
+                            submission.submitted_at,
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }),
+                        };
+                        navigate("/staff/review-panel", {
+                          state: { submission: submissionData },
+                        });
                       }}
-                    >
-                      <ImageIcon
-                        style={{ width: "13px", height: "13px" }}
-                        aria-hidden="true"
-                      />
-                      VIEW &amp; REVIEW
-                    </button>
+                      label="VIEW & REVIEW"
+                    />
                   </td>
                 </tr>
               ))
@@ -498,40 +600,95 @@ export default function RecentSubmissionsTable({ onViewReview }) {
         </table>
       </div>
 
-      {/* Footer: Showing 1-X of Y submissions and "View All Submissions" button */}
-      <div
-        className="flex items-center justify-between border-t border-gray-100 bg-white"
-        style={{
-          paddingLeft: CONTENT_PADDING,
-          paddingRight: CONTENT_PADDING,
-          paddingTop: "14px",
-          paddingBottom: "14px",
-        }}
-      >
-        <p className="font-inter text-[13px] font-medium text-gray-500">
-          Showing{" "}
-          <span className="font-semibold text-gray-700">
-            {totalCount === 0 ? 0 : 1}–
-            {Math.min(filteredSubmissions.length, PAGE_SIZE)}
-          </span>{" "}
-          of <span className="font-semibold text-gray-700">{totalCount}</span>{" "}
-          submissions
-        </p>
-
-        <button
-          type="button"
-          onClick={() => navigate("/staff/review-panel")}
-          className="inline-flex items-center gap-2 rounded-lg font-inter font-bold text-white transition hover:brightness-110 active:scale-95 shadow-sm cursor-pointer"
+      {/* Footer / Pagination */}
+      {totalCount > 0 && (
+        <div
+          className="flex items-center justify-between border-t border-gray-100 bg-white"
           style={{
-            backgroundColor: "#1f5cae",
-            padding: "8px 18px",
-            fontSize: "13px",
+            paddingLeft: CONTENT_PADDING,
+            paddingRight: CONTENT_PADDING,
+            paddingTop: "14px",
+            paddingBottom: "14px",
           }}
         >
-          View All Submissions
-          <ArrowRight style={{ width: "15px", height: "15px" }} />
-        </button>
-      </div>
+          <p className="font-inter text-[13px] font-medium text-gray-500">
+            Showing {(safeCurrentPage - 1) * PAGE_SIZE + 1}–
+            {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)} of {totalCount}{" "}
+            submissions
+          </p>
+
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => goToPage(safeCurrentPage - 1)}
+              disabled={safeCurrentPage === 1}
+              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
+              style={{
+                borderColor: "#d1d5db",
+                color: safeCurrentPage === 1 ? "#c1c5cc" : "#374151",
+                cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
+              }}
+            >
+              <ChevronLeft style={{ width: "14px", height: "14px" }} />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= safeCurrentPage - 1 && page <= safeCurrentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => goToPage(page)}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border font-inter font-semibold transition"
+                    style={{
+                      fontSize: "12.5px",
+                      borderColor:
+                        page === safeCurrentPage ? "#12345b" : "#d1d5db",
+                      backgroundColor:
+                        page === safeCurrentPage ? "#12345b" : "#ffffff",
+                      color: page === safeCurrentPage ? "#ffffff" : "#374151",
+                    }}
+                  >
+                    {page}
+                  </button>
+                );
+              }
+              if (page === 2 && safeCurrentPage > 3)
+                return (
+                  <span key={page} className="px-1 text-gray-400">
+                    ...
+                  </span>
+                );
+              if (page === totalPages - 1 && safeCurrentPage < totalPages - 2)
+                return (
+                  <span key={page} className="px-1 text-gray-400">
+                    ...
+                  </span>
+                );
+              return null;
+            })}
+
+            <button
+              type="button"
+              onClick={() => goToPage(safeCurrentPage + 1)}
+              disabled={safeCurrentPage >= totalPages}
+              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
+              style={{
+                borderColor: "#d1d5db",
+                color: safeCurrentPage >= totalPages ? "#c1c5cc" : "#374151",
+                cursor:
+                  safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
+              }}
+            >
+              <ChevronRight style={{ width: "14px", height: "14px" }} />
+            </button>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

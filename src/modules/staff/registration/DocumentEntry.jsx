@@ -9,11 +9,11 @@ import DocumentEntryHeader from "./components/DocumentEntryHeader";
 import SubmitRegistration from "./components/SubmitRegistration";
 import OCRResults from "./components/OCRResults";
 import registrationSider from "../../assets/registration_sider.png";
-import StatusModal from "../../../components/StatusModal";
-import { convertImageToWebP } from "../../../utils/fileOptimizer";
+import { useSidebar } from "../../../hooks/useSidebar";
 
 export default function DocumentEntry() {
   const navigate = useNavigate();
+  const { isOpen, open, close } = useSidebar();
 
   const [activeView, setActiveView] = useState("form");
   const [isScanning, setIsScanning] = useState(false);
@@ -277,12 +277,16 @@ export default function DocumentEntry() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="staff" />
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="registration" profilePath="/staff/profile" />
+      <Sidebar role="staff" isOpen={isOpen} onClose={close} />
 
-        <main className="flex-1 overflow-y-auto">
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="registration" profilePath="/staff/profile" onMenuToggle={open} />
+
+        <main className="dashboard-main flex-1 overflow-y-auto">
           <div style={{ padding: "20px 24px" }}>
             <DocumentEntryHeader />
 

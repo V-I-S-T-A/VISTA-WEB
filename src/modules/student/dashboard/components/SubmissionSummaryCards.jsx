@@ -1,4 +1,4 @@
-import { FolderOpen, Clock, ShieldCheck } from "lucide-react";
+import { FolderOpen, Clock, ClipboardCheck } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 
 // Cards reflect only the current student org's submissions — the backend
@@ -12,75 +12,82 @@ export default function SubmissionSummaryCards() {
   const { data: pendingData, isLoading: isLoadingPending } = useSubmissions({
     page: 1,
     pageSize: 1,
-    status: "pending", // FIXED: Changed to lowercase to match Django
+    status: "pending",
   });
   const { data: approvedData, isLoading: isLoadingApproved } = useSubmissions({
     page: 1,
     pageSize: 1,
-    status: "approved", // FIXED: Changed to lowercase to match Django
+    status: "approved",
   });
 
   const isLoading = isLoadingAll || isLoadingPending || isLoadingApproved;
 
   const total = allData?.count ?? 0;
   const pending = pendingData?.count ?? 0;
-  const verified = approvedData?.count ?? 0;
+  const completed = approvedData?.count ?? 0;
 
-  const CARDS = [
+  const cards = [
     {
-      label: "Total",
+      label: "Total Submissions",
       value: total,
       icon: FolderOpen,
       bg: "bg-[#1a51a5]",
+      badgeBg: "bg-white/15",
+      span: "card-full-width",
     },
     {
       label: "Pending",
       value: pending,
       icon: Clock,
       bg: "bg-[#FDC849]",
-      textColor: "text-[#6e5c00]",
+      badgeBg: "bg-black/10",
+      span: "",
     },
     {
-      label: "Verified",
-      value: verified,
-      icon: ShieldCheck,
+      label: "Completed",
+      value: completed,
+      icon: ClipboardCheck,
       bg: "bg-[#2d9f6f]",
+      badgeBg: "bg-black/10",
+      span: "",
     },
   ];
 
   return (
     <div className="w-full">
-      <div className="grid grid-cols-3" style={{ gap: "16px" }}>
-        {CARDS.map(({ label, value, icon: Icon, bg, textColor }) => (
+      <div
+        className="student-cards-grid grid grid-cols-1 md:grid-cols-3"
+        style={{ gap: "16px" }}
+      >
+        {cards.map(({ label, value, icon: Icon, bg, badgeBg, span }) => (
           <div
             key={label}
-            className={`relative overflow-hidden rounded-2xl ${bg} ${textColor ?? "text-white"} flex flex-col justify-between shadow-sm`}
+            className={`relative rounded-2xl ${bg} text-white flex flex-col justify-between ${span} shadow-sm hover:shadow-md transition-shadow`}
             style={{ padding: "20px 22px", height: "130px" }}
           >
             <p
-              className="relative z-10 font-inter font-semibold opacity-90"
+              className="font-inter font-semibold text-white/90"
               style={{ fontSize: "14px" }}
             >
               {label}
             </p>
-            <p
-              className="relative z-10 font-inter font-bold leading-none"
-              style={{ fontSize: "48px" }}
-            >
-              {isLoading ? "—" : value.toString().padStart(2, "0")}
-            </p>
-            <Icon
-              className="absolute opacity-20"
-              style={{
-                right: "16px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                width: "72px",
-                height: "72px",
-              }}
-              strokeWidth={1.5}
-              aria-hidden="true"
-            />
+            <div className="flex items-end justify-between">
+              <p
+                className="font-inter font-bold leading-none"
+                style={{ fontSize: "44px" }}
+              >
+                {isLoading ? "—" : value.toString()}
+              </p>
+              <span
+                className={`flex items-center justify-center rounded-xl ${badgeBg}`}
+                style={{ width: "44px", height: "44px" }}
+              >
+                <Icon
+                  style={{ width: "22px", height: "22px" }}
+                  aria-hidden="true"
+                />
+              </span>
+            </div>
           </div>
         ))}
       </div>
