@@ -22,11 +22,11 @@ export default function UserSummaryCards() {
 
   return (
     <div className="w-full" style={{ marginBottom: '12px' }}>
-      <div className="grid grid-cols-5" style={{ gap: '10px' }}>
+      <div className="admin-cards-grid grid grid-cols-5" style={{ gap: '10px' }}>
         {CARDS.map(({ label, value, icon: Icon, bg }, index) => (
           <div
             key={label}
-            className={`relative overflow-hidden rounded-xl ${bg} text-white flex flex-col justify-between ${index === 0 ? 'col-span-2' : 'col-span-1'}`}
+            className={`relative overflow-hidden rounded-xl ${bg} text-white flex flex-col justify-between ${index === 0 ? 'card-full-width col-span-2' : 'col-span-1'}`}
             style={{ padding: '16px 20px', height: '150px' }}
           >
             <p className="relative z-10 font-inter font-semibold text-white/90" style={{ fontSize: '13px' }}>

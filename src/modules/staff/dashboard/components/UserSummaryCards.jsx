@@ -57,11 +57,11 @@ export default function SubmissionSummaryCards() {
 
   return (
     <div className="w-full" style={{ marginBottom: "16px" }}>
-      <div className="grid grid-cols-4" style={{ gap: "16px" }}>
+      <div className="summary-cards-grid grid grid-cols-4" style={{ gap: "16px" }}>
         {cards.map(({ label, value, icon: Icon, bg, badgeBg, span }) => (
           <div
             key={label}
-            className={`relative rounded-2xl ${bg} text-white flex flex-col justify-between ${span} shadow-sm hover:shadow-md transition-shadow`}
+            className={`relative rounded-2xl ${bg} text-white flex flex-col justify-between ${span === "col-span-2" ? "card-full-width col-span-2" : span} shadow-sm hover:shadow-md transition-shadow`}
             style={{ padding: "20px 22px", height: "130px" }}
           >
             <p

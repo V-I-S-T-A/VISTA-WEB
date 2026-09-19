@@ -6,11 +6,13 @@ import Sidebar from "../../components/Sidebar";
 import AuditLogTable from "./auditlogs/components/AuditLogTable";
 import AuditLogDetails from "./auditlogs/components/AuditLogDetails";
 import { useCurrentUser } from "../../hooks/useAuth";
+import { useSidebar } from "../../hooks/useSidebar";
 
 export default function AuditLogs() {
   const navigate = useNavigate();
   const { data: currentUser, isLoading } = useCurrentUser();
   const [selectedLog, setSelectedLog] = useState(null);
+  const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {
     if (!isLoading) {
@@ -24,13 +26,17 @@ export default function AuditLogs() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="staff" />
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="staff" profilePath="/staff/profile" />
+      <Sidebar role="staff" isOpen={isOpen} onClose={close} />
+
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="staff" profilePath="/staff/profile" onMenuToggle={open} />
 
         <main
-          className="flex-1 overflow-y-auto"
+          className="dashboard-main flex-1 overflow-y-auto"
           style={{ padding: "20px 24px" }}
         >
           <div className="w-full">

@@ -31,17 +31,17 @@ export default function LandingPage() {
 
           {/* Content */}
           <div className="hero-content">
-            <div className="hero-text max-w-[700px] relative top-[230px]">
+            <div className="hero-text">
               <h1 className="font-hahmlet text-white font-semibold">
                 Turn <span className="text-[#A3C3EE]">Transparency</span> into <span className="text-[#A3C3EE]">Efficiency.</span>
               </h1>
-              <p className="font-jakarta text-white ">
+              <p className="font-jakarta text-white">
                 Keeps your event documents moving — submit, track, and get feedback in one place,
                 so nothing gets lost in the process.
               </p>
             </div>
 
-            <div className="hero-features relative top-[-50px]">
+            <div className="hero-features">
               {FEATURES.map(({ icon: Icon, title, description }) => (
                 <div key={title} className="flex items-start gap-3">
                   <Icon className="feature-icon mt-0.5 text-white" strokeWidth={1.5} aria-hidden="true" />

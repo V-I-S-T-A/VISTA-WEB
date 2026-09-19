@@ -4,36 +4,60 @@ import {
   Filter,
   Download,
   Loader2,
-  MoreVertical,
-  AlertCircle,
-  SquarePen,
+  ImageIcon,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import {
-  useSubmissions,
-  useUpdateSubmissionStatus,
-} from "../../../../hooks/useSubmissions";
+import { useSubmissions } from "../../../../hooks/useSubmissions";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
+import { ActionButton } from "../../../../components";
 
-const PAGE_SIZE = 50;
-const CONTENT_PADDING = "28px";
+const PAGE_SIZE = 5;
+const CONTENT_PADDING = "24px";
 
 const COLORS = {
-  navy: "#003370",
-  navyHover: "#16385f",
-  amber: "#FDC849",
-  amberHover: "#e0951a",
-  headerBg: "#1A59A5",
+  navy: "#12345b",
+  navyHover: "#1d4ed8",
+  amber: "#ffc700",
+  amberHover: "#e6b800",
+  headerBg: "#1f5cae",
   border: "#e2e6ee",
 };
 
-const STATUS_CONFIG = {
-  pending: { label: "New", color: "#1d4ed8" },
-  under_review: { label: "Reviewing", color: "#b45309" },
-  approved: { label: "Verified", color: "#15803d" },
-  rejected: { label: "Flagged", color: "#b91c1c" },
-  resubmission_required: { label: "Resubmission Required", color: "#6d28d9" },
+const UI_STATUS_MAP = {
+  pending: "New",
+  under_review: "Reviewing",
+  approved: "Verified",
+  rejected: "Flagged",
+  resubmission_required: "Resubmission Required",
 };
+
+const STATUS_CONFIG = {
+  Reviewing: { dot: "#f59e0b", text: "#b45309" },
+  New: { dot: "#3b82f6", text: "#1d4ed8" },
+  Verified: { dot: "#22c55e", text: "#15803d" },
+  Flagged: { dot: "#ef4444", text: "#b91c1c" },
+  "Resubmission Required": { dot: "#7c3aed", text: "#6d28d9" },
+};
+
+function StatusDot({ status }) {
+  const uiStatus = UI_STATUS_MAP[status] || "New";
+  const config = STATUS_CONFIG[uiStatus] ?? { dot: "#9ca3af", text: "#6b7280" };
+
+  return (
+    <span
+      className="inline-flex items-center gap-1.5 font-inter font-semibold"
+      style={{ color: config.text, fontSize: "13px" }}
+    >
+      <span
+        className="h-1.5 w-1.5 rounded-full flex-shrink-0"
+        style={{ backgroundColor: config.dot }}
+      />
+      {uiStatus}
+    </span>
+  );
+}
 
 const STATUS_OPTIONS = [
   "All Status",
@@ -43,40 +67,6 @@ const STATUS_OPTIONS = [
   "Rejected",
   "Resubmission Required",
 ];
-
-const PRIMARY_ACTION = {
-  pending: { label: "VIEW & REVIEW", target: "under_review" },
-  under_review: { label: "VIEW & REVIEW", target: "approved" },
-  resubmission_required: { label: "VIEW & REVIEW", target: "under_review" },
-};
-
-const SECONDARY_ACTIONS = {
-  pending: [{ label: "Reject", target: "rejected" }],
-  under_review: [
-    { label: "Reject", target: "rejected" },
-    { label: "Request Resubmission", target: "resubmission_required" },
-  ],
-  resubmission_required: [{ label: "Reset to Pending", target: "pending" }],
-};
-
-function StatusLabel({ status }) {
-  const config = STATUS_CONFIG[status] ?? {
-    label: status || "Unknown",
-    color: "#6b7280",
-  };
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 font-inter font-bold whitespace-nowrap"
-      style={{ fontSize: "13px", color: config.color }}
-    >
-      <span
-        className="h-1.5 w-1.5 rounded-full flex-shrink-0"
-        style={{ backgroundColor: config.color }}
-      />
-      {config.label}
-    </span>
-  );
-}
 
 function FilterPopover({
   status,
@@ -210,11 +200,8 @@ export default function RecentSubmissionsTable() {
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [updatingSubmissionId, setUpdatingSubmissionId] = useState(null);
-  const [openMenuId, setOpenMenuId] = useState(null);
-  const [actionError, setActionError] = useState("");
 
-  const { data, isLoading, isFetching } = useSubmissions({
+  const { data, isLoading } = useSubmissions({
     page: currentPage,
     pageSize: PAGE_SIZE,
     status: statusFilter,
@@ -229,24 +216,11 @@ export default function RecentSubmissionsTable() {
     }, 300);
     return () => clearTimeout(timer);
   }, [searchInput]);
-  const updateSubmissionStatus = useUpdateSubmissionStatus();
+
   const submissions = data?.results ?? [];
   const totalPages = data?.total_pages ?? 1;
   const safeCurrentPage = Math.min(currentPage, totalPages);
   const totalCount = data?.count ?? 0;
-
-  const pageNumbers = useMemo(() => {
-    if (totalPages <= 5)
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    const half = 2;
-    let start = Math.max(1, safeCurrentPage - half);
-    let end = Math.min(totalPages, safeCurrentPage + half);
-    if (end - start < 4) {
-      if (start === 1) end = Math.min(totalPages, 5);
-      else start = Math.max(1, end - 4);
-    }
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }, [totalPages, safeCurrentPage]);
 
   function goToPage(page) {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
@@ -259,23 +233,6 @@ export default function RecentSubmissionsTable() {
     setCurrentPage(1);
   }
 
-  async function handleStatusUpdate(submissionId, status) {
-    setUpdatingSubmissionId(submissionId);
-    setActionError("");
-    setOpenMenuId(null);
-    try {
-      await updateSubmissionStatus.mutateAsync({ submissionId, status });
-    } catch (error) {
-      const backendMessage =
-        error?.response?.data?.status?.[0] ||
-        error?.response?.data?.detail ||
-        "Failed to update submission status. Please try again.";
-      setActionError(backendMessage);
-    } finally {
-      setUpdatingSubmissionId(null);
-    }
-  }
-
   // Frontend CSV Exporter
   const handleExportCSV = () => {
     if (!submissions || submissions.length === 0) {
@@ -285,10 +242,9 @@ export default function RecentSubmissionsTable() {
 
     const headers = [
       "ID",
-      "TITLE",
-      "ORGANIZATION/APPLICANT",
+      "DOCUMENT / APPLICANT",
       "CATEGORY",
-      "SUBMITTED DATE",
+      "DATE",
       "STATUS",
     ];
     const csvContent = [
@@ -299,7 +255,6 @@ export default function RecentSubmissionsTable() {
         const applicant = (
           sub.org_name ||
           sub.submitted_by_name ||
-          sub.submitted_by_email ||
           "Unknown"
         ).replace(/"/g, '""');
         const category = sub.category_name || "N/A";
@@ -308,7 +263,7 @@ export default function RecentSubmissionsTable() {
           : "N/A";
         const status = sub.status || "Unknown";
 
-        return `"${id}","${title}","${applicant}","${category}","${date}","${status}"`;
+        return `"${id}","${title} (${applicant})","${category}","${date}","${status}"`;
       }),
     ].join("\n");
 
@@ -329,26 +284,18 @@ export default function RecentSubmissionsTable() {
     (dateTo ? 1 : 0);
 
   return (
-    <section
-      className="overflow-hidden"
-      style={{
-        borderRadius: "12px",
-        border: `1px solid ${COLORS.border}`,
-        boxShadow: "0 1px 3px rgba(15, 42, 74, 0.06)",
-      }}
-    >
+    <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      {/* Toolbar */}
       <div
-        className="flex items-center justify-between gap-3 flex-wrap"
+        className="flex items-center justify-between gap-3 flex-wrap bg-[#1f5cae]"
         style={{
-          backgroundColor: COLORS.headerBg,
-          padding: "20px 24px",
-          borderBottom: `1px solid ${COLORS.border}`,
+          paddingLeft: CONTENT_PADDING,
+          paddingRight: CONTENT_PADDING,
+          paddingTop: "14px",
+          paddingBottom: "14px",
         }}
       >
-        <h3
-          className="font-inter font-bold"
-          style={{ fontSize: "19px", color: "white" }}
-        >
+        <h3 className="font-inter text-[16px] font-bold text-white">
           Recent Submissions
         </h3>
 
@@ -360,8 +307,8 @@ export default function RecentSubmissionsTable() {
                 left: "10px",
                 top: "50%",
                 transform: "translateY(-50%)",
-                height: "16px",
-                width: "16px",
+                height: "14px",
+                width: "14px",
                 color: "#9ca3af",
               }}
               aria-hidden="true"
@@ -375,12 +322,12 @@ export default function RecentSubmissionsTable() {
               placeholder="Search submissions..."
               className="font-inter outline-none"
               style={{
-                width: "230px",
-                borderRadius: "8px",
+                width: "220px",
+                borderRadius: "6px",
                 border: "1px solid #d1d5db",
                 backgroundColor: "#ffffff",
-                padding: "9px 12px 9px 34px",
-                fontSize: "14px",
+                padding: "8px 12px 8px 32px",
+                fontSize: "13px",
               }}
             />
           </div>
@@ -389,21 +336,15 @@ export default function RecentSubmissionsTable() {
             <button
               type="button"
               onClick={() => setIsFilterOpen((open) => !open)}
-              className="inline-flex items-center gap-1.5 font-inter font-semibold text-white transition-colors"
+              className="inline-flex items-center gap-1.5 font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
               style={{
-                borderRadius: "8px",
-                backgroundColor: COLORS.navy,
-                padding: "9px 16px",
-                fontSize: "14px",
+                borderRadius: "6px",
+                backgroundColor: "#12345b",
+                padding: "7px 14px",
+                fontSize: "12.5px",
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.backgroundColor = COLORS.navyHover)
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.backgroundColor = COLORS.navy)
-              }
             >
-              <Filter className="h-4 w-4" aria-hidden="true" />
+              <Filter style={{ width: "13px", height: "13px" }} aria-hidden="true" />
               Filter
               {activeFilterCount > 0 && (
                 <span
@@ -413,8 +354,9 @@ export default function RecentSubmissionsTable() {
                     height: "16px",
                     borderRadius: "9999px",
                     backgroundColor: "#ffffff",
-                    color: COLORS.navy,
+                    color: "#12345b",
                     fontSize: "10px",
+                    marginLeft: "2px",
                   }}
                 >
                   {activeFilterCount}
@@ -447,75 +389,46 @@ export default function RecentSubmissionsTable() {
           <button
             type="button"
             onClick={handleExportCSV}
-            className="inline-flex items-center gap-1.5 font-inter font-bold text-white transition-colors"
+            className="inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
             style={{
-              borderRadius: "8px",
-              backgroundColor: COLORS.amber,
-              color: "#6e5c00",
-              padding: "9px 16px",
-              fontSize: "14px",
+              borderRadius: "6px",
+              backgroundColor: "#ffc700",
+              padding: "6px 14px",
+              fontSize: "12px",
               boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = COLORS.amberHover;
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = COLORS.amber;
-            }}
           >
-            <Download className="h-4 w-4" aria-hidden="true" />
+            <Download style={{ width: "13px", height: "13px" }} aria-hidden="true" />
             Export
           </button>
         </div>
       </div>
 
-      {actionError && (
-        <div
-          className="flex items-center gap-2 bg-red-50 border-b border-red-200 text-red-700 font-inter"
-          style={{ padding: "10px 24px", fontSize: "13px" }}
-        >
-          <AlertCircle className="h-4 w-4 flex-shrink-0" aria-hidden="true" />
-          {actionError}
-        </div>
-      )}
-
-      {isFetching && !isLoading && (
-        <div
-          className="bg-gray-50 text-gray-500 font-inter"
-          style={{ padding: "6px 24px", fontSize: "12px" }}
-        >
-          Refreshing…
-        </div>
-      )}
-
-      <div className="overflow-x-auto bg-white">
+      {/* Table */}
+      <div className="overflow-x-auto">
         <table className="min-w-full border-collapse">
           <thead>
-            <tr
-              className="h-14"
-              style={{
-                borderBottom: `1px solid ${COLORS.border}`,
-                backgroundColor: "#f8f9fc",
-              }}
-            >
-              {["ID", "APPLICANT", "CATEGORY", "DATE", "STATUS", "ACTIONS"].map(
-                (heading) => (
-                  <th
-                    key={heading}
-                    className={`text-left font-inter font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${
-                      heading === "ACTIONS" ? "pl-6 w-[170px]" : ""
-                    } ${heading === "STATUS" ? "min-w-[120px]" : ""}`}
-                    style={{
-                      padding: "12px 20px",
-                      fontSize: "13px",
-                      paddingLeft:
-                        heading === "ID" ? CONTENT_PADDING : undefined,
-                    }}
-                  >
-                    {heading}
-                  </th>
-                ),
-              )}
+            <tr className="h-12 border-b border-gray-100 bg-[#f8f9fc]">
+              {[
+                "ID",
+                "DOCUMENT / APPLICANT",
+                "CATEGORY",
+                "DATE",
+                "STATUS",
+                "ACTIONS",
+              ].map((heading) => (
+                <th
+                  key={heading}
+                  className="px-5 py-2 text-left font-inter text-[12px] font-bold uppercase tracking-wider text-gray-500"
+                  style={
+                    heading === "ID"
+                      ? { paddingLeft: CONTENT_PADDING }
+                      : undefined
+                  }
+                >
+                  {heading}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -523,8 +436,7 @@ export default function RecentSubmissionsTable() {
               <tr>
                 <td
                   colSpan={6}
-                  className="text-center font-inter text-sm text-gray-500"
-                  style={{ padding: "40px 20px" }}
+                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
                 >
                   <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
                   Loading submissions...
@@ -534,302 +446,209 @@ export default function RecentSubmissionsTable() {
               <tr>
                 <td
                   colSpan={6}
-                  className="text-center font-inter text-sm text-gray-500"
-                  style={{ padding: "40px 20px" }}
+                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
                 >
                   No submissions found.
                 </td>
               </tr>
             ) : (
-              submissions.map((submission) => {
-                const primary = PRIMARY_ACTION[submission.status];
-                const secondary = SECONDARY_ACTIONS[submission.status] ?? [];
-                const isUpdatingRow =
-                  updatingSubmissionId === submission.submission_id;
-                const isMenuOpen = openMenuId === submission.submission_id;
-
-                return (
-                  <tr
-                    key={submission.submission_id}
-                    className="h-16 transition-colors last:border-b-0"
-                    style={{ borderBottom: `1px solid ${COLORS.border}` }}
-                    onMouseEnter={(e) =>
-                      (e.currentTarget.style.backgroundColor = "#f7f9ff")
-                    }
-                    onMouseLeave={(e) =>
-                      (e.currentTarget.style.backgroundColor = "transparent")
-                    }
+              submissions.map((submission) => (
+                <tr
+                  key={submission.submission_id}
+                  className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
+                >
+                  {/* ID */}
+                  <td
+                    className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
+                    style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
                   >
-                    <td
-                      className="font-inter font-semibold text-gray-700 whitespace-nowrap"
-                      style={{
-                        padding: "12px 20px",
-                        paddingLeft: CONTENT_PADDING,
-                        fontSize: "13px",
-                      }}
-                    >
-                      #{submission.submission_id.slice(0, 8)}
-                    </td>
-                    <td style={{ padding: "12px 20px" }}>
-                      <div className="flex items-center gap-3">
-                        <img
-                          src={submission.org_image_url || defaultUser}
-                          alt=""
-                          className="flex-shrink-0 rounded-full object-cover border border-gray-200"
-                          style={{ width: "36px", height: "36px" }}
-                          onError={(e) => {
-                            e.currentTarget.src = defaultUser;
-                          }}
-                        />
-                        <div className="min-w-0">
-                          <p
-                            className="font-inter font-bold text-gray-900 leading-tight"
-                            style={{ fontSize: "14px" }}
-                          >
-                            {submission.org_name || "Unknown"}
-                          </p>
-                          {submission.submitted_by_email && (
-                            <p
-                              className="font-inter text-gray-400 leading-tight"
-                              style={{ fontSize: "12px", marginTop: "2px" }}
-                            >
-                              {submission.submitted_by_email}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </td>
-                    <td style={{ padding: "12px 20px" }}>
-                      <span
-                        className="inline-flex items-center justify-center font-inter font-semibold"
-                        style={{
-                          fontSize: "12px",
-                          padding: "5px 14px",
-                          borderRadius: "9999px",
-                          backgroundColor: "#eef1f8",
-                          color: "#4b5b78",
-                        }}
-                      >
-                        {submission.category_name || "N/A"}
-                      </span>
-                    </td>
-                    <td
-                      className="font-inter font-medium text-gray-500 whitespace-nowrap"
-                      style={{ padding: "12px 20px", fontSize: "13px" }}
-                    >
-                      {new Date(submission.submitted_at).toLocaleDateString(
-                        "en-US",
-                        {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        },
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap min-w-[120px]" style={{ padding: "12px 20px" }}>
-                      <StatusLabel status={submission.status} />
-                    </td>
-                    <td className="pl-6 whitespace-nowrap w-[170px]" style={{ padding: "12px 20px" }}>
-                      {!primary ? (
-                        <span className="font-inter text-xs text-gray-400">
-                          No action needed
-                        </span>
-                      ) : (
-                        <div className="flex items-center gap-1.5 relative">
-                          <button
-                            type="button"
-                            onClick={() => navigate("/staff/review-panel")}
-                            className="inline-flex items-center gap-1.5 font-inter font-bold text-white active:scale-95"
-                            style={{
-                              fontSize: "12px",
-                              padding: "8px 18px",
-                              borderRadius: "9999px",
-                              backgroundColor: COLORS.amber,
-                              boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
-                              cursor: "pointer",
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                COLORS.amberHover;
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor =
-                                COLORS.amber;
-                            }}
-                          >
-                            {isUpdatingRow ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <>
-                                <SquarePen className="h-3.5 w-3.5" />
-                                {primary.label}
-                              </>
-                            )}
-                          </button>
+                    #{submission.submission_id.slice(0, 8)}
+                  </td>
 
-                          {secondary.length > 0 && (
-                            <div className="relative">
-                              <button
-                                type="button"
-                                disabled={isUpdatingRow}
-                                onClick={() =>
-                                  setOpenMenuId(
-                                    isMenuOpen
-                                      ? null
-                                      : submission.submission_id,
-                                  )
-                                }
-                                className="inline-flex items-center justify-center border text-gray-500 hover:bg-gray-100"
-                                style={{
-                                  width: "28px",
-                                  height: "28px",
-                                  borderRadius: "6px",
-                                  borderColor: "#d1d5db",
-                                  opacity: isUpdatingRow ? 0.6 : 1,
-                                }}
-                                aria-label="More actions"
-                              >
-                                <MoreVertical className="h-3.5 w-3.5" />
-                              </button>
-                              {isMenuOpen && (
-                                <div
-                                  className="absolute right-0 top-full z-10 overflow-hidden"
-                                  style={{
-                                    marginTop: "4px",
-                                    minWidth: "170px",
-                                    borderRadius: "8px",
-                                    border: `1px solid ${COLORS.border}`,
-                                    backgroundColor: "#ffffff",
-                                    boxShadow:
-                                      "0 10px 25px rgba(15, 42, 74, 0.12)",
-                                  }}
-                                >
-                                  {secondary.map((action) => (
-                                    <button
-                                      key={action.target}
-                                      type="button"
-                                      onClick={() =>
-                                        handleStatusUpdate(
-                                          submission.submission_id,
-                                          action.target,
-                                        )
-                                      }
-                                      className="block w-full text-left font-inter font-semibold text-gray-700 hover:bg-gray-50"
-                                      style={{
-                                        padding: "8px 12px",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      {action.label}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })
+                  {/* Document / Applicant */}
+                  <td className="px-5 py-2.5">
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={submission.org_image_url || defaultUser}
+                        alt=""
+                        className="flex-shrink-0 rounded-full object-cover border border-gray-200"
+                        style={{ width: "36px", height: "36px" }}
+                        onError={(e) => {
+                          e.currentTarget.src = defaultUser;
+                        }}
+                      />
+                      <div className="min-w-0">
+                        <p
+                          className="font-inter font-bold text-gray-900 leading-tight"
+                          style={{ fontSize: "13.5px" }}
+                        >
+                          {submission.title || "Untitled Document"}
+                        </p>
+                        <p
+                          className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
+                          style={{ fontSize: "12px" }}
+                        >
+                          {submission.org_name ||
+                            submission.submitted_by_name ||
+                            "Unknown Applicant"}
+                        </p>
+                      </div>
+                    </div>
+                  </td>
+
+                  {/* Category */}
+                  <td className="px-5 py-2.5">
+                    <span
+                      className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
+                      style={{ fontSize: "12px", padding: "4px 12px" }}
+                    >
+                      {submission.category_name || "N/A"}
+                    </span>
+                  </td>
+
+                  {/* Date */}
+                  <td
+                    className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
+                    style={{ fontSize: "13px" }}
+                  >
+                    {new Date(submission.submitted_at).toLocaleDateString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      },
+                    )}
+                  </td>
+
+                  {/* Status */}
+                  <td className="px-5 py-2.5">
+                    <StatusDot status={submission.status} />
+                  </td>
+
+                  {/* Actions */}
+                  <td className="px-5 py-2.5">
+                    <ActionButton
+                      onClick={() => {
+                        const submissionData = {
+                          id: submission.submission_id,
+                          title: submission.title || "Untitled Document",
+                          site: submission.org_name || "Unknown Organization",
+                          contactEmail: submission.submitted_by_email
+                            ? `${submission.submitted_by_name || ""} (${submission.submitted_by_email})`.trim()
+                            : submission.submitted_by_name || "N/A",
+                          documentType: submission.doc_type_name || "N/A",
+                          submittedDate: new Date(
+                            submission.submitted_at,
+                          ).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          }),
+                        };
+                        navigate("/staff/review-panel", {
+                          state: { submission: submissionData },
+                        });
+                      }}
+                      label="VIEW & REVIEW"
+                    />
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
       </div>
 
-      <div
-        className="flex items-center justify-between flex-wrap gap-3"
-        style={{
-          borderTop: `1px solid ${COLORS.border}`,
-          backgroundColor: "#ffffff",
-          paddingLeft: CONTENT_PADDING,
-          paddingRight: CONTENT_PADDING,
-          paddingTop: "12px",
-          paddingBottom: "12px",
-        }}
-      >
-        <p
-          className="font-inter font-medium text-gray-500"
-          style={{ fontSize: "14px" }}
+      {/* Footer / Pagination */}
+      {totalCount > 0 && (
+        <div
+          className="flex items-center justify-between border-t border-gray-100 bg-white"
+          style={{
+            paddingLeft: CONTENT_PADDING,
+            paddingRight: CONTENT_PADDING,
+            paddingTop: "14px",
+            paddingBottom: "14px",
+          }}
         >
-          Showing{" "}
-          <span className="font-semibold text-gray-700">
-            {totalCount === 0 ? 0 : (safeCurrentPage - 1) * PAGE_SIZE + 1}–
-            {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)}
-          </span>{" "}
-          of <span className="font-semibold text-gray-700">{totalCount}</span>{" "}
-          submissions
-        </p>
+          <p className="font-inter text-[13px] font-medium text-gray-500">
+            Showing {(safeCurrentPage - 1) * PAGE_SIZE + 1}–
+            {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)} of {totalCount}{" "}
+            submissions
+          </p>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => goToPage(safeCurrentPage - 1)}
-            disabled={safeCurrentPage === 1}
-            className="font-inter font-semibold transition"
-            style={{
-              width: "34px",
-              height: "34px",
-              fontSize: "14px",
-              borderRadius: "9999px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-              color: safeCurrentPage === 1 ? "#9ca3af" : "#374151",
-              cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            &lt;
-          </button>
-          {pageNumbers.map((page) => (
+          <div className="flex items-center gap-1.5">
             <button
-              key={page}
               type="button"
-              onClick={() => goToPage(page)}
-              className="font-inter font-semibold transition"
+              onClick={() => goToPage(safeCurrentPage - 1)}
+              disabled={safeCurrentPage === 1}
+              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
               style={{
-                width: "34px",
-                height: "34px",
-                fontSize: "13px",
-                borderRadius: "9999px",
-                border: `1px solid ${page === safeCurrentPage ? COLORS.navy : "#d1d5db"}`,
-                backgroundColor:
-                  page === safeCurrentPage ? COLORS.navy : "#ffffff",
-                color: page === safeCurrentPage ? "#ffffff" : "#374151",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                borderColor: "#d1d5db",
+                color: safeCurrentPage === 1 ? "#c1c5cc" : "#374151",
+                cursor: safeCurrentPage === 1 ? "not-allowed" : "pointer",
               }}
             >
-              {page}
+              <ChevronLeft style={{ width: "14px", height: "14px" }} />
             </button>
-          ))}
-          <button
-            type="button"
-            onClick={() => goToPage(safeCurrentPage + 1)}
-            disabled={safeCurrentPage >= totalPages}
-            className="font-inter font-semibold transition"
-            style={{
-              width: "34px",
-              height: "34px",
-              fontSize: "14px",
-              borderRadius: "9999px",
-              border: "1px solid #d1d5db",
-              backgroundColor: "#ffffff",
-              color: safeCurrentPage >= totalPages ? "#9ca3af" : "#374151",
-              cursor: safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            &gt;
-          </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+              if (
+                page === 1 ||
+                page === totalPages ||
+                (page >= safeCurrentPage - 1 && page <= safeCurrentPage + 1)
+              ) {
+                return (
+                  <button
+                    key={page}
+                    type="button"
+                    onClick={() => goToPage(page)}
+                    className="flex h-7 w-7 items-center justify-center rounded-full border font-inter font-semibold transition"
+                    style={{
+                      fontSize: "12.5px",
+                      borderColor:
+                        page === safeCurrentPage ? "#12345b" : "#d1d5db",
+                      backgroundColor:
+                        page === safeCurrentPage ? "#12345b" : "#ffffff",
+                      color: page === safeCurrentPage ? "#ffffff" : "#374151",
+                    }}
+                  >
+                    {page}
+                  </button>
+                );
+              }
+              if (page === 2 && safeCurrentPage > 3)
+                return (
+                  <span key={page} className="px-1 text-gray-400">
+                    ...
+                  </span>
+                );
+              if (page === totalPages - 1 && safeCurrentPage < totalPages - 2)
+                return (
+                  <span key={page} className="px-1 text-gray-400">
+                    ...
+                  </span>
+                );
+              return null;
+            })}
+
+            <button
+              type="button"
+              onClick={() => goToPage(safeCurrentPage + 1)}
+              disabled={safeCurrentPage >= totalPages}
+              className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition"
+              style={{
+                borderColor: "#d1d5db",
+                color: safeCurrentPage >= totalPages ? "#c1c5cc" : "#374151",
+                cursor:
+                  safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
+              }}
+            >
+              <ChevronRight style={{ width: "14px", height: "14px" }} />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </section>
   );
 }

@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
+import { ActionButton } from "../../../../components";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "24px";
@@ -150,7 +151,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
     <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Toolbar */}
       <div
-        className="flex flex-wrap items-center justify-between gap-3 bg-[#1f5cae]"
+        className="review-panel-toolbar flex flex-wrap items-center justify-between gap-3 bg-[#1f5cae]"
         style={{
           paddingLeft: CONTENT_PADDING,
           paddingRight: CONTENT_PADDING,
@@ -229,7 +230,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="review-panel-controls flex items-center gap-2">
           <div className="relative">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
@@ -507,8 +508,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
 
                   {/* Actions */}
                   <td className="px-5 py-2.5">
-                    <button
-                      type="button"
+                    <ActionButton
                       onClick={() =>
                         onViewReview?.({
                           id: submission.submission_id,
@@ -527,19 +527,8 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                           }),
                         })
                       }
-                      className="inline-flex items-center gap-1.5 rounded font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 whitespace-nowrap"
-                      style={{
-                        fontSize: "12px",
-                        padding: "6px 14px",
-                        backgroundColor: "#ffc700",
-                      }}
-                    >
-                      <ImageIcon
-                        style={{ width: "13px", height: "13px" }}
-                        aria-hidden="true"
-                      />
-                      VIEW &amp; REVIEW
-                    </button>
+                      label="VIEW & REVIEW"
+                    />
                   </td>
                 </tr>
               ))
