@@ -1,9 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import SubmissionSummaryCards from "./dashboard/components/UserSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
+import SubmissionReviewDetails from "./review-panel/components/SubmissionReviewDetails";
 import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
 import AuditLogWidget from "./dashboard/components/AuditLogWidget";
 import { useCurrentUser } from "../../hooks/useAuth";
@@ -42,11 +43,18 @@ export default function Dashboard() {
           style={{ padding: "24px 28px" }}
         >
           <div className="w-full">
-            <SubmissionSummaryCards />
+            {selectedSubmission ? (
+              <SubmissionReviewDetails
+                submission={selectedSubmission}
+                onBack={() => setSelectedSubmission(null)}
+              />
+            ) : (
+              <>
+                <SubmissionSummaryCards />
 
-            <div style={{ marginTop: "20px" }}>
-              <RecentSubmissionsTable />
-            </div>
+                <div style={{ marginTop: "20px" }}>
+                  <RecentSubmissionsTable onViewReview={setSelectedSubmission} />
+                </div>
 
             <div
               className="dashboard-bottom-grid grid grid-cols-2"
@@ -56,16 +64,19 @@ export default function Dashboard() {
               <AuditLogWidget />
             </div>
 
-            <div style={{ paddingTop: "32px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="w-full h-auto rounded-xl"
-              />
-            </div>
+                <div style={{ paddingTop: "32px" }}>
+                  <img
+                    src={systemScopeBanner}
+                    alt="System Scope"
+                    className="w-full h-auto rounded-xl"
+                  />
+                </div>
+              </>
+            )}
           </div>
         </main>
       </div>
     </div>
   );
 }
+

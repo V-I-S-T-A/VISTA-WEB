@@ -19,6 +19,40 @@ export default function DocumentEntry() {
   const [isScanning, setIsScanning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [modalConfig, setModalConfig] = useState({
+    isOpen: false,
+    type: "success",
+    title: "",
+    message: "",
+    onConfirm: null,
+  });
+
+  const showNotification = (
+    title,
+    message,
+    type = "success",
+    onConfirm = null,
+  ) => {
+    setModalConfig({
+      isOpen: true,
+      title,
+      message,
+      type,
+      onConfirm,
+    });
+  };
+
+  const closeNotification = () => {
+    const callback = modalConfig.onConfirm;
+    setModalConfig({
+      isOpen: false,
+      type: "success",
+      title: "",
+      message: "",
+      onConfirm: null,
+    });
+    if (callback) callback();
+  };
 
   const [organizations, setOrganizations] = useState([]);
   const [users, setUsers] = useState([]);
@@ -75,15 +109,20 @@ export default function DocumentEntry() {
   };
 
   const handleFileUpload = async (uploadedFile) => {
-    setFile(uploadedFile);
-    if (!uploadedFile) return;
+    if (!uploadedFile) {
+      setFile(null);
+      return;
+    }
 
     setIsScanning(true);
     setError("");
 
     try {
+      const optimizedFile = await convertImageToWebP(uploadedFile);
+      setFile(optimizedFile);
+
       const fd = new FormData();
-      fd.append("file", uploadedFile);
+      fd.append("file", optimizedFile);
       const res = await api.post("/submissions/autofill/", fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
@@ -170,8 +209,9 @@ export default function DocumentEntry() {
       // Step B: Upload to Cloudinary
       if (file) {
         try {
+          const uploadFile = await convertImageToWebP(file);
           const cloudinaryData = new FormData();
-          cloudinaryData.append("file", file);
+          cloudinaryData.append("file", uploadFile);
           cloudinaryData.append("upload_preset", "vista_uploads");
 
           const cloudName = "djtdar2ex";
@@ -185,19 +225,23 @@ export default function DocumentEntry() {
           if (cloudinaryJson.secure_url) {
             await api.post("/documents/", {
               submission_id: subId,
-              file_name: file.name,
+              file_name: uploadFile.name,
               file_url: cloudinaryJson.secure_url,
-              mime_type: file.type || "application/pdf",
-              file_size_kb: Math.max(1, Math.round(file.size / 1024)),
+              mime_type: uploadFile.type || "application/pdf",
+              file_size_kb: Math.max(1, Math.round(uploadFile.size / 1024)),
             });
           } else {
             throw new Error(JSON.stringify(cloudinaryJson));
           }
         } catch (docErr) {
           console.error("Cloudinary upload failed:", docErr);
-          alert(
-            "Submission created but file failed to upload to Cloudinary. Check your upload preset.",
+          showNotification(
+            "Upload Warning",
+            "Submission created, but file failed to upload to Cloudinary. Check your upload preset.",
+            "warning",
+            () => navigate("/staff/dashboard"),
           );
+          return;
         }
       }
 
@@ -556,6 +600,16 @@ export default function DocumentEntry() {
           </div>
         </main>
       </div>
+
+      <StatusModal
+        isOpen={modalConfig.isOpen}
+        onClose={closeNotification}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        type={modalConfig.type}
+        confirmText="OK"
+        onConfirm={closeNotification}
+      />
     </div>
   );
 }

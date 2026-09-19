@@ -290,6 +290,35 @@ body {
   box-shadow: 0 0 0 3px rgba(26, 86, 163, 0.1);
 }
 
+.login-password-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.login-password-toggle {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  border-radius: 6px;
+  transition: color 0.15s ease, background-color 0.15s ease;
+}
+
+.login-password-toggle:hover {
+  color: #1f5cae;
+  background-color: rgba(31, 92, 174, 0.08);
+}
+
 .login-remember {
   width: 100%;
   display: flex;

@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Search,
   Filter,
   Download,
+  ImageIcon,
   Loader2,
   ImageIcon,
   ChevronLeft,
@@ -127,75 +128,53 @@ function FilterPopover({
         </select>
       </div>
 
-      <div className="grid grid-cols-2 gap-2" style={{ marginBottom: "14px" }}>
-        <div>
-          <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
-            From
-          </label>
-          <input
-            type="date"
-            value={dateFrom}
-            onChange={(e) => onDateFromChange(e.target.value)}
-            className="w-full font-inter outline-none"
-            style={{
-              borderRadius: "8px",
-              border: "1px solid #d1d5db",
-              padding: "6px 8px",
-              fontSize: "14px",
-            }}
-          />
-        </div>
-        <div>
-          <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
-            To
-          </label>
-          <input
-            type="date"
-            value={dateTo}
-            onChange={(e) => onDateToChange(e.target.value)}
-            className="w-full font-inter outline-none"
-            style={{
-              borderRadius: "8px",
-              border: "1px solid #d1d5db",
-              padding: "6px 8px",
-              fontSize: "14px",
-            }}
-          />
-        </div>
-      </div>
+const CATEGORY_OPTIONS = ["All Categories", "Off-Campus", "In-Campus"];
 
-      <div className="flex items-center justify-between">
-        <button
-          type="button"
-          onClick={onClear}
-          className="font-inter font-semibold text-gray-500 hover:text-gray-700"
-          style={{ fontSize: "12px" }}
-        >
-          Clear filters
-        </button>
-        <button
-          type="button"
-          onClick={onClose}
-          className="font-inter font-bold text-white"
-          style={{
-            borderRadius: "8px",
-            backgroundColor: COLORS.navy,
-            padding: "7px 14px",
-            fontSize: "12px",
-          }}
-        >
-          Done
-        </button>
-      </div>
-    </div>
-  );
+function downloadCsv(rows) {
+  const headers = [
+    "ID",
+    "Document Title",
+    "Applicant",
+    "Email",
+    "Category",
+    "Date",
+    "Status",
+  ];
+  const lines = rows.map((s) => {
+    const uiStatus = UI_STATUS_MAP[s.status] || s.status;
+    const dateStr = s.submitted_at
+      ? new Date(s.submitted_at).toLocaleDateString("en-US", {
+          month: "short",
+          day: "numeric",
+          year: "numeric",
+        })
+      : "N/A";
+
+    return [
+      `#${s.submission_id.slice(0, 8)}`,
+      `"${(s.title || "Untitled Document").replace(/"/g, '""')}"`,
+      `"${(s.org_name || s.submitted_by_name || "Unknown").replace(/"/g, '""')}"`,
+      s.submitted_by_email || "N/A",
+      s.category_name || "N/A",
+      dateStr,
+      uiStatus,
+    ].join(",");
+  });
+
+  const csv = [headers.join(","), ...lines].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `recent_submissions_${new Date().toISOString().split("T")[0]}.csv`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 }
 
-export default function RecentSubmissionsTable() {
+export default function RecentSubmissionsTable({ onViewReview }) {
   const navigate = useNavigate();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [statusFilter, setStatusFilter] = useState("All Status");
-  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -204,10 +183,8 @@ export default function RecentSubmissionsTable() {
   const { data, isLoading } = useSubmissions({
     page: currentPage,
     pageSize: PAGE_SIZE,
-    status: statusFilter,
     search: searchTerm,
-    dateFrom,
-    dateTo,
+    status: apiStatus,
   });
 
   useEffect(() => {
@@ -218,8 +195,6 @@ export default function RecentSubmissionsTable() {
   }, [searchInput]);
 
   const submissions = data?.results ?? [];
-  const totalPages = data?.total_pages ?? 1;
-  const safeCurrentPage = Math.min(currentPage, totalPages);
   const totalCount = data?.count ?? 0;
 
   function goToPage(page) {
@@ -280,8 +255,7 @@ export default function RecentSubmissionsTable() {
 
   const activeFilterCount =
     (statusFilter !== "All Status" ? 1 : 0) +
-    (dateFrom ? 1 : 0) +
-    (dateTo ? 1 : 0);
+    (categoryFilter !== "All Categories" ? 1 : 0);
 
   return (
     <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -299,7 +273,8 @@ export default function RecentSubmissionsTable() {
           Recent Submissions
         </h3>
 
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
+          {/* Search */}
           <div className="relative">
             <Search
               className="pointer-events-none absolute"
@@ -314,13 +289,11 @@ export default function RecentSubmissionsTable() {
               aria-hidden="true"
             />
             <input
-              value={searchInput}
-              onChange={(event) => {
-                setSearchInput(event.target.value);
-                setCurrentPage(1);
-              }}
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search submissions..."
-              className="font-inter outline-none"
+              className="font-inter font-medium text-gray-700 placeholder-gray-400 outline-none rounded-md bg-white"
               style={{
                 width: "220px",
                 borderRadius: "6px",
@@ -332,6 +305,7 @@ export default function RecentSubmissionsTable() {
             />
           </div>
 
+          {/* Filter Popover */}
           <div className="relative">
             <button
               type="button"
@@ -363,29 +337,95 @@ export default function RecentSubmissionsTable() {
                 </span>
               )}
             </button>
-            {isFilterOpen && (
-              <FilterPopover
-                status={statusFilter}
-                onStatusChange={(v) => {
-                  setStatusFilter(v);
-                  setCurrentPage(1);
+
+            {filterOpen && (
+              <div
+                className="absolute right-0 top-full z-20"
+                style={{
+                  marginTop: "8px",
+                  width: "288px",
+                  borderRadius: "10px",
+                  border: "1px solid #e2e6ee",
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
+                  padding: "16px",
                 }}
-                dateFrom={dateFrom}
-                dateTo={dateTo}
-                onDateFromChange={(v) => {
-                  setDateFrom(v);
-                  setCurrentPage(1);
-                }}
-                onDateToChange={(v) => {
-                  setDateTo(v);
-                  setCurrentPage(1);
-                }}
-                onClear={clearFilters}
-                onClose={() => setIsFilterOpen(false)}
-              />
+              >
+                <div style={{ marginBottom: "14px" }}>
+                  <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
+                    Status
+                  </label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full font-inter outline-none"
+                    style={{
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      padding: "8px 10px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {STATUS_OPTIONS.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div style={{ marginBottom: "14px" }}>
+                  <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
+                    Category
+                  </label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="w-full font-inter outline-none"
+                    style={{
+                      borderRadius: "8px",
+                      border: "1px solid #d1d5db",
+                      padding: "8px 10px",
+                      fontSize: "14px",
+                    }}
+                  >
+                    {CATEGORY_OPTIONS.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStatusFilter("All Status");
+                    setCategoryFilter("All Categories");
+                    setSearchTerm("");
+                  }}
+                  className="w-full font-inter font-bold transition-colors cursor-pointer"
+                  style={{
+                    backgroundColor: "#f3f4f6",
+                    color: "#4b5563",
+                    padding: "8px 0",
+                    borderRadius: "8px",
+                    fontSize: "13px",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#e5e7eb")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.backgroundColor = "#f3f4f6")
+                  }
+                >
+                  Clear Filters
+                </button>
+              </div>
             )}
           </div>
 
+          {/* Export CSV */}
           <button
             type="button"
             onClick={handleExportCSV}
@@ -442,7 +482,7 @@ export default function RecentSubmissionsTable() {
                   Loading submissions...
                 </td>
               </tr>
-            ) : submissions.length === 0 ? (
+            ) : filteredSubmissions.length === 0 ? (
               <tr>
                 <td
                   colSpan={6}

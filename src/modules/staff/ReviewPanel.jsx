@@ -26,6 +26,7 @@ export default function ReviewPanel() {
     }
   }, [isLoading, currentUser, navigate]);
 
+
   if (isLoading) return null;
 
   return (
