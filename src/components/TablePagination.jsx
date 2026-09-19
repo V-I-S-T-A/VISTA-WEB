@@ -1,7 +1,9 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 /**
  * TablePagination
  *
- * Previous / numbered-page-buttons / Next pagination row.
+ * Circular Previous / numbered-page-buttons / Next pagination row.
  * Used in all paginated tables (admin, staff, student).
  *
  * Props:
@@ -17,24 +19,22 @@ export default function TablePagination({
   onGoToPage,
 }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="table-pagination-row flex items-center gap-1.5">
       {/* Previous */}
       <button
         type="button"
         onClick={() => onGoToPage(currentPage - 1)}
         disabled={currentPage === 1}
-        className="font-inter font-semibold border rounded-md transition"
+        className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition disabled:opacity-50"
         style={{
-          height: "30px",
-          padding: "0 14px",
-          fontSize: "13px",
           borderColor: "#d1d5db",
-          backgroundColor: "#f9fafb",
-          color: currentPage === 1 ? "#9ca3af" : "#374151",
+          backgroundColor: "#ffffff",
+          color: currentPage === 1 ? "#c1c5cc" : "#374151",
           cursor: currentPage === 1 ? "not-allowed" : "pointer",
         }}
+        aria-label="Previous page"
       >
-        Previous
+        <ChevronLeft style={{ width: "14px", height: "14px" }} />
       </button>
 
       {/* Page numbers */}
@@ -43,13 +43,11 @@ export default function TablePagination({
           key={page}
           type="button"
           onClick={() => onGoToPage(page)}
-          className="font-inter font-semibold border rounded-md transition"
+          className="flex h-7 w-7 items-center justify-center rounded-full border font-inter font-semibold transition"
           style={{
-            width: "34px",
-            height: "30px",
-            fontSize: "13px",
-            borderColor: page === currentPage ? "#002b5c" : "#d1d5db",
-            backgroundColor: page === currentPage ? "#002b5c" : "#ffffff",
+            fontSize: "12.5px",
+            borderColor: page === currentPage ? "#12345b" : "#d1d5db",
+            backgroundColor: page === currentPage ? "#12345b" : "#ffffff",
             color: page === currentPage ? "#ffffff" : "#374151",
           }}
         >
@@ -62,18 +60,16 @@ export default function TablePagination({
         type="button"
         onClick={() => onGoToPage(currentPage + 1)}
         disabled={currentPage >= totalPages}
-        className="font-inter font-semibold border rounded-md transition"
+        className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition disabled:opacity-50"
         style={{
-          height: "30px",
-          padding: "0 14px",
-          fontSize: "13px",
           borderColor: "#d1d5db",
           backgroundColor: "#ffffff",
-          color: currentPage >= totalPages ? "#9ca3af" : "#374151",
+          color: currentPage >= totalPages ? "#c1c5cc" : "#374151",
           cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
         }}
+        aria-label="Next page"
       >
-        Next
+        <ChevronRight style={{ width: "14px", height: "14px" }} />
       </button>
     </div>
   );

@@ -55,7 +55,7 @@ export default function TableContainer({
     >
       {/* ── Blue header bar ── */}
       <div
-        className="flex items-center justify-between px-4 py-3 flex-wrap"
+        className="table-header-bar flex items-center justify-between px-4 py-3 flex-wrap"
         style={{
           backgroundColor: "#1f5cae",
           minHeight: "64px",
@@ -73,7 +73,7 @@ export default function TableContainer({
 
         {headerRight && (
           <div
-            className="flex items-center gap-3"
+            className="table-header-controls flex items-center gap-3"
             style={{ paddingRight: "20px" }}
           >
             {headerRight}
@@ -97,7 +97,7 @@ export default function TableContainer({
 
       {/* ── Footer ── */}
       <div
-        className="flex items-center justify-between border-t border-gray-200 bg-white"
+        className="table-footer-row flex items-center justify-between border-t border-gray-200 bg-white"
         style={{
           paddingLeft: CONTENT_PADDING,
           paddingRight: CONTENT_PADDING,

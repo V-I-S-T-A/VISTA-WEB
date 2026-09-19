@@ -15,7 +15,7 @@ export default function FilterButton({ onClick, activeCount = 0 }) {
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
+      className="filter-btn inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
       style={{
         fontSize: "12.5px",
         padding: "7px 14px",
@@ -23,7 +23,7 @@ export default function FilterButton({ onClick, activeCount = 0 }) {
       }}
     >
       <Filter style={{ width: "13px", height: "13px" }} aria-hidden="true" />
-      Filter
+      <span className="btn-label">Filter</span>
       {activeCount > 0 && (
         <span
           className="inline-flex items-center justify-center font-bold"

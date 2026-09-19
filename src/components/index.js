@@ -8,6 +8,7 @@
  *   import { BackButton } from "../../components";
  */
 
+export { default as ActionButton } from "./ActionButton";
 export { default as BackButton } from "./BackButton";
 export { default as ExportButton } from "./ExportButton";
 export { default as FilterButton } from "./FilterButton";

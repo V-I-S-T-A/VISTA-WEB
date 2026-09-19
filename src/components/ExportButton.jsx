@@ -21,7 +21,7 @@ export default function ExportButton({
       type="button"
       onClick={onClick}
       disabled={isLoading}
-      className="inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap disabled:opacity-60"
+      className="export-btn inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap disabled:opacity-60"
       style={{
         borderRadius: "6px",
         padding: "6px 12px",
@@ -34,7 +34,7 @@ export default function ExportButton({
       ) : (
         <Download className="h-4 w-4" aria-hidden="true" />
       )}
-      {isLoading ? "Exporting..." : label}
+      <span className="btn-label">{isLoading ? "Exporting..." : label}</span>
     </button>
   );
 }

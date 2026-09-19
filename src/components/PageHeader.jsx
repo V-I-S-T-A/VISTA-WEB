@@ -12,7 +12,7 @@
 export default function PageHeader({ title, subtitle, children }) {
   return (
     <div
-      className="flex items-start justify-between w-full"
+      className="page-header-row flex items-start justify-between w-full"
       style={{ marginBottom: "14px" }}
     >
       <div>
