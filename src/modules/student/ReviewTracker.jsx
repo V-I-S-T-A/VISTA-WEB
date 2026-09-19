@@ -6,10 +6,12 @@ import ReviewTrackerHeader from "./reviewtracker/components/ReviewTrackerHeader"
 import ReviewTrackerBanner from "./reviewtracker/components/ReviewTrackerBanner";
 import ReviewTrackerTable from "./reviewtracker/components/ReviewTrackerTable";
 import { useCurrentUser } from "../../hooks/useAuth";
+import { useSidebar } from "../../hooks/useSidebar";
 
 export default function ReviewTracker() {
   const navigate = useNavigate();
   const { data: currentUser, isLoading } = useCurrentUser();
+  const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {
     if (!isLoading) {
@@ -23,13 +25,17 @@ export default function ReviewTracker() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="student" />
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="student" profilePath="/student/profile" />
+      <Sidebar role="student" isOpen={isOpen} onClose={close} />
+
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="student" profilePath="/student/profile" onMenuToggle={open} />
 
         <main
-          className="flex-1 overflow-y-auto bg-[#f7f9fc]"
+          className="dashboard-main flex-1 overflow-y-auto bg-[#f7f9fc]"
           style={{ padding: "20px 24px" }}
         >
           <div className="w-full">

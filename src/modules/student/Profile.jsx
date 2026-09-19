@@ -5,10 +5,12 @@ import ProfileForm from "./profile/components/ProfileForm";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
+import { useSidebar } from "../../hooks/useSidebar";
 
 export default function Profile() {
   const navigate = useNavigate();
   const { data: currentUser, isLoading } = useCurrentUser();
+  const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {
     if (!isLoading) {
@@ -20,17 +22,19 @@ export default function Profile() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="student" />
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="profile" profilePath="/student/profile" />
+      <Sidebar role="student" isOpen={isOpen} onClose={close} />
 
-        <main className="flex-1 overflow-y-auto bg-[#f5f7fb]">
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="profile" profilePath="/student/profile" onMenuToggle={open} />
+
+        <main className="dashboard-main flex-1 overflow-y-auto bg-[#f5f7fb]">
           <div style={{ padding: "20px 24px" }}>
             <ProfileBanner />
             <ProfileForm />
-
-
           </div>
         </main>
       </div>

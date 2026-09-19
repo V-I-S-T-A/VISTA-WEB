@@ -9,11 +9,13 @@ import DetailsSubmissionInfo from "./components/DetailsSubmissionInfo";
 import DetailsStatusHistory from "./components/DetailsStatusHistory";
 import DetailsStaffRemarks from "./components/DetailsStaffRemarks";
 import { Loader2 } from "lucide-react";
+import { useSidebar } from "../../../hooks/useSidebar";
 
 export default function ReviewTrackerDetails() {
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const { isOpen, open, close } = useSidebar();
 
   // BULLETPROOF ID EXTRACTION:
   // Grabs the ID from params, OR forcefully extracts it from the end of the URL
@@ -76,13 +78,17 @@ export default function ReviewTrackerDetails() {
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="student" />
+      {isOpen && (
+        <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
+      )}
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="student" profilePath="/student/profile" />
+      <Sidebar role="student" isOpen={isOpen} onClose={close} />
+
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="student" profilePath="/student/profile" onMenuToggle={open} />
 
         <main
-          className="flex-1 overflow-y-auto bg-[#f7f9fc]"
+          className="dashboard-main flex-1 overflow-y-auto bg-[#f7f9fc]"
           style={{ padding: "20px 24px" }}
         >
           <div className="w-full">
