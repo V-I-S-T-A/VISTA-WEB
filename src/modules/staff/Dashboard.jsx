@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import SubmissionSummaryCards from "./dashboard/components/UserSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
-import SubmissionReviewDetails from "./review-panel/components/SubmissionReviewDetails";
 import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
 import AuditLogWidget from "./dashboard/components/AuditLogWidget";
 import { useCurrentUser } from "../../hooks/useAuth";
@@ -36,25 +35,22 @@ export default function Dashboard() {
       <Sidebar role="staff" isOpen={isOpen} onClose={close} />
 
       <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
-        <Header layout="staff" profilePath="/staff/profile" onMenuToggle={open} />
+        <Header
+          layout="staff"
+          profilePath="/staff/profile"
+          onMenuToggle={open}
+        />
 
         <main
           className="dashboard-main flex-1 overflow-y-auto bg-[#f7f9fc]"
           style={{ padding: "24px 28px" }}
         >
           <div className="w-full">
-            {selectedSubmission ? (
-              <SubmissionReviewDetails
-                submission={selectedSubmission}
-                onBack={() => setSelectedSubmission(null)}
-              />
-            ) : (
-              <>
-                <SubmissionSummaryCards />
+            <SubmissionSummaryCards />
 
-                <div style={{ marginTop: "20px" }}>
-                  <RecentSubmissionsTable onViewReview={setSelectedSubmission} />
-                </div>
+            <div style={{ marginTop: "20px" }}>
+              <RecentSubmissionsTable />
+            </div>
 
             <div
               className="dashboard-bottom-grid grid grid-cols-2"
@@ -64,19 +60,16 @@ export default function Dashboard() {
               <AuditLogWidget />
             </div>
 
-                <div style={{ paddingTop: "32px" }}>
-                  <img
-                    src={systemScopeBanner}
-                    alt="System Scope"
-                    className="w-full h-auto rounded-xl"
-                  />
-                </div>
-              </>
-            )}
+            <div style={{ paddingTop: "32px" }}>
+              <img
+                src={systemScopeBanner}
+                alt="System Scope"
+                className="w-full h-auto rounded-xl"
+              />
+            </div>
           </div>
         </main>
       </div>
     </div>
   );
 }
-

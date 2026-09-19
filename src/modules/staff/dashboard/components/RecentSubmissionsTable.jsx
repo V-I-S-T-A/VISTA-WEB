@@ -1,30 +1,19 @@
-import { useMemo, useState } from "react";
-import {
-  Search,
-  Filter,
-  Download,
-  ImageIcon,
-  Loader2,
-  ImageIcon,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Search, Download, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
-import { ActionButton } from "../../../../components";
+import {
+  ActionButton,
+  FilterButton,
+  FilterPopover,
+  FilterPopoverRow,
+  FilterSelect,
+  FilterDateInput,
+} from "../../../../components";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "24px";
-
-const COLORS = {
-  navy: "#12345b",
-  navyHover: "#1d4ed8",
-  amber: "#ffc700",
-  amberHover: "#e6b800",
-  headerBg: "#1f5cae",
-  border: "#e2e6ee",
-};
 
 const UI_STATUS_MAP = {
   pending: "New",
@@ -42,10 +31,20 @@ const STATUS_CONFIG = {
   "Resubmission Required": { dot: "#7c3aed", text: "#6d28d9" },
 };
 
+const STATUS_OPTIONS = [
+  "All Status",
+  "Pending",
+  "Under Review",
+  "Approved",
+  "Rejected",
+  "Resubmission Required",
+];
+
+const CATEGORY_OPTIONS = ["All Categories", "Off-Campus", "In-Campus"];
+
 function StatusDot({ status }) {
   const uiStatus = UI_STATUS_MAP[status] || "New";
   const config = STATUS_CONFIG[uiStatus] ?? { dot: "#9ca3af", text: "#6b7280" };
-
   return (
     <span
       className="inline-flex items-center gap-1.5 font-inter font-semibold"
@@ -60,107 +59,30 @@ function StatusDot({ status }) {
   );
 }
 
-const STATUS_OPTIONS = [
-  "All Status",
-  "Pending",
-  "Under Review",
-  "Approved",
-  "Rejected",
-  "Resubmission Required",
-];
-
-function FilterPopover({
-  status,
-  onStatusChange,
-  dateFrom,
-  dateTo,
-  onDateFromChange,
-  onDateToChange,
-  onClear,
-  onClose,
-}) {
-  const ref = useRef(null);
-
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (ref.current && !ref.current.contains(event.target)) {
-        onClose();
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [onClose]);
-
-  return (
-    <div
-      ref={ref}
-      className="absolute right-0 top-full z-20"
-      style={{
-        marginTop: "8px",
-        width: "288px",
-        borderRadius: "10px",
-        border: `1px solid ${COLORS.border}`,
-        backgroundColor: "#ffffff",
-        boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
-        padding: "16px",
-      }}
-    >
-      <div style={{ marginBottom: "14px" }}>
-        <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
-          Status
-        </label>
-        <select
-          value={status}
-          onChange={(e) => onStatusChange(e.target.value)}
-          className="w-full font-inter outline-none"
-          style={{
-            borderRadius: "8px",
-            border: "1px solid #d1d5db",
-            padding: "8px 10px",
-            fontSize: "14px",
-          }}
-        >
-          {STATUS_OPTIONS.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      </div>
-
-const CATEGORY_OPTIONS = ["All Categories", "Off-Campus", "In-Campus"];
+function formatDate(value) {
+  return value
+    ? new Date(value).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : "N/A";
+}
 
 function downloadCsv(rows) {
-  const headers = [
-    "ID",
-    "Document Title",
-    "Applicant",
-    "Email",
-    "Category",
-    "Date",
-    "Status",
-  ];
-  const lines = rows.map((s) => {
-    const uiStatus = UI_STATUS_MAP[s.status] || s.status;
-    const dateStr = s.submitted_at
-      ? new Date(s.submitted_at).toLocaleDateString("en-US", {
-          month: "short",
-          day: "numeric",
-          year: "numeric",
-        })
-      : "N/A";
-
-    return [
-      `#${s.submission_id.slice(0, 8)}`,
-      `"${(s.title || "Untitled Document").replace(/"/g, '""')}"`,
-      `"${(s.org_name || s.submitted_by_name || "Unknown").replace(/"/g, '""')}"`,
-      s.submitted_by_email || "N/A",
-      s.category_name || "N/A",
-      dateStr,
-      uiStatus,
-    ].join(",");
-  });
-
+  const headers = ["ID", "Document Title", "Applicant", "Email", "Category", "Date", "Status"];
+  const esc = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lines = rows.map((s) =>
+    [
+      esc(`#${s.submission_id.slice(0, 8)}`),
+      esc(s.title || "Untitled Document"),
+      esc(s.org_name || s.submitted_by_name || "Unknown"),
+      esc(s.submitted_by_email || "N/A"),
+      esc(s.category_name || "N/A"),
+      esc(formatDate(s.submitted_at)),
+      esc(UI_STATUS_MAP[s.status] || s.status),
+    ].join(","),
+  );
   const csv = [headers.join(","), ...lines].join("\n");
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
   const url = URL.createObjectURL(blob);
@@ -173,29 +95,51 @@ function downloadCsv(rows) {
   URL.revokeObjectURL(url);
 }
 
-export default function RecentSubmissionsTable({ onViewReview }) {
+export default function RecentSubmissionsTable() {
   const navigate = useNavigate();
+  const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All Status");
+  const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearchTerm(searchInput);
+      setCurrentPage(1);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchInput]);
 
   const { data, isLoading } = useSubmissions({
     page: currentPage,
     pageSize: PAGE_SIZE,
     search: searchTerm,
-    status: apiStatus,
+    status: statusFilter, // submissionService maps the UI label -> API value
+    dateFrom: dateFrom || undefined,
+    dateTo: dateTo || undefined,
   });
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setSearchTerm(searchInput);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [searchInput]);
 
   const submissions = data?.results ?? [];
   const totalCount = data?.count ?? 0;
+  const totalPages = data?.total_pages ?? 1;
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+
+  // Category isn't a name-based server filter, so narrow it client-side
+  const filteredSubmissions = useMemo(() => {
+    if (categoryFilter === "All Categories") return submissions;
+    return submissions.filter((s) => s.category_name === categoryFilter);
+  }, [submissions, categoryFilter]);
+
+  const activeFilterCount =
+    (statusFilter !== "All Status" ? 1 : 0) +
+    (categoryFilter !== "All Categories" ? 1 : 0) +
+    (dateFrom ? 1 : 0) +
+    (dateTo ? 1 : 0);
 
   function goToPage(page) {
     setCurrentPage(Math.min(Math.max(page, 1), totalPages));
@@ -203,59 +147,28 @@ export default function RecentSubmissionsTable({ onViewReview }) {
 
   function clearFilters() {
     setStatusFilter("All Status");
+    setCategoryFilter("All Categories");
     setDateFrom("");
     setDateTo("");
     setCurrentPage(1);
   }
 
-  // Frontend CSV Exporter
-  const handleExportCSV = () => {
-    if (!submissions || submissions.length === 0) {
-      alert("No submissions to export.");
-      return;
-    }
-
-    const headers = [
-      "ID",
-      "DOCUMENT / APPLICANT",
-      "CATEGORY",
-      "DATE",
-      "STATUS",
-    ];
-    const csvContent = [
-      headers.join(","),
-      ...submissions.map((sub) => {
-        const id = sub.submission_id;
-        const title = (sub.title || "Untitled Document").replace(/"/g, '""');
-        const applicant = (
-          sub.org_name ||
-          sub.submitted_by_name ||
-          "Unknown"
-        ).replace(/"/g, '""');
-        const category = sub.category_name || "N/A";
-        const date = sub.submitted_at
-          ? new Date(sub.submitted_at).toLocaleDateString("en-US")
-          : "N/A";
-        const status = sub.status || "Unknown";
-
-        return `"${id}","${title} (${applicant})","${category}","${date}","${status}"`;
-      }),
-    ].join("\n");
-
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `recent_submissions_export_${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-  };
-
-  const activeFilterCount =
-    (statusFilter !== "All Status" ? 1 : 0) +
-    (categoryFilter !== "All Categories" ? 1 : 0);
+  function handleReview(submission) {
+    navigate("/staff/review-panel", {
+      state: {
+        submission: {
+          id: submission.submission_id,
+          title: submission.title || "Untitled Document",
+          site: submission.org_name || "Unknown Organization",
+          contactEmail: submission.submitted_by_email
+            ? `${submission.submitted_by_name || ""} (${submission.submitted_by_email})`.trim()
+            : submission.submitted_by_name || "N/A",
+          documentType: submission.doc_type_name || "N/A",
+          submittedDate: formatDate(submission.submitted_at),
+        },
+      },
+    });
+  }
 
   return (
     <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
@@ -274,168 +187,89 @@ export default function RecentSubmissionsTable({ onViewReview }) {
         </h3>
 
         <div className="flex items-center gap-2">
-          {/* Search */}
           <div className="relative">
             <Search
-              className="pointer-events-none absolute"
-              style={{
-                left: "10px",
-                top: "50%",
-                transform: "translateY(-50%)",
-                height: "14px",
-                width: "14px",
-                color: "#9ca3af",
-              }}
+              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
             />
             <input
               type="text"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search submissions..."
               className="font-inter font-medium text-gray-700 placeholder-gray-400 outline-none rounded-md bg-white"
-              style={{
-                width: "220px",
-                borderRadius: "6px",
-                border: "1px solid #d1d5db",
-                backgroundColor: "#ffffff",
-                padding: "8px 12px 8px 32px",
-                fontSize: "13px",
-              }}
+              style={{ fontSize: "12.5px", padding: "8px 12px 8px 32px", width: "220px" }}
             />
           </div>
 
-          {/* Filter Popover */}
           <div className="relative">
-            <button
-              type="button"
-              onClick={() => setIsFilterOpen((open) => !open)}
-              className="inline-flex items-center gap-1.5 font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
-              style={{
-                borderRadius: "6px",
-                backgroundColor: "#12345b",
-                padding: "7px 14px",
-                fontSize: "12.5px",
-              }}
-            >
-              <Filter style={{ width: "13px", height: "13px" }} aria-hidden="true" />
-              Filter
-              {activeFilterCount > 0 && (
-                <span
-                  className="inline-flex items-center justify-center font-bold"
-                  style={{
-                    width: "16px",
-                    height: "16px",
-                    borderRadius: "9999px",
-                    backgroundColor: "#ffffff",
-                    color: "#12345b",
-                    fontSize: "10px",
-                    marginLeft: "2px",
-                  }}
-                >
-                  {activeFilterCount}
-                </span>
-              )}
-            </button>
-
-            {filterOpen && (
-              <div
-                className="absolute right-0 top-full z-20"
-                style={{
-                  marginTop: "8px",
-                  width: "288px",
-                  borderRadius: "10px",
-                  border: "1px solid #e2e6ee",
-                  backgroundColor: "#ffffff",
-                  boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
-                  padding: "16px",
-                }}
-              >
-                <div style={{ marginBottom: "14px" }}>
-                  <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
-                    Status
-                  </label>
-                  <select
+            <FilterButton
+              onClick={() => setIsFilterOpen((o) => !o)}
+              activeCount={activeFilterCount}
+            />
+            {isFilterOpen && (
+              <FilterPopover onClear={clearFilters} onClose={() => setIsFilterOpen(false)}>
+                <FilterPopoverRow label="Status">
+                  <FilterSelect
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full font-inter outline-none"
-                    style={{
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      padding: "8px 10px",
-                      fontSize: "14px",
+                    onChange={(e) => {
+                      setStatusFilter(e.target.value);
+                      setCurrentPage(1);
                     }}
                   >
                     {STATUS_OPTIONS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
+                      <option key={o} value={o}>{o}</option>
                     ))}
-                  </select>
-                </div>
+                  </FilterSelect>
+                </FilterPopoverRow>
 
-                <div style={{ marginBottom: "14px" }}>
-                  <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
-                    Category
-                  </label>
-                  <select
+                <FilterPopoverRow label="Category">
+                  <FilterSelect
                     value={categoryFilter}
                     onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="w-full font-inter outline-none"
-                    style={{
-                      borderRadius: "8px",
-                      border: "1px solid #d1d5db",
-                      padding: "8px 10px",
-                      fontSize: "14px",
-                    }}
                   >
                     {CATEGORY_OPTIONS.map((o) => (
-                      <option key={o} value={o}>
-                        {o}
-                      </option>
+                      <option key={o} value={o}>{o}</option>
                     ))}
-                  </select>
-                </div>
+                  </FilterSelect>
+                </FilterPopoverRow>
 
-                <button
-                  type="button"
-                  onClick={() => {
-                    setStatusFilter("All Status");
-                    setCategoryFilter("All Categories");
-                    setSearchTerm("");
-                  }}
-                  className="w-full font-inter font-bold transition-colors cursor-pointer"
-                  style={{
-                    backgroundColor: "#f3f4f6",
-                    color: "#4b5563",
-                    padding: "8px 0",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#e5e7eb")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#f3f4f6")
-                  }
-                >
-                  Clear Filters
-                </button>
-              </div>
+                <FilterPopoverRow label="From Date">
+                  <FilterDateInput
+                    value={dateFrom}
+                    onChange={(e) => {
+                      setDateFrom(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </FilterPopoverRow>
+
+                <FilterPopoverRow label="To Date">
+                  <FilterDateInput
+                    value={dateTo}
+                    onChange={(e) => {
+                      setDateTo(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  />
+                </FilterPopoverRow>
+              </FilterPopover>
             )}
           </div>
 
-          {/* Export CSV */}
           <button
             type="button"
-            onClick={handleExportCSV}
+            onClick={() =>
+              filteredSubmissions.length
+                ? downloadCsv(filteredSubmissions)
+                : alert("No submissions to export.")
+            }
             className="inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
             style={{
               borderRadius: "6px",
               backgroundColor: "#ffc700",
-              padding: "6px 14px",
-              fontSize: "12px",
-              boxShadow: "0 1px 2px rgba(0,0,0,0.08)",
+              padding: "7px 14px",
+              fontSize: "12.5px",
             }}
           >
             <Download style={{ width: "13px", height: "13px" }} aria-hidden="true" />
@@ -449,55 +283,39 @@ export default function RecentSubmissionsTable({ onViewReview }) {
         <table className="min-w-full border-collapse">
           <thead>
             <tr className="h-12 border-b border-gray-100 bg-[#f8f9fc]">
-              {[
-                "ID",
-                "DOCUMENT / APPLICANT",
-                "CATEGORY",
-                "DATE",
-                "STATUS",
-                "ACTIONS",
-              ].map((heading) => (
-                <th
-                  key={heading}
-                  className="px-5 py-2 text-left font-inter text-[12px] font-bold uppercase tracking-wider text-gray-500"
-                  style={
-                    heading === "ID"
-                      ? { paddingLeft: CONTENT_PADDING }
-                      : undefined
-                  }
-                >
-                  {heading}
-                </th>
-              ))}
+              {["ID", "DOCUMENT / APPLICANT", "CATEGORY", "DATE", "STATUS", "ACTIONS"].map(
+                (heading) => (
+                  <th
+                    key={heading}
+                    className="px-5 py-2 text-left font-inter text-[12px] font-bold uppercase tracking-wider text-gray-500"
+                    style={heading === "ID" ? { paddingLeft: CONTENT_PADDING } : undefined}
+                  >
+                    {heading}
+                  </th>
+                ),
+              )}
             </tr>
           </thead>
           <tbody>
             {isLoading ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-                >
+                <td colSpan={6} className="px-5 py-10 text-center font-inter text-sm text-gray-500">
                   <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
                   Loading submissions...
                 </td>
               </tr>
             ) : filteredSubmissions.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-                >
+                <td colSpan={6} className="px-5 py-10 text-center font-inter text-sm text-gray-500">
                   No submissions found.
                 </td>
               </tr>
             ) : (
-              submissions.map((submission) => (
+              filteredSubmissions.map((submission) => (
                 <tr
                   key={submission.submission_id}
                   className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
                 >
-                  {/* ID */}
                   <td
                     className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
                     style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
@@ -505,7 +323,6 @@ export default function RecentSubmissionsTable({ onViewReview }) {
                     #{submission.submission_id.slice(0, 8)}
                   </td>
 
-                  {/* Document / Applicant */}
                   <td className="px-5 py-2.5">
                     <div className="flex items-center gap-3">
                       <img
@@ -536,7 +353,6 @@ export default function RecentSubmissionsTable({ onViewReview }) {
                     </div>
                   </td>
 
-                  {/* Category */}
                   <td className="px-5 py-2.5">
                     <span
                       className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
@@ -546,50 +362,20 @@ export default function RecentSubmissionsTable({ onViewReview }) {
                     </span>
                   </td>
 
-                  {/* Date */}
                   <td
                     className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
                     style={{ fontSize: "13px" }}
                   >
-                    {new Date(submission.submitted_at).toLocaleDateString(
-                      "en-US",
-                      {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      },
-                    )}
+                    {formatDate(submission.submitted_at)}
                   </td>
 
-                  {/* Status */}
                   <td className="px-5 py-2.5">
                     <StatusDot status={submission.status} />
                   </td>
 
-                  {/* Actions */}
                   <td className="px-5 py-2.5">
                     <ActionButton
-                      onClick={() => {
-                        const submissionData = {
-                          id: submission.submission_id,
-                          title: submission.title || "Untitled Document",
-                          site: submission.org_name || "Unknown Organization",
-                          contactEmail: submission.submitted_by_email
-                            ? `${submission.submitted_by_name || ""} (${submission.submitted_by_email})`.trim()
-                            : submission.submitted_by_name || "N/A",
-                          documentType: submission.doc_type_name || "N/A",
-                          submittedDate: new Date(
-                            submission.submitted_at,
-                          ).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          }),
-                        };
-                        navigate("/staff/review-panel", {
-                          state: { submission: submissionData },
-                        });
-                      }}
+                      onClick={() => handleReview(submission)}
                       label="VIEW & REVIEW"
                     />
                   </td>
@@ -613,8 +399,7 @@ export default function RecentSubmissionsTable({ onViewReview }) {
         >
           <p className="font-inter text-[13px] font-medium text-gray-500">
             Showing {(safeCurrentPage - 1) * PAGE_SIZE + 1}–
-            {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)} of {totalCount}{" "}
-            submissions
+            {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)} of {totalCount} submissions
           </p>
 
           <div className="flex items-center gap-1.5">
@@ -646,10 +431,8 @@ export default function RecentSubmissionsTable({ onViewReview }) {
                     className="flex h-7 w-7 items-center justify-center rounded-full border font-inter font-semibold transition"
                     style={{
                       fontSize: "12.5px",
-                      borderColor:
-                        page === safeCurrentPage ? "#12345b" : "#d1d5db",
-                      backgroundColor:
-                        page === safeCurrentPage ? "#12345b" : "#ffffff",
+                      borderColor: page === safeCurrentPage ? "#12345b" : "#d1d5db",
+                      backgroundColor: page === safeCurrentPage ? "#12345b" : "#ffffff",
                       color: page === safeCurrentPage ? "#ffffff" : "#374151",
                     }}
                   >
@@ -658,17 +441,9 @@ export default function RecentSubmissionsTable({ onViewReview }) {
                 );
               }
               if (page === 2 && safeCurrentPage > 3)
-                return (
-                  <span key={page} className="px-1 text-gray-400">
-                    ...
-                  </span>
-                );
+                return <span key={page} className="px-1 text-gray-400">...</span>;
               if (page === totalPages - 1 && safeCurrentPage < totalPages - 2)
-                return (
-                  <span key={page} className="px-1 text-gray-400">
-                    ...
-                  </span>
-                );
+                return <span key={page} className="px-1 text-gray-400">...</span>;
               return null;
             })}
 
@@ -680,8 +455,7 @@ export default function RecentSubmissionsTable({ onViewReview }) {
               style={{
                 borderColor: "#d1d5db",
                 color: safeCurrentPage >= totalPages ? "#c1c5cc" : "#374151",
-                cursor:
-                  safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
+                cursor: safeCurrentPage >= totalPages ? "not-allowed" : "pointer",
               }}
             >
               <ChevronRight style={{ width: "14px", height: "14px" }} />
