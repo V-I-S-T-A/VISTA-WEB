@@ -10,7 +10,8 @@ import SubmitRegistration from "./components/SubmitRegistration";
 import OCRResults from "./components/OCRResults";
 import registrationSider from "../../assets/registration_sider.png";
 import { useSidebar } from "../../../hooks/useSidebar";
-
+import { convertImageToWebP } from "../../../utils/fileOptimizer";
+import { StatusModal } from "../../../components";
 export default function DocumentEntry() {
   const navigate = useNavigate();
   const { isOpen, open, close } = useSidebar();
@@ -284,7 +285,11 @@ export default function DocumentEntry() {
       <Sidebar role="staff" isOpen={isOpen} onClose={close} />
 
       <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
-        <Header layout="registration" profilePath="/staff/profile" onMenuToggle={open} />
+        <Header
+          layout="registration"
+          profilePath="/staff/profile"
+          onMenuToggle={open}
+        />
 
         <main className="dashboard-main flex-1 overflow-y-auto">
           <div style={{ padding: "20px 24px" }}>
