@@ -13,6 +13,150 @@ import {
 
 import { useDriveConnection } from "../../../../../hooks/useDrive";
 
+const MAX_FILES = 10;
+const APPROVED_FOLDER_NAME = "Approved";
+
+const isPdf = (file) =>
+  file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+const fileKey = (file) => `${file.name}-${file.size}-${file.lastModified}`;
+const formatSize = (bytes) =>
+  bytes >= 1024 * 1024
+    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
+    : `${(bytes / 1024).toFixed(1)} KB`;
+
+function SelectedFileRow({ file, onRemove }) {
+  return (
+    <li
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        background: "#f0fdf4",
+        border: "1.5px solid #86efac",
+        borderRadius: "8px",
+        padding: "8px 12px",
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "10px",
+          minWidth: 0,
+        }}
+      >
+        <FileText
+          style={{
+            width: "16px",
+            height: "16px",
+            color: "#15803d",
+            flexShrink: 0,
+          }}
+        />
+        <div style={{ minWidth: 0 }}>
+          <p
+            style={{
+              fontFamily: "Inter, sans-serif",
+              fontSize: "12.5px",
+              fontWeight: 700,
+              color: "#14532d",
+              margin: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {file.name}
+          </p>
+          <p
+            style={{
+              fontFamily: "Inter, sans-serif",
+              fontSize: "11px",
+              color: "#16a34a",
+              margin: 0,
+            }}
+          >
+            {formatSize(file.size)}
+          </p>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={onRemove}
+        title="Remove file"
+        style={{
+          background: "none",
+          border: "none",
+          cursor: "pointer",
+          padding: "4px",
+          color: "#dc2626",
+          display: "flex",
+        }}
+      >
+        <Trash2 style={{ width: "16px", height: "16px" }} />
+      </button>
+    </li>
+  );
+}
+
+function TreeRow({
+  depth,
+  icon: Icon,
+  iconColor,
+  label,
+  tag,
+  tagColor,
+  tagBg,
+  strong = false,
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: "8px",
+        paddingLeft: `${depth * 16}px`,
+        borderLeft: depth ? "2px solid #cbd5e1" : "none",
+        marginLeft: depth ? "7px" : 0,
+        color: "#334155",
+        fontWeight: strong ? 700 : 600,
+      }}
+    >
+      <Icon
+        style={{
+          width: "15px",
+          height: "15px",
+          color: iconColor,
+          flexShrink: 0,
+        }}
+      />
+      <span
+        style={{
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {label}
+      </span>
+      {tag && (
+        <span
+          style={{
+            fontSize: "10px",
+            color: tagColor,
+            background: tagBg,
+            padding: "1px 6px",
+            borderRadius: "4px",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {tag}
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function ConfirmDriveSyncModal({
   isOpen,
   onClose,
@@ -23,11 +167,53 @@ export default function ConfirmDriveSyncModal({
   statusAction,
   remarks,
 }) {
-  const { data: driveConn, isLoading: isLoadingConn } = useDriveConnection();
-  const [finalFile, setFinalFile] = useState(null);
+  const { data: driveConn } = useDriveConnection();
+  const [finalFiles, setFinalFiles] = useState([]);
+  const [reportFiles, setReportFiles] = useState([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isReportDragging, setIsReportDragging] = useState(false);
   const [fileError, setFileError] = useState("");
+  const [reportFileError, setReportFileError] = useState("");
   const fileInputRef = useRef(null);
+  const reportFileInputRef = useRef(null);
+
+  const addFiles = (incoming) => {
+    const candidates = Array.from(incoming ?? []);
+    const pdfs = candidates.filter(isPdf);
+    const byKey = new Map(finalFiles.map((f) => [fileKey(f), f]));
+    pdfs.forEach((f) => byKey.set(fileKey(f), f));
+    const merged = [...byKey.values()];
+
+    if (pdfs.length < candidates.length)
+      setFileError("Only PDF files (.pdf) are accepted.");
+    else if (merged.length > MAX_FILES)
+      setFileError(`You can attach up to ${MAX_FILES} files.`);
+    else setFileError("");
+
+    setFinalFiles(merged.slice(0, MAX_FILES));
+  };
+
+  const removeFile = (key) =>
+    setFinalFiles((files) => files.filter((f) => fileKey(f) !== key));
+
+  const addReportFiles = (incoming) => {
+    const candidates = Array.from(incoming ?? []);
+    const pdfs = candidates.filter(isPdf);
+    const byKey = new Map(reportFiles.map((f) => [fileKey(f), f]));
+    pdfs.forEach((f) => byKey.set(fileKey(f), f));
+    const merged = [...byKey.values()];
+
+    if (pdfs.length < candidates.length)
+      setReportFileError("Only PDF files (.pdf) are accepted.");
+    else if (merged.length > MAX_FILES)
+      setReportFileError(`You can attach up to ${MAX_FILES} files.`);
+    else setReportFileError("");
+
+    setReportFiles(merged.slice(0, MAX_FILES));
+  };
+
+  const removeReportFile = (key) =>
+    setReportFiles((files) => files.filter((f) => fileKey(f) !== key));
 
   const isDriveConnected = driveConn?.connected ?? false;
   const rootFolderName =
@@ -50,20 +236,22 @@ export default function ConfirmDriveSyncModal({
     submission?.doc_type_name ||
     submission?.documentType ||
     "Document Type";
-  const displayFileName = finalFile
-    ? finalFile.name
-    : `${submissionDetails?.title || submission?.title || "Submission_Document"}.pdf`;
+  const isReport = Boolean(submissionDetails?.is_accomplishment_report);
+  const defaultFileName = `${submissionDetails?.title || submission?.title || "Submission_Document"}.pdf`;
+  const reportFileNames =
+    submissionDetails?.documents?.map((d) => d.file_name) ?? [];
+  const approvedFileNames = finalFiles.map((f) => f.name);
 
   if (!isOpen) return null;
 
   const handleFinalSubmit = () => {
     onConfirm({
-      finalFile,
+      finalFiles,
+      reportFiles,
       folder_name: rootFolderName,
       folder_id: driveConn?.folder_id || driveConn?.target_folder_id,
     });
   };
-
 
   return (
     <div
@@ -118,7 +306,9 @@ export default function ConfirmDriveSyncModal({
                 flexShrink: 0,
               }}
             >
-              <HardDrive style={{ width: "18px", height: "18px", color: "#ffffff" }} />
+              <HardDrive
+                style={{ width: "18px", height: "18px", color: "#ffffff" }}
+              />
             </div>
             <div>
               <h2
@@ -284,7 +474,62 @@ export default function ConfirmDriveSyncModal({
             )}
           </div>
 
+          {isReport && (
+            <div
+              style={{
+                border: "1.5px solid #bfdbfe",
+                borderRadius: "10px",
+                padding: "16px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+                background: "#f8fbff",
+              }}
+            >
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <label style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 700, color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+                  Accomplishment Report Document(s)
+                </label>
+                <span style={{ fontFamily: "Inter, sans-serif", fontSize: "10px", fontWeight: 700, color: reportFiles.length ? "#15803d" : "#1e3a8a", background: reportFiles.length ? "#dcfce7" : "#dbeafe", padding: "2px 8px", borderRadius: "99px" }}>
+                  {reportFiles.length ? `${reportFiles.length} File${reportFiles.length > 1 ? "s" : ""} Selected` : "Saved to Report Folder"}
+                </span>
+              </div>
+              <div
+                onDragOver={(e) => { e.preventDefault(); setIsReportDragging(true); }}
+                onDragLeave={() => setIsReportDragging(false)}
+                onDrop={(e) => { e.preventDefault(); setIsReportDragging(false); addReportFiles(e.dataTransfer.files); }}
+                onClick={() => reportFileInputRef.current?.click()}
+                style={{ border: `2px dashed ${isReportDragging ? "#1f5cae" : "#93c5fd"}`, backgroundColor: isReportDragging ? "#eff6ff" : "#ffffff", borderRadius: "8px", padding: "18px 14px", textAlign: "center", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}
+              >
+                <input
+                  ref={reportFileInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,application/pdf"
+                  onChange={(e) => { addReportFiles(e.target.files); e.target.value = ""; }}
+                  style={{ display: "none" }}
+                />
+                <UploadCloud style={{ width: "18px", height: "18px", color: "#1f5cae" }} />
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: "#1e3a8a", margin: 0 }}>
+                  Click to browse or drop Accomplishment Report PDFs here
+                </p>
+                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#64748b", margin: 0 }}>
+                  These files are archived in the Accomplishment Report folder, not the Approved subfolder.
+                </p>
+              </div>
+              {reportFiles.length > 0 && (
+                <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
+                  {reportFiles.map((file) => (
+                    <SelectedFileRow key={fileKey(file)} file={file} onRemove={() => removeReportFile(fileKey(file))} tag="Report Document" />
+                  ))}
+                </ul>
+              )}
+              {reportFileError && <p style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#dc2626", margin: 0, fontWeight: 600 }}>{reportFileError}</p>}
+            </div>
+          )}
+
           {/* Drop PDF Section (Final Paper Replacement) */}
+          {/* Final PDFs (replace the submission's current documents) */}
           <div
             style={{
               border: "1.5px solid #e5e7eb",
@@ -307,31 +552,37 @@ export default function ConfirmDriveSyncModal({
                 style={{
                   fontFamily: "Inter, sans-serif",
                   fontSize: "11px",
-                  fontWeight: "700",
+                  fontWeight: 700,
                   color: "#374151",
                   textTransform: "uppercase",
                   letterSpacing: "0.04em",
                   margin: 0,
                 }}
               >
-                Drop PDF (Final Version for Drive)
+                {isReport
+                  ? "Drop Approved Document(s)"
+                  : "Drop PDFs (Final Versions for Drive)"}
               </label>
               <span
                 style={{
                   fontFamily: "Inter, sans-serif",
                   fontSize: "10px",
-                  fontWeight: "700",
-                  color: finalFile ? "#15803d" : "#6b7280",
-                  background: finalFile ? "#f0fdf4" : "#f3f4f6",
+                  fontWeight: 700,
+                  color: finalFiles.length ? "#15803d" : "#6b7280",
+                  background: finalFiles.length ? "#f0fdf4" : "#f3f4f6",
                   padding: "2px 8px",
                   borderRadius: "99px",
                 }}
               >
-                {finalFile ? "New File Selected" : "Replaces Old Document"}
+                {finalFiles.length
+                  ? `${finalFiles.length} File${finalFiles.length > 1 ? "s" : ""} Selected`
+                  : isReport
+                    ? "Saved to Approved Folder"
+                    : "Replaces Old Documents"}
               </span>
             </div>
 
-            {!finalFile ? (
+            {finalFiles.length < MAX_FILES && (
               <div
                 onDragOver={(e) => {
                   e.preventDefault();
@@ -341,24 +592,11 @@ export default function ConfirmDriveSyncModal({
                 onDrop={(e) => {
                   e.preventDefault();
                   setIsDragging(false);
-                  const dropped = e.dataTransfer.files?.[0];
-                  if (dropped) {
-                    if (
-                      dropped.type === "application/pdf" ||
-                      dropped.name.toLowerCase().endsWith(".pdf")
-                    ) {
-                      setFinalFile(dropped);
-                      setFileError("");
-                    } else {
-                      setFileError("Only PDF files (.pdf) are accepted.");
-                    }
-                  }
+                  addFiles(e.dataTransfer.files);
                 }}
                 onClick={() => fileInputRef.current?.click()}
                 style={{
-                  border: isDragging
-                    ? "2px dashed #1f5cae"
-                    : "2px dashed #cbd5e1",
+                  border: `2px dashed ${isDragging ? "#1f5cae" : "#cbd5e1"}`,
                   backgroundColor: isDragging ? "#f0f5fc" : "#f8fafd",
                   borderRadius: "8px",
                   padding: "18px 14px",
@@ -368,150 +606,70 @@ export default function ConfirmDriveSyncModal({
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
-                  justifyContent: "center",
                   gap: "6px",
                 }}
               >
                 <input
                   ref={fileInputRef}
                   type="file"
+                  multiple
                   accept=".pdf,application/pdf"
                   onChange={(e) => {
-                    const selected = e.target.files?.[0];
-                    if (selected) {
-                      if (
-                        selected.type === "application/pdf" ||
-                        selected.name.toLowerCase().endsWith(".pdf")
-                      ) {
-                        setFinalFile(selected);
-                        setFileError("");
-                      } else {
-                        setFileError("Only PDF files (.pdf) are accepted.");
-                      }
-                    }
+                    addFiles(e.target.files);
+                    e.target.value = "";
                   }}
                   style={{ display: "none" }}
                 />
-                <div
+                <UploadCloud
+                  style={{ width: "18px", height: "18px", color: "#1f5cae" }}
+                />
+                <p
                   style={{
-                    background: "#eaf1ff",
-                    borderRadius: "50%",
-                    width: "36px",
-                    height: "36px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#1f5cae",
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    color: "#1e3a8a",
+                    margin: 0,
                   }}
                 >
-                  <UploadCloud style={{ width: "18px", height: "18px" }} />
-                </div>
-                <div>
-                  <p
-                    style={{
-                      fontFamily: "Inter, sans-serif",
-                      fontSize: "13px",
-                      fontWeight: "700",
-                      color: "#1e3a8a",
-                      margin: 0,
-                    }}
-                  >
-                    Click to browse or drop final PDF here
-                  </p>
-                  <p
-                    style={{
-                      fontFamily: "Inter, sans-serif",
-                      fontSize: "11px",
-                      color: "#64748b",
-                      margin: "3px 0 0",
-                    }}
-                  >
-                    Old file will be removed from system &amp; new PDF will be uploaded to Drive
-                  </p>
-                </div>
+                  Click to browse or drop final PDFs here
+                </p>
+                <p
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "11px",
+                    color: "#64748b",
+                    margin: 0,
+                  }}
+                >
+                  {isReport
+                    ? `Up to ${MAX_FILES} files. Saved in the Approved folder beside the Accomplishment Report, which is kept as is.`
+                    : `Up to ${MAX_FILES} files. Old files are removed from the system and the new PDFs are uploaded to Drive.`}
+                </p>
               </div>
-            ) : (
-              <div
+            )}
+
+            {finalFiles.length > 0 && (
+              <ul
                 style={{
+                  listStyle: "none",
+                  margin: 0,
+                  padding: 0,
+                  maxHeight: "180px",
+                  overflowY: "auto",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  background: "#f0fdf4",
-                  border: "1.5px solid #86efac",
-                  borderRadius: "8px",
-                  padding: "10px 14px",
+                  flexDirection: "column",
+                  gap: "6px",
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "10px",
-                    minWidth: 0,
-                  }}
-                >
-                  <div
-                    style={{
-                      background: "#dcfce7",
-                      borderRadius: "6px",
-                      width: "32px",
-                      height: "32px",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <FileText
-                      style={{ width: "16px", height: "16px", color: "#15803d" }}
-                    />
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <p
-                      style={{
-                        fontFamily: "Inter, sans-serif",
-                        fontSize: "12.5px",
-                        fontWeight: "700",
-                        color: "#14532d",
-                        margin: 0,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {finalFile.name}
-                    </p>
-                    <p
-                      style={{
-                        fontFamily: "Inter, sans-serif",
-                        fontSize: "11px",
-                        color: "#16a34a",
-                        margin: "1px 0 0",
-                      }}
-                    >
-                      {(finalFile.size / 1024).toFixed(1)} KB · Will replace initial document
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => setFinalFile(null)}
-                  style={{
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    padding: "4px",
-                    color: "#dc2626",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                  title="Remove replacement PDF"
-                >
-                  <Trash2 style={{ width: "16px", height: "16px" }} />
-                </button>
-              </div>
+                {finalFiles.map((file) => (
+                  <SelectedFileRow
+                    key={fileKey(file)}
+                    file={file}
+                    onRemove={() => removeFile(fileKey(file))}
+                  />
+                ))}
+              </ul>
             )}
 
             {fileError && (
@@ -521,7 +679,7 @@ export default function ConfirmDriveSyncModal({
                   fontSize: "11px",
                   color: "#dc2626",
                   margin: 0,
-                  fontWeight: "600",
+                  fontWeight: 600,
                 }}
               >
                 {fileError}
@@ -576,7 +734,9 @@ export default function ConfirmDriveSyncModal({
                     borderRadius: "99px",
                   }}
                 >
-                  <CheckCircle2 style={{ width: "12px", height: "12px", color: "#16a34a" }} />
+                  <CheckCircle2
+                    style={{ width: "12px", height: "12px", color: "#16a34a" }}
+                  />
                   Connected
                 </span>
               ) : (
@@ -594,7 +754,9 @@ export default function ConfirmDriveSyncModal({
                     borderRadius: "99px",
                   }}
                 >
-                  <AlertCircle style={{ width: "12px", height: "12px", color: "#d97706" }} />
+                  <AlertCircle
+                    style={{ width: "12px", height: "12px", color: "#d97706" }}
+                  />
                   Not Connected
                 </span>
               )}
@@ -613,7 +775,14 @@ export default function ConfirmDriveSyncModal({
                 gap: "10px",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: "10px", minWidth: 0 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "10px",
+                  minWidth: 0,
+                }}
+              >
                 <div
                   style={{
                     width: "32px",
@@ -626,7 +795,9 @@ export default function ConfirmDriveSyncModal({
                     flexShrink: 0,
                   }}
                 >
-                  <HardDrive style={{ width: "16px", height: "16px", color: "#1f5cae" }} />
+                  <HardDrive
+                    style={{ width: "16px", height: "16px", color: "#1f5cae" }}
+                  />
                 </div>
                 <div style={{ minWidth: 0 }}>
                   <span
@@ -729,41 +900,212 @@ export default function ConfirmDriveSyncModal({
                 }}
               >
                 {/* Level 0: Root */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "#1e3a8a", fontWeight: "600" }}>
-                  <Folder style={{ width: "15px", height: "15px", color: "#3b82f6", flexShrink: 0 }} />
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{rootFolderName}</span>
-                  <span style={{ fontSize: "10px", color: "#64748b", background: "#e2e8f0", padding: "1px 6px", borderRadius: "4px" }}>Root</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    color: "#1e3a8a",
+                    fontWeight: "600",
+                  }}
+                >
+                  <Folder
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      color: "#3b82f6",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {rootFolderName}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: "#64748b",
+                      background: "#e2e8f0",
+                      padding: "1px 6px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    Root
+                  </span>
                 </div>
 
                 {/* Level 1: Academic Year */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "16px", borderLeft: "2px solid #cbd5e1", marginLeft: "7px", color: "#334155", fontWeight: "600" }}>
-                  <Folder style={{ width: "15px", height: "15px", color: "#f59e0b", flexShrink: 0 }} />
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{academicYear}</span>
-                  <span style={{ fontSize: "10px", color: "#d97706", background: "#fef3c7", padding: "1px 6px", borderRadius: "4px" }}>Year</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    paddingLeft: "16px",
+                    borderLeft: "2px solid #cbd5e1",
+                    marginLeft: "7px",
+                    color: "#334155",
+                    fontWeight: "600",
+                  }}
+                >
+                  <Folder
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      color: "#f59e0b",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {academicYear}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: "#d97706",
+                      background: "#fef3c7",
+                      padding: "1px 6px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    Year
+                  </span>
                 </div>
 
                 {/* Level 2: Organization */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "32px", borderLeft: "2px solid #cbd5e1", marginLeft: "7px", color: "#334155", fontWeight: "600" }}>
-                  <Folder style={{ width: "15px", height: "15px", color: "#f59e0b", flexShrink: 0 }} />
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{orgName}</span>
-                  <span style={{ fontSize: "10px", color: "#1d4ed8", background: "#e0e7ff", padding: "1px 6px", borderRadius: "4px" }}>Organization</span>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    paddingLeft: "32px",
+                    borderLeft: "2px solid #cbd5e1",
+                    marginLeft: "7px",
+                    color: "#334155",
+                    fontWeight: "600",
+                  }}
+                >
+                  <Folder
+                    style={{
+                      width: "15px",
+                      height: "15px",
+                      color: "#f59e0b",
+                      flexShrink: 0,
+                    }}
+                  />
+                  <span
+                    style={{
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {orgName}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: "10px",
+                      color: "#1d4ed8",
+                      background: "#e0e7ff",
+                      padding: "1px 6px",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    Organization
+                  </span>
                 </div>
 
                 {/* Level 3: Document Type */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "48px", borderLeft: "2px solid #cbd5e1", marginLeft: "7px", color: "#334155", fontWeight: "600" }}>
-                  <Folder style={{ width: "15px", height: "15px", color: "#f59e0b", flexShrink: 0 }} />
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{docTypeName}</span>
-                  <span style={{ fontSize: "10px", color: "#7c3aed", background: "#f3e8ff", padding: "1px 6px", borderRadius: "4px" }}>File Type</span>
-                </div>
+                <TreeRow
+                  depth={3}
+                  icon={Folder}
+                  iconColor="#f59e0b"
+                  label={docTypeName}
+                  tag="File Type"
+                  tagColor="#7c3aed"
+                  tagBg="#f3e8ff"
+                />
 
-                {/* Level 4: Final File */}
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", paddingLeft: "64px", borderLeft: "2px solid #cbd5e1", marginLeft: "7px", color: "#0f172a", fontWeight: "700" }}>
-                  <FileText style={{ width: "15px", height: "15px", color: "#15803d", flexShrink: 0 }} />
-                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "#15803d" }}>{displayFileName}</span>
-                  <span style={{ fontSize: "10px", color: "#15803d", background: "#dcfce7", padding: "1px 6px", borderRadius: "4px" }}>
-                    {finalFile ? "New Final PDF" : "System PDF"}
-                  </span>
-                </div>
+                {isReport ? (
+                  <>
+                    {(reportFileNames.length
+                      ? reportFileNames
+                      : [defaultFileName]
+                    ).map((name) => (
+                      <TreeRow
+                        key={`report-${name}`}
+                        depth={4}
+                        icon={FileText}
+                        iconColor="#15803d"
+                        label={name}
+                        tag="Accomplishment Report"
+                        tagColor="#1d4ed8"
+                        tagBg="#e0e7ff"
+                        strong
+                      />
+                    ))}
+                    <TreeRow
+                      depth={4}
+                      icon={Folder}
+                      iconColor="#22c55e"
+                      label={APPROVED_FOLDER_NAME}
+                      tag="Approved"
+                      tagColor="#15803d"
+                      tagBg="#dcfce7"
+                    />
+                    {approvedFileNames.length ? (
+                      approvedFileNames.map((name) => (
+                        <TreeRow
+                          key={`approved-${name}`}
+                          depth={5}
+                          icon={FileText}
+                          iconColor="#15803d"
+                          label={name}
+                          tag="New Approved Doc"
+                          tagColor="#15803d"
+                          tagBg="#dcfce7"
+                          strong
+                        />
+                      ))
+                    ) : (
+                      <TreeRow
+                        depth={5}
+                        icon={FileText}
+                        iconColor="#94a3b8"
+                        label="No approved document attached"
+                      />
+                    )}
+                  </>
+                ) : (
+                  (finalFiles.length
+                    ? approvedFileNames
+                    : reportFileNames.length
+                      ? reportFileNames
+                      : [defaultFileName]
+                  ).map((name) => (
+                    <TreeRow
+                      key={name}
+                      depth={4}
+                      icon={FileText}
+                      iconColor="#15803d"
+                      label={name}
+                      tag={finalFiles.length ? "New Final PDF" : "System PDF"}
+                      tagColor="#15803d"
+                      tagBg="#dcfce7"
+                      strong
+                    />
+                  ))
+                )}
               </div>
             </div>
 
@@ -776,7 +1118,20 @@ export default function ConfirmDriveSyncModal({
                 lineHeight: "1.4",
               }}
             >
-              💡 This nested hierarchy is automatically resolved on Google Drive. The new paper will be archived directly inside the <strong>{docTypeName}</strong> subfolder.
+              💡 This nested hierarchy is automatically resolved on Google
+              Drive.{" "}
+              {isReport ? (
+                <>
+                  The report is archived in the <strong>{docTypeName}</strong>{" "}
+                  folder and the approved document in its{" "}
+                  <strong>{APPROVED_FOLDER_NAME}</strong> subfolder.
+                </>
+              ) : (
+                <>
+                  The new paper will be archived directly inside the{" "}
+                  <strong>{docTypeName}</strong> subfolder.
+                </>
+              )}
             </p>
           </div>
         </div>
@@ -835,7 +1190,10 @@ export default function ConfirmDriveSyncModal({
             }}
           >
             {isSubmitting ? (
-              <Loader2 className="animate-spin" style={{ width: "15px", height: "15px" }} />
+              <Loader2
+                className="animate-spin"
+                style={{ width: "15px", height: "15px" }}
+              />
             ) : (
               <CheckCircle2 style={{ width: "15px", height: "15px" }} />
             )}
