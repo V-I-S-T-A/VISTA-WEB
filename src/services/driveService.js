@@ -9,7 +9,7 @@ export const driveService = {
 
   async startAuth(mode = "existing") {
     const { data } = await apiClient.get(API_ENDPOINTS.DRIVE.AUTH_START, {
-      params: { mode },
+      params: { mode, client_type: "web" },
     });
     return data; // { authorization_url }
   },

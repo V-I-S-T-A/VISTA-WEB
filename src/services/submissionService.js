@@ -48,37 +48,27 @@ export const submissionService = {
     submissionId,
     status,
     remarksText = "",
-    finalFile = null,
+    finalFiles = [],
     driveFolderId = "",
+    reportFiles = [],
   ) {
-    const mappedStatus = STATUS_API_MAP[status] || status;
-
-    // Use FormData so both JSON-like fields and multipart files are supported.
     const formData = new FormData();
-    formData.append("status", mappedStatus);
-
-    if (remarksText) {
-      formData.append("remarks_text", remarksText);
-    }
-    if (finalFile) {
-      formData.append("file", finalFile);
-    }
-    if (driveFolderId) {
-      formData.append("drive_folder_id", driveFolderId);
-    }
+    formData.append("status", STATUS_API_MAP[status] || status);
+    if (remarksText) formData.append("remarks_text", remarksText);
+    finalFiles.forEach((file) => formData.append("files", file)); // repeated key = list
+    reportFiles.forEach((file) => formData.append("report_files", file));
+    if (driveFolderId) formData.append("drive_folder_id", driveFolderId);
 
     const response = await apiClient.patch(
       API_ENDPOINTS.SUBMISSIONS.STATUS(submissionId),
       formData,
       {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
+        headers: { "Content-Type": "multipart/form-data" },
+        timeout: finalFiles.length || reportFiles.length ? 180000 : undefined,
       },
     );
     return response.data;
   },
-
 
   /**
    * Streams the server-generated PDF as a blob. All filtering (status,
