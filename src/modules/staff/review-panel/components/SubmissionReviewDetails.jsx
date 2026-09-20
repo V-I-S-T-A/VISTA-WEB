@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import {
-  ChevronLeft,
   Building2,
   Mail,
   FileText,
@@ -16,11 +15,10 @@ import ConfirmDriveSyncModal from "./modals/ConfirmDriveSyncModal";
 import StatusModal from "../../../../components/StatusModal";
 import { getOptimizedViewUrl, isPdfUrl } from "../../../../utils/fileOptimizer";
 
-
 const STATUS_ACTIONS = [
   "Select Action...",
   "Start Review Process",
-  "Mark as Verified",
+  "Approve Submission",
   "Mark as Flagged",
   "Return for Revision",
   "Reject Submission",
@@ -28,14 +26,17 @@ const STATUS_ACTIONS = [
 
 const ACTION_TO_STATUS_MAP = {
   "Start Review Process": "under_review",
-  "Mark as Verified": "approved",
+  "Approve Submission": "approved",
   "Mark as Flagged": "rejected",
   "Reject Submission": "rejected",
   "Return for Revision": "resubmission_required",
 };
 
-// Only show Drive modal when marking as verified (approved)
-const REQUIRES_DRIVE_CONFIRM = new Set(["Mark as Verified"]);
+// Only show Drive modal when approving a submission that needs a final Drive upload confirmation.
+const REQUIRES_DRIVE_CONFIRM = new Set([
+  "Approve Submission",
+  "Mark as Verified",
+]);
 
 export default function SubmissionReviewDetails({ submission, onBack }) {
   const queryClient = useQueryClient();
@@ -143,7 +144,9 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   async function invalidateAndGoBack() {
     // Invalidate all submission-related queries so Recent Submissions & Review Panel refresh
     await queryClient.invalidateQueries({ queryKey: ["submissions"] });
-    await queryClient.invalidateQueries({ queryKey: ["submission", submission?.id] });
+    await queryClient.invalidateQueries({
+      queryKey: ["submission", submission?.id],
+    });
     await queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
     onBack();
   }
@@ -180,16 +183,40 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     setIsSubmitting(true);
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
-      await submissionService.updateStatus(
+      const finalFiles = driveFolderData?.finalFiles ?? [];
+      const reportFiles = driveFolderData?.reportFiles ?? [];
+      const result = await submissionService.updateStatus(
         submission.id,
         backendStatus,
         remarks,
-        driveFolderData?.finalFile || null,
+        finalFiles,
         driveFolderData?.folder_id || "",
+        reportFiles,
       );
-      const successMsg = driveFolderData?.finalFile
-        ? "Final PDF uploaded, old document replaced in system, and archived to Google Drive!"
-        : "Submission verified and synced to Google Drive!";
+      const driveSync = result?.drive_sync;
+      if (driveSync?.status !== "success") {
+        const detail = driveSync.detail || "The submission was updated, but the Google Drive upload did not complete.";
+        showNotification(
+          driveSync.status === "partial" ? "Drive Sync Partially Completed" : "Drive Sync Failed",
+          detail,
+          driveSync.status === "partial" ? "warning" : "error",
+          async () => {
+            await invalidateAndGoBack();
+          },
+        );
+        setShowConfirmModal(false);
+        return;
+      }
+      const plural = finalFiles.length > 1 ? "s" : "";
+      let successMsg = "Submission verified and synced to Google Drive!";
+      if (finalFiles.length) {
+        successMsg = submissionDetails?.is_accomplishment_report
+          ? `Approved document${plural} archived to the Approved folder on Google Drive!`
+          : `${finalFiles.length} final PDF${plural} uploaded, previous documents replaced, and archived to Google Drive!`;
+      }
+      if (reportFiles.length) {
+        successMsg = `${reportFiles.length} Accomplishment Report file${reportFiles.length > 1 ? "s" : ""} archived to its report folder${finalFiles.length ? `, along with ${finalFiles.length} approved document${finalFiles.length > 1 ? "s" : ""} in the Approved folder` : ""}.`;
+      }
       setShowConfirmModal(false);
       showNotification(
         "Verification & Drive Sync Successful",
@@ -209,8 +236,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       setIsSubmitting(false);
     }
   }
-
-
 
   return (
     <div className="w-full">
