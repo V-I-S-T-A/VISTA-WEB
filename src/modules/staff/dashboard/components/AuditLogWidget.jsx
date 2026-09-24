@@ -44,6 +44,18 @@ function formatRelativeTime(isoString) {
 function describeLog(log) {
   const actor = log.performed_by || "System";
   const table = (log.table_name || "").replace(/^tbl_/i, "");
+  const changes = typeof log.changes === "string"
+    ? JSON.parse(log.changes || "{}")
+    : log.changes || {};
+  const event = changes.new || changes.new_data || {};
+
+  if (
+    log.action === "create" &&
+    event.action === "manual_drive_archive" &&
+    (event.status === "success" || (!event.status && event.drive_file_id))
+  ) {
+    return "File uploaded successfully to Google Drive";
+  }
 
   switch (log.action) {
     case "login":

@@ -45,8 +45,15 @@ export default function AuditLogDetails({ log, onBack }) {
     const normalizedAction = log.action
       ? String(log.action).toUpperCase().replace(/_/g, " ")
       : "UNKNOWN";
-
-    const humanTitle = `${normalizedAction.charAt(0) + normalizedAction.slice(1).toLowerCase()}`;
+    const isDriveUploadSuccess =
+      log.action === "create" &&
+      (changes.new || changes.new_data)?.action === "manual_drive_archive" &&
+      ((changes.new || changes.new_data)?.status === "success" ||
+        (!(changes.new || changes.new_data)?.status &&
+          (changes.new || changes.new_data)?.drive_file_id));
+    const humanTitle = isDriveUploadSuccess
+      ? "File uploaded successfully to Google Drive"
+      : `${normalizedAction.charAt(0) + normalizedAction.slice(1).toLowerCase()}`;
 
     let newData = log.new_data || changes.new_data || changes.new || null;
     let oldData = log.old_data || changes.old_data || changes.old || null;

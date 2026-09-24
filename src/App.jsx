@@ -19,8 +19,10 @@ import StudentReviewTrackerDetails from "./modules/student/reviewtracker/ReviewT
 import StudentProfile from "./modules/student/Profile";
 import StudentAuditLogs from "./modules/student/AuditLogs";
 import StaffGdriveCallback from "./modules/staff/gdrive/GdriveCallback";
+import {useDriveUploadWatcher} from "./hooks/useBackgroundDriveUpload";
 
 function App() {
+  useDriveUploadWatcher(); // Start the background drive upload watcher
   return (
     <BrowserRouter>
       <Routes>
