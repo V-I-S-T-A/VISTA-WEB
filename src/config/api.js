@@ -56,5 +56,7 @@ export const API_ENDPOINTS = {
     FOLDER_SELECT: `${API_CONFIG.ENDPOINTS.DRIVE}/folders/select/`,
     FOLDER_CREATE: `${API_CONFIG.ENDPOINTS.DRIVE}/folders/create/`,
     DISCONNECT: `${API_CONFIG.ENDPOINTS.DRIVE}/disconnect/`,
+    UPLOAD: `${API_CONFIG.ENDPOINTS.DRIVE}/upload/`,
+    UPLOAD_STATUS: (taskId) => `${API_CONFIG.ENDPOINTS.DRIVE}/upload/status/${taskId}/`,
   },
 };

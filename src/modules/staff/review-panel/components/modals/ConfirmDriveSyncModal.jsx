@@ -24,7 +24,7 @@ const formatSize = (bytes) =>
     ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
     : `${(bytes / 1024).toFixed(1)} KB`;
 
-function SelectedFileRow({ file, onRemove }) {
+function SelectedFileRow({ file, fileName = file.name, onNameChange, onRemove }) {
   return (
     <li
       style={{
@@ -66,7 +66,7 @@ function SelectedFileRow({ file, onRemove }) {
               whiteSpace: "nowrap",
             }}
           >
-            {file.name}
+            {fileName}
           </p>
           <p
             style={{
@@ -80,6 +80,25 @@ function SelectedFileRow({ file, onRemove }) {
           </p>
         </div>
       </div>
+      {onNameChange && (
+        <input
+          aria-label={`Google Drive filename for ${file.name}`}
+          type="text"
+          value={fileName}
+          maxLength={255}
+          onChange={(event) => onNameChange(event.target.value)}
+          onClick={(event) => event.stopPropagation()}
+          placeholder="File name in Google Drive"
+          style={{
+            width: "min(45%, 260px)",
+            border: "1px solid #d1d5db",
+            borderRadius: "6px",
+            padding: "6px 8px",
+            fontFamily: "Inter, sans-serif",
+            fontSize: "12px",
+          }}
+        />
+      )}
       <button
         type="button"
         onClick={onRemove}
@@ -170,6 +189,7 @@ export default function ConfirmDriveSyncModal({
   const { data: driveConn } = useDriveConnection();
   const [finalFiles, setFinalFiles] = useState([]);
   const [reportFiles, setReportFiles] = useState([]);
+  const [driveFileNames, setDriveFileNames] = useState({});
   const [isDragging, setIsDragging] = useState(false);
   const [isReportDragging, setIsReportDragging] = useState(false);
   const [fileError, setFileError] = useState("");
@@ -236,18 +256,35 @@ export default function ConfirmDriveSyncModal({
     submission?.doc_type_name ||
     submission?.documentType ||
     "Document Type";
-  const isReport = Boolean(submissionDetails?.is_accomplishment_report);
+  const documentTypeIdentity = [
+    submissionDetails?.doc_type_name,
+    submissionDetails?.doc_type_id?.name,
+    submissionDetails?.doc_type_id?.code,
+    submission?.doc_type_name,
+    submission?.documentType,
+    submission?.doc_type_id?.name,
+    submission?.doc_type_id?.code,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  const isReport =
+    Boolean(submissionDetails?.is_accomplishment_report) ||
+    documentTypeIdentity.includes("accomplishment report") ||
+    documentTypeIdentity.includes("fm-ustp-osa-04b");
   const defaultFileName = `${submissionDetails?.title || submission?.title || "Submission_Document"}.pdf`;
-  const reportFileNames =
-    submissionDetails?.documents?.map((d) => d.file_name) ?? [];
-  const approvedFileNames = finalFiles.map((f) => f.name);
+  const getDriveFileName = (file) => driveFileNames[fileKey(file)] ?? file.name;
+  const reportFileNames = reportFiles.length
+    ? reportFiles.map(getDriveFileName)
+    : submissionDetails?.documents?.map((d) => d.file_name) ?? [];
+  const approvedFileNames = finalFiles.map(getDriveFileName);
 
   if (!isOpen) return null;
 
   const handleFinalSubmit = () => {
     onConfirm({
-      finalFiles,
-      reportFiles,
+      finalFiles: finalFiles.map((file) => ({ file, fileName: getDriveFileName(file) })),
+      reportFiles: reportFiles.map((file) => ({ file, fileName: getDriveFileName(file) })),
       folder_name: rootFolderName,
       folder_id: driveConn?.folder_id || driveConn?.target_folder_id,
     });
@@ -520,7 +557,14 @@ export default function ConfirmDriveSyncModal({
               {reportFiles.length > 0 && (
                 <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
                   {reportFiles.map((file) => (
-                    <SelectedFileRow key={fileKey(file)} file={file} onRemove={() => removeReportFile(fileKey(file))} tag="Report Document" />
+                    <SelectedFileRow
+                      key={fileKey(file)}
+                      file={file}
+                      fileName={getDriveFileName(file)}
+                      onNameChange={(fileName) => setDriveFileNames((names) => ({ ...names, [fileKey(file)]: fileName }))}
+                      onRemove={() => removeReportFile(fileKey(file))}
+                      tag="Report Document"
+                    />
                   ))}
                 </ul>
               )}
@@ -666,6 +710,8 @@ export default function ConfirmDriveSyncModal({
                   <SelectedFileRow
                     key={fileKey(file)}
                     file={file}
+                    fileName={getDriveFileName(file)}
+                    onNameChange={(fileName) => setDriveFileNames((names) => ({ ...names, [fileKey(file)]: fileName }))}
                     onRemove={() => removeFile(fileKey(file))}
                   />
                 ))}

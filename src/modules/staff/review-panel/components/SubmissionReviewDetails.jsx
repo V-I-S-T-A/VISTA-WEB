@@ -11,6 +11,10 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { submissionService } from "../../../../services/submissionService";
 import { reviewLogService } from "../../../../services/reviewLogService";
+import {
+  startBackgroundDriveUpload,
+  watchTasks,
+} from "../../../../hooks/useBackgroundDriveUpload";
 import ConfirmDriveSyncModal from "./modals/ConfirmDriveSyncModal";
 import StatusModal from "../../../../components/StatusModal";
 import { getOptimizedViewUrl, isPdfUrl } from "../../../../utils/fileOptimizer";
@@ -183,55 +187,56 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     setIsSubmitting(true);
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
-      const finalFiles = driveFolderData?.finalFiles ?? [];
-      const reportFiles = driveFolderData?.reportFiles ?? [];
-      const result = await submissionService.updateStatus(
+
+      // 1. Fast, synchronous status change — no file, so this returns immediately
+      await submissionService.updateStatus(
         submission.id,
         backendStatus,
         remarks,
-        finalFiles,
-        driveFolderData?.folder_id || "",
-        reportFiles,
       );
-      const driveSync = result?.drive_sync;
-      if (driveSync?.status !== "success") {
-        const detail = driveSync.detail || "The submission was updated, but the Google Drive upload did not complete.";
-        showNotification(
-          driveSync.status === "partial" ? "Drive Sync Partially Completed" : "Drive Sync Failed",
-          detail,
-          driveSync.status === "partial" ? "warning" : "error",
-          async () => {
-            await invalidateAndGoBack();
-          },
-        );
-        setShowConfirmModal(false);
-        return;
+
+      // 2. Kick off the Drive upload in the background, don't await it
+      const finalFiles = driveFolderData?.finalFiles ?? [];
+      const reportFiles = driveFolderData?.reportFiles ?? [];
+      const uploads = [
+        ...finalFiles.map((item) => ({ ...item, uploadKind: "approved" })),
+        ...reportFiles.map((item) => ({ ...item, uploadKind: "report" })),
+      ];
+      const queuedTasks = [];
+      let queueFailures = 0;
+      for (const { file, fileName, uploadKind } of uploads) {
+        try {
+          queuedTasks.push(await startBackgroundDriveUpload({
+            submissionId: submission.id,
+            file,
+            fileName,
+            folderId: driveFolderData?.folder_id,
+            uploadKind,
+          }));
+        } catch (uploadError) {
+          queueFailures += 1;
+          console.error("Could not queue Drive upload:", uploadError);
+        }
       }
-      const plural = finalFiles.length > 1 ? "s" : "";
-      let successMsg = "Submission verified and synced to Google Drive!";
-      if (finalFiles.length) {
-        successMsg = submissionDetails?.is_accomplishment_report
-          ? `Approved document${plural} archived to the Approved folder on Google Drive!`
-          : `${finalFiles.length} final PDF${plural} uploaded, previous documents replaced, and archived to Google Drive!`;
-      }
-      if (reportFiles.length) {
-        successMsg = `${reportFiles.length} Accomplishment Report file${reportFiles.length > 1 ? "s" : ""} archived to its report folder${finalFiles.length ? `, along with ${finalFiles.length} approved document${finalFiles.length > 1 ? "s" : ""} in the Approved folder` : ""}.`;
-      }
-      setShowConfirmModal(false);
+      watchTasks(queuedTasks);
+
       showNotification(
-        "Verification & Drive Sync Successful",
-        successMsg,
-        "success",
+        queueFailures ? "Decision Submitted with Upload Issues" : "Decision Submitted",
+        uploads.length
+          ? `${queuedTasks.length} file${queuedTasks.length === 1 ? " is" : "s are"} uploading to Google Drive in the background.${queueFailures ? ` ${queueFailures} could not be queued.` : ""}`
+          : "Status updated.",
+        queueFailures ? "warning" : "success",
         async () => {
           await invalidateAndGoBack();
         },
       );
+      setShowConfirmModal(false);
     } catch (error) {
       console.error("Submission error:", error);
       const backendError = error.response?.data
         ? JSON.stringify(error.response.data, null, 2)
-        : error.message || "Failed to sync submission to Google Drive.";
-      showNotification("Drive Sync Error", backendError, "error");
+        : error.message || "Failed to submit decision.";
+      showNotification("Submission Error", backendError, "error");
     } finally {
       setIsSubmitting(false);
     }
