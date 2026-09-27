@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   X,
   HardDrive,
@@ -9,22 +9,59 @@ import {
   UploadCloud,
   FileText,
   Trash2,
+  Camera,
+  RefreshCw,
+  Eye,
+  GripVertical,
 } from "lucide-react";
 
 import { useDriveConnection } from "../../../../../hooks/useDrive";
+import { imagesToPdf } from "../../../../../utils/imagesToPdf";
 
 const MAX_FILES = 10;
 const APPROVED_FOLDER_NAME = "Approved";
 
 const isPdf = (file) =>
   file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf");
+const isImage = (file) => file.type.startsWith("image/");
+const isSupportedUpload = (file) => isPdf(file) || isImage(file);
 const fileKey = (file) => `${file.name}-${file.size}-${file.lastModified}`;
 const formatSize = (bytes) =>
   bytes >= 1024 * 1024
     ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
     : `${(bytes / 1024).toFixed(1)} KB`;
 
-function SelectedFileRow({ file, fileName = file.name, onNameChange, onRemove }) {
+function ImagePreview({ file }) {
+  const [previewUrl, setPreviewUrl] = useState("");
+
+  useEffect(() => {
+    const url = URL.createObjectURL(file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [file]);
+
+  return previewUrl ? (
+    <img
+      src={previewUrl}
+      alt={`Preview of ${file.name}`}
+      style={{
+        width: "100%",
+        height: 130,
+        objectFit: "contain",
+        background: "#f1f5f9",
+        borderRadius: 6,
+      }}
+    />
+  ) : null;
+}
+
+function SelectedFileRow({
+  file,
+  fileName = file.name,
+  onNameChange,
+  onRemove,
+  onPreview,
+}) {
   return (
     <li
       style={{
@@ -98,6 +135,30 @@ function SelectedFileRow({ file, fileName = file.name, onNameChange, onRemove })
             fontSize: "12px",
           }}
         />
+      )}
+      {onPreview && (
+        <button
+          type="button"
+          onClick={onPreview}
+          title={`Preview ${fileName}`}
+          aria-label={`Preview PDF ${fileName} in a new tab`}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 4,
+            border: "1px solid #bfdbfe",
+            borderRadius: 6,
+            background: "#fff",
+            color: "#1e3a8a",
+            padding: "6px 8px",
+            cursor: "pointer",
+            fontSize: 11,
+            fontWeight: 700,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <Eye size={14} /> Preview PDF
+        </button>
       )}
       <button
         type="button"
@@ -196,25 +257,205 @@ export default function ConfirmDriveSyncModal({
   const [reportFileError, setReportFileError] = useState("");
   const fileInputRef = useRef(null);
   const reportFileInputRef = useRef(null);
+  const cameraVideoRef = useRef(null);
+  const cameraStreamRef = useRef(null);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraError, setCameraError] = useState("");
+  const [cameraReplaceKey, setCameraReplaceKey] = useState(null);
+  const [capturedImage, setCapturedImage] = useState(null);
+  const [capturedReplaceKey, setCapturedReplaceKey] = useState(null);
+  const [isConvertingImages, setIsConvertingImages] = useState(false);
+  const replaceImageInputRef = useRef(null);
+  const [replaceImageKey, setReplaceImageKey] = useState(null);
+  const [draggingImageKey, setDraggingImageKey] = useState(null);
+  const [dragOverImageKey, setDragOverImageKey] = useState(null);
+  const imageReviewRef = useRef(null);
+  const imageFiles = finalFiles.filter(isImage);
+  const hasUnconvertedImages = imageFiles.length > 0;
+
+  const stopCamera = () => {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    setIsCameraOpen(false);
+  };
+
+  useEffect(() => {
+    if (!isOpen) {
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+      cameraStreamRef.current = null;
+      setIsCameraOpen(false);
+    }
+    return () =>
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+  }, [isOpen]);
+
+  const openCamera = async (replaceKey = null) => {
+    setCameraError("");
+    setCameraReplaceKey(replaceKey);
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setCameraError(
+        "Camera access is unavailable in this browser or page context.",
+      );
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      cameraStreamRef.current = stream;
+      setIsCameraOpen(true);
+      requestAnimationFrame(() => {
+        if (cameraVideoRef.current) cameraVideoRef.current.srcObject = stream;
+      });
+    } catch (error) {
+      setCameraError(
+        error.name === "NotAllowedError"
+          ? "Camera access was denied. Allow camera access in your browser settings and try again."
+          : "Could not open the camera. Check that a camera is connected and try again.",
+      );
+    }
+  };
+
+  const captureCameraImage = () => {
+    const video = cameraVideoRef.current;
+    if (!video?.videoWidth || !video?.videoHeight) {
+      setCameraError("The camera is not ready yet. Please wait and try again.");
+      return;
+    }
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    canvas.getContext("2d").drawImage(video, 0, 0);
+    canvas.toBlob(
+      (blob) => {
+        if (!blob) {
+          setCameraError("Could not capture the image. Please try again.");
+          return;
+        }
+        const file = new File([blob], `camera-capture-${Date.now()}.jpg`, {
+          type: "image/jpeg",
+        });
+        setCapturedImage(file);
+        setCapturedReplaceKey(cameraReplaceKey);
+        stopCamera();
+      },
+      "image/jpeg",
+      0.92,
+    );
+  };
 
   const addFiles = (incoming) => {
     const candidates = Array.from(incoming ?? []);
-    const pdfs = candidates.filter(isPdf);
-    const byKey = new Map(finalFiles.map((f) => [fileKey(f), f]));
-    pdfs.forEach((f) => byKey.set(fileKey(f), f));
+    const supportedFiles = candidates.filter(isSupportedUpload);
+    const byKey = new Map(finalFiles.map((file) => [fileKey(file), file]));
+    supportedFiles.forEach((file) => byKey.set(fileKey(file), file));
     const merged = [...byKey.values()];
-
-    if (pdfs.length < candidates.length)
-      setFileError("Only PDF files (.pdf) are accepted.");
+    if (supportedFiles.length < candidates.length)
+      setFileError("Choose PDF or image files.");
     else if (merged.length > MAX_FILES)
       setFileError(`You can attach up to ${MAX_FILES} files.`);
     else setFileError("");
 
-    setFinalFiles(merged.slice(0, MAX_FILES));
+    setFinalFiles((files) => {
+      const currentByKey = new Map(files.map((file) => [fileKey(file), file]));
+      supportedFiles.forEach((file) => currentByKey.set(fileKey(file), file));
+      return [...currentByKey.values()].slice(0, MAX_FILES);
+    });
+  };
+
+  const acceptCapturedImage = () => {
+    if (!capturedImage) return;
+    if (capturedReplaceKey) {
+      setFinalFiles((files) =>
+        files.map((existing) =>
+          fileKey(existing) === capturedReplaceKey ? capturedImage : existing,
+        ),
+      );
+    } else {
+      addFiles([capturedImage]);
+    }
+    setCapturedImage(null);
+    setCapturedReplaceKey(null);
+    setCameraReplaceKey(null);
+    window.requestAnimationFrame(() =>
+      imageReviewRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      }),
+    );
+  };
+
+  const retakeCapturedImage = () => {
+    const replaceKey = capturedReplaceKey;
+    setCapturedImage(null);
+    setCapturedReplaceKey(null);
+    openCamera(replaceKey);
   };
 
   const removeFile = (key) =>
     setFinalFiles((files) => files.filter((f) => fileKey(f) !== key));
+
+  const reorderImage = (targetKey) => {
+    if (!draggingImageKey || draggingImageKey === targetKey) return;
+    setFinalFiles((files) => {
+      const images = files.filter(isImage);
+      const from = images.findIndex(
+        (file) => fileKey(file) === draggingImageKey,
+      );
+      const to = images.findIndex((file) => fileKey(file) === targetKey);
+      if (from < 0 || to < 0) return files;
+      const [moved] = images.splice(from, 1);
+      images.splice(to, 0, moved);
+      let imageIndex = 0;
+      return files.map((file) => (isImage(file) ? images[imageIndex++] : file));
+    });
+    setDraggingImageKey(null);
+    setDragOverImageKey(null);
+  };
+
+  const replaceImage = (event) => {
+    const [replacement] = Array.from(event.target.files ?? []);
+    if (replacement && isImage(replacement) && replaceImageKey) {
+      setFinalFiles((files) =>
+        files.map((file) =>
+          fileKey(file) === replaceImageKey ? replacement : file,
+        ),
+      );
+    } else if (replacement) {
+      setFileError("Choose an image file to replace this photo.");
+    }
+    setReplaceImageKey(null);
+    event.target.value = "";
+  };
+
+  const convertImagesToPdf = async () => {
+    if (!imageFiles.length || isConvertingImages) return;
+    setIsConvertingImages(true);
+    setFileError("");
+    try {
+      const firstImageIndex = finalFiles.findIndex(isImage);
+      const firstName =
+        imageFiles[0].name.replace(/\.[^.]+$/, "") || "Scanned_Documents";
+      const pdfFile = await imagesToPdf(imageFiles, `${firstName}.pdf`);
+      setFinalFiles((files) => {
+        const withoutImages = files.filter((file) => !isImage(file));
+        const insertAt = Math.min(firstImageIndex, withoutImages.length);
+        return [
+          ...withoutImages.slice(0, insertAt),
+          pdfFile,
+          ...withoutImages.slice(insertAt),
+        ];
+      });
+    } catch (error) {
+      setFileError(error.message || "Could not convert the images to PDF.");
+    } finally {
+      setIsConvertingImages(false);
+    }
+  };
+
+  const previewPdf = (file) => {
+    const previewUrl = URL.createObjectURL(file);
+    window.open(previewUrl, "_blank", "noopener,noreferrer");
+    window.setTimeout(() => URL.revokeObjectURL(previewUrl), 60_000);
+  };
 
   const addReportFiles = (incoming) => {
     const candidates = Array.from(incoming ?? []);
@@ -276,15 +517,25 @@ export default function ConfirmDriveSyncModal({
   const getDriveFileName = (file) => driveFileNames[fileKey(file)] ?? file.name;
   const reportFileNames = reportFiles.length
     ? reportFiles.map(getDriveFileName)
-    : submissionDetails?.documents?.map((d) => d.file_name) ?? [];
+    : (submissionDetails?.documents?.map((d) => d.file_name) ?? []);
   const approvedFileNames = finalFiles.map(getDriveFileName);
 
   if (!isOpen) return null;
 
   const handleFinalSubmit = () => {
+    if (hasUnconvertedImages) {
+      setFileError("Convert the selected images to PDF before submitting.");
+      return;
+    }
     onConfirm({
-      finalFiles: finalFiles.map((file) => ({ file, fileName: getDriveFileName(file) })),
-      reportFiles: reportFiles.map((file) => ({ file, fileName: getDriveFileName(file) })),
+      finalFiles: finalFiles.map((file) => ({
+        file,
+        fileName: getDriveFileName(file),
+      })),
+      reportFiles: reportFiles.map((file) => ({
+        file,
+        fileName: getDriveFileName(file),
+      })),
       folder_name: rootFolderName,
       folder_id: driveConn?.folder_id || driveConn?.target_folder_id,
     });
@@ -306,6 +557,185 @@ export default function ConfirmDriveSyncModal({
       role="dialog"
       aria-modal="true"
     >
+      {capturedImage && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Review captured photo"
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 120,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            background: "rgba(15, 23, 42, 0.86)",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 600,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              background: "#fff",
+              borderRadius: 12,
+              padding: 18,
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            <div>
+              <h3
+                style={{
+                  margin: 0,
+                  color: "#1e3a8a",
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: 16,
+                }}
+              >
+                Review your photo
+              </h3>
+              <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 12 }}>
+                Retake the photo or add it to your selected images.
+              </p>
+            </div>
+            <ImagePreview file={capturedImage} />
+            <span style={{ color: "#475569", fontSize: 12 }}>
+              {capturedImage.name}
+            </span>
+            <div
+              style={{
+                display: "flex",
+                flexWrap: "wrap",
+                justifyContent: "flex-end",
+                gap: 8,
+              }}
+            >
+              <button
+                type="button"
+                onClick={retakeCapturedImage}
+                style={{
+                  border: "1px solid #bfdbfe",
+                  borderRadius: 6,
+                  padding: "8px 12px",
+                  background: "#fff",
+                  color: "#1e3a8a",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                Retake photo
+              </button>
+              <button
+                type="button"
+                onClick={() => acceptCapturedImage()}
+                style={{
+                  border: 0,
+                  borderRadius: 6,
+                  padding: "8px 12px",
+                  background: "#1f5cae",
+                  color: "#fff",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                Use this photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {isCameraOpen && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 110,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 16,
+            background: "rgba(15, 23, 42, 0.82)",
+          }}
+        >
+          <div
+            style={{
+              width: "100%",
+              maxWidth: 560,
+              background: "#fff",
+              borderRadius: 12,
+              padding: 18,
+              display: "flex",
+              flexDirection: "column",
+              gap: 12,
+            }}
+          >
+            <h3
+              style={{
+                margin: 0,
+                fontFamily: "Inter, sans-serif",
+                fontSize: 16,
+              }}
+            >
+              Take a photo
+            </h3>
+            <video
+              ref={cameraVideoRef}
+              autoPlay
+              playsInline
+              style={{
+                width: "100%",
+                maxHeight: "60vh",
+                background: "#111827",
+                borderRadius: 8,
+              }}
+            />
+            {cameraError && (
+              <p
+                role="alert"
+                style={{ color: "#dc2626", margin: 0, fontSize: 12 }}
+              >
+                {cameraError}
+              </p>
+            )}
+            <div
+              style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
+            >
+              <button
+                type="button"
+                onClick={stopCamera}
+                style={{
+                  padding: "8px 12px",
+                  border: "1px solid #d1d5db",
+                  borderRadius: 6,
+                  background: "#fff",
+                  cursor: "pointer",
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={captureCameraImage}
+                style={{
+                  padding: "8px 12px",
+                  border: 0,
+                  borderRadius: 6,
+                  background: "#1f5cae",
+                  color: "#fff",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                }}
+              >
+                Capture photo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       <div
         style={{
           background: "#ffffff",
@@ -523,52 +953,144 @@ export default function ConfirmDriveSyncModal({
                 background: "#f8fbff",
               }}
             >
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <label style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 700, color: "#1e3a8a", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <label
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    color: "#1e3a8a",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.04em",
+                  }}
+                >
                   Accomplishment Report Document(s)
                 </label>
-                <span style={{ fontFamily: "Inter, sans-serif", fontSize: "10px", fontWeight: 700, color: reportFiles.length ? "#15803d" : "#1e3a8a", background: reportFiles.length ? "#dcfce7" : "#dbeafe", padding: "2px 8px", borderRadius: "99px" }}>
-                  {reportFiles.length ? `${reportFiles.length} File${reportFiles.length > 1 ? "s" : ""} Selected` : "Saved to Report Folder"}
+                <span
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: reportFiles.length ? "#15803d" : "#1e3a8a",
+                    background: reportFiles.length ? "#dcfce7" : "#dbeafe",
+                    padding: "2px 8px",
+                    borderRadius: "99px",
+                  }}
+                >
+                  {reportFiles.length
+                    ? `${reportFiles.length} File${reportFiles.length > 1 ? "s" : ""} Selected`
+                    : "Saved to Report Folder"}
                 </span>
               </div>
               <div
-                onDragOver={(e) => { e.preventDefault(); setIsReportDragging(true); }}
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsReportDragging(true);
+                }}
                 onDragLeave={() => setIsReportDragging(false)}
-                onDrop={(e) => { e.preventDefault(); setIsReportDragging(false); addReportFiles(e.dataTransfer.files); }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsReportDragging(false);
+                  addReportFiles(e.dataTransfer.files);
+                }}
                 onClick={() => reportFileInputRef.current?.click()}
-                style={{ border: `2px dashed ${isReportDragging ? "#1f5cae" : "#93c5fd"}`, backgroundColor: isReportDragging ? "#eff6ff" : "#ffffff", borderRadius: "8px", padding: "18px 14px", textAlign: "center", cursor: "pointer", display: "flex", flexDirection: "column", alignItems: "center", gap: "6px" }}
+                style={{
+                  border: `2px dashed ${isReportDragging ? "#1f5cae" : "#93c5fd"}`,
+                  backgroundColor: isReportDragging ? "#eff6ff" : "#ffffff",
+                  borderRadius: "8px",
+                  padding: "18px 14px",
+                  textAlign: "center",
+                  cursor: "pointer",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: "6px",
+                }}
               >
                 <input
                   ref={reportFileInputRef}
                   type="file"
                   multiple
                   accept=".pdf,application/pdf"
-                  onChange={(e) => { addReportFiles(e.target.files); e.target.value = ""; }}
+                  onChange={(e) => {
+                    addReportFiles(e.target.files);
+                    e.target.value = "";
+                  }}
                   style={{ display: "none" }}
                 />
-                <UploadCloud style={{ width: "18px", height: "18px", color: "#1f5cae" }} />
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700, color: "#1e3a8a", margin: 0 }}>
+                <UploadCloud
+                  style={{ width: "18px", height: "18px", color: "#1f5cae" }}
+                />
+                <p
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "13px",
+                    fontWeight: 700,
+                    color: "#1e3a8a",
+                    margin: 0,
+                  }}
+                >
                   Click to browse or drop Accomplishment Report PDFs here
                 </p>
-                <p style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#64748b", margin: 0 }}>
-                  These files are archived in the Accomplishment Report folder, not the Approved subfolder.
+                <p
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "11px",
+                    color: "#64748b",
+                    margin: 0,
+                  }}
+                >
+                  These files are archived in the Accomplishment Report folder,
+                  not the Approved subfolder.
                 </p>
               </div>
               {reportFiles.length > 0 && (
-                <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "flex", flexDirection: "column", gap: "6px" }}>
+                <ul
+                  style={{
+                    listStyle: "none",
+                    margin: 0,
+                    padding: 0,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "6px",
+                  }}
+                >
                   {reportFiles.map((file) => (
                     <SelectedFileRow
                       key={fileKey(file)}
                       file={file}
                       fileName={getDriveFileName(file)}
-                      onNameChange={(fileName) => setDriveFileNames((names) => ({ ...names, [fileKey(file)]: fileName }))}
+                      onNameChange={(fileName) =>
+                        setDriveFileNames((names) => ({
+                          ...names,
+                          [fileKey(file)]: fileName,
+                        }))
+                      }
                       onRemove={() => removeReportFile(fileKey(file))}
                       tag="Report Document"
                     />
                   ))}
                 </ul>
               )}
-              {reportFileError && <p style={{ fontFamily: "Inter, sans-serif", fontSize: "11px", color: "#dc2626", margin: 0, fontWeight: 600 }}>{reportFileError}</p>}
+              {reportFileError && (
+                <p
+                  style={{
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "11px",
+                    color: "#dc2626",
+                    margin: 0,
+                    fontWeight: 600,
+                  }}
+                >
+                  {reportFileError}
+                </p>
+              )}
             </div>
           )}
 
@@ -638,14 +1160,12 @@ export default function ConfirmDriveSyncModal({
                   setIsDragging(false);
                   addFiles(e.dataTransfer.files);
                 }}
-                onClick={() => fileInputRef.current?.click()}
                 style={{
                   border: `2px dashed ${isDragging ? "#1f5cae" : "#cbd5e1"}`,
                   backgroundColor: isDragging ? "#f0f5fc" : "#f8fafd",
                   borderRadius: "8px",
                   padding: "18px 14px",
                   textAlign: "center",
-                  cursor: "pointer",
                   transition: "all 0.15s ease",
                   display: "flex",
                   flexDirection: "column",
@@ -657,11 +1177,18 @@ export default function ConfirmDriveSyncModal({
                   ref={fileInputRef}
                   type="file"
                   multiple
-                  accept=".pdf,application/pdf"
+                  accept=".pdf,application/pdf,image/*"
                   onChange={(e) => {
                     addFiles(e.target.files);
                     e.target.value = "";
                   }}
+                  style={{ display: "none" }}
+                />
+                <input
+                  ref={replaceImageInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={replaceImage}
                   style={{ display: "none" }}
                 />
                 <UploadCloud
@@ -676,8 +1203,43 @@ export default function ConfirmDriveSyncModal({
                     margin: 0,
                   }}
                 >
-                  Click to browse or drop final PDFs here
+                  Drop PDFs or images here
                 </p>
+                <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    style={{
+                      border: "1px solid #bfdbfe",
+                      borderRadius: "6px",
+                      padding: "7px 12px",
+                      background: "#fff",
+                      color: "#1e3a8a",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Select file
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => openCamera()}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "6px",
+                      border: "1px solid #bfdbfe",
+                      borderRadius: "6px",
+                      padding: "7px 12px",
+                      background: "#fff",
+                      color: "#1e3a8a",
+                      fontWeight: 700,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <Camera size={15} /> Open camera
+                  </button>
+                </div>
                 <p
                   style={{
                     fontFamily: "Inter, sans-serif",
@@ -688,8 +1250,224 @@ export default function ConfirmDriveSyncModal({
                 >
                   {isReport
                     ? `Up to ${MAX_FILES} files. Saved in the Approved folder beside the Accomplishment Report, which is kept as is.`
-                    : `Up to ${MAX_FILES} files. Old files are removed from the system and the new PDFs are uploaded to Drive.`}
+                    : `Up to ${MAX_FILES} files. Choose PDF or image files. Old files are removed from the system and the new files are uploaded to Drive.`}
                 </p>
+              </div>
+            )}
+
+            {imageFiles.length > 0 && (
+              <div
+                ref={imageReviewRef}
+                style={{
+                  border: "1px solid #bfdbfe",
+                  borderRadius: 8,
+                  padding: 12,
+                  background: "#f8fbff",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 10,
+                }}
+              >
+                <div>
+                  <p
+                    style={{
+                      margin: 0,
+                      color: "#1e3a8a",
+                      fontSize: 13,
+                      fontWeight: 700,
+                    }}
+                  >
+                    Review selected images
+                  </p>
+                  <p
+                    style={{
+                      margin: "3px 0 0",
+                      color: "#64748b",
+                      fontSize: 11,
+                    }}
+                  >
+                    Check each photo, retake or replace it, or add more
+                    pictures. Convert the images into a PDF when ready.
+                  </p>
+                </div>
+                <div
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns:
+                      "repeat(auto-fill, minmax(145px, 1fr))",
+                    gap: 10,
+                  }}
+                >
+                  {imageFiles.map((file) => (
+                    <div
+                      key={fileKey(file)}
+                      onDragOver={(event) => {
+                        event.preventDefault();
+                        setDragOverImageKey(fileKey(file));
+                      }}
+                      onDragLeave={() =>
+                        setDragOverImageKey((key) =>
+                          key === fileKey(file) ? null : key,
+                        )
+                      }
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        reorderImage(fileKey(file));
+                      }}
+                      style={{
+                        minWidth: 0,
+                        border: `1px solid ${dragOverImageKey === fileKey(file) ? "#1f5cae" : "#dbeafe"}`,
+                        borderRadius: 8,
+                        padding: 8,
+                        background:
+                          dragOverImageKey === fileKey(file)
+                            ? "#eff6ff"
+                            : "#fff",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: 7,
+                      }}
+                    >
+                      <button
+                        type="button"
+                        draggable
+                        onDragStart={(event) => {
+                          event.dataTransfer.effectAllowed = "move";
+                          setDraggingImageKey(fileKey(file));
+                        }}
+                        onDragEnd={() => {
+                          setDraggingImageKey(null);
+                          setDragOverImageKey(null);
+                        }}
+                        aria-label={`Drag to reorder ${file.name}`}
+                        title="Drag to change PDF page order"
+                        style={{
+                          alignSelf: "flex-start",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: 4,
+                          border: "1px solid #d1d5db",
+                          borderRadius: 5,
+                          padding: "3px 6px",
+                          background: "#fff",
+                          color: "#475569",
+                          cursor: "grab",
+                          fontSize: 10,
+                        }}
+                      >
+                        <GripVertical size={13} /> Drag to reorder
+                      </button>
+                      <ImagePreview file={file} />
+                      <span
+                        title={file.name}
+                        style={{
+                          overflow: "hidden",
+                          textOverflow: "ellipsis",
+                          whiteSpace: "nowrap",
+                          fontSize: 11,
+                          color: "#334155",
+                        }}
+                      >
+                        {file.name}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => openCamera(fileKey(file))}
+                        style={{
+                          border: "1px solid #bfdbfe",
+                          borderRadius: 5,
+                          padding: "6px 7px",
+                          background: "#fff",
+                          color: "#1e3a8a",
+                          cursor: "pointer",
+                          fontSize: 11,
+                        }}
+                      >
+                        Retake with camera
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReplaceImageKey(fileKey(file));
+                          replaceImageInputRef.current?.click();
+                        }}
+                        style={{
+                          border: "1px solid #d1d5db",
+                          borderRadius: 5,
+                          padding: "6px 7px",
+                          background: "#fff",
+                          color: "#334155",
+                          cursor: "pointer",
+                          fontSize: 11,
+                        }}
+                      >
+                        Replace image file
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(fileKey(file))}
+                        style={{
+                          border: 0,
+                          background: "transparent",
+                          color: "#b91c1c",
+                          cursor: "pointer",
+                          fontSize: 11,
+                        }}
+                      >
+                        Remove photo
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                  <button
+                    type="button"
+                    onClick={() => openCamera()}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      border: "1px solid #bfdbfe",
+                      borderRadius: 6,
+                      padding: "8px 10px",
+                      background: "#fff",
+                      color: "#1e3a8a",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                      fontSize: 12,
+                    }}
+                  >
+                    <Camera size={14} /> Take another picture
+                  </button>
+                  <button
+                    type="button"
+                    onClick={convertImagesToPdf}
+                    disabled={isConvertingImages}
+                    style={{
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: 6,
+                      border: 0,
+                      borderRadius: 6,
+                      padding: "8px 10px",
+                      background: "#1f5cae",
+                      color: "#fff",
+                      cursor: isConvertingImages ? "wait" : "pointer",
+                      fontWeight: 700,
+                      fontSize: 12,
+                      opacity: isConvertingImages ? 0.7 : 1,
+                    }}
+                  >
+                    {isConvertingImages ? (
+                      <Loader2 size={14} className="animate-spin" />
+                    ) : (
+                      <RefreshCw size={14} />
+                    )}
+                    {isConvertingImages
+                      ? "Converting…"
+                      : "Convert images to PDF"}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -711,14 +1489,20 @@ export default function ConfirmDriveSyncModal({
                     key={fileKey(file)}
                     file={file}
                     fileName={getDriveFileName(file)}
-                    onNameChange={(fileName) => setDriveFileNames((names) => ({ ...names, [fileKey(file)]: fileName }))}
+                    onNameChange={(fileName) =>
+                      setDriveFileNames((names) => ({
+                        ...names,
+                        [fileKey(file)]: fileName,
+                      }))
+                    }
                     onRemove={() => removeFile(fileKey(file))}
+                    onPreview={isPdf(file) ? () => previewPdf(file) : undefined}
                   />
                 ))}
               </ul>
             )}
 
-            {fileError && (
+            {(fileError || cameraError) && (
               <p
                 style={{
                   fontFamily: "Inter, sans-serif",
@@ -728,7 +1512,7 @@ export default function ConfirmDriveSyncModal({
                   fontWeight: 600,
                 }}
               >
-                {fileError}
+                {fileError || cameraError}
               </p>
             )}
           </div>
@@ -1218,7 +2002,9 @@ export default function ConfirmDriveSyncModal({
           <button
             type="button"
             onClick={handleFinalSubmit}
-            disabled={isSubmitting}
+            disabled={
+              isSubmitting || hasUnconvertedImages || isConvertingImages
+            }
             style={{
               fontFamily: "Inter, sans-serif",
               fontSize: "13px",
@@ -1228,8 +2014,14 @@ export default function ConfirmDriveSyncModal({
               border: "none",
               borderRadius: "8px",
               padding: "9px 20px",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              opacity: isSubmitting ? 0.5 : 1,
+              cursor:
+                isSubmitting || hasUnconvertedImages || isConvertingImages
+                  ? "not-allowed"
+                  : "pointer",
+              opacity:
+                isSubmitting || hasUnconvertedImages || isConvertingImages
+                  ? 0.5
+                  : 1,
               display: "flex",
               alignItems: "center",
               gap: "6px",
