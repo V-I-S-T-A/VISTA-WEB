@@ -1,0 +1,113 @@
+@media (max-width: 600px) {
+  .drive-sync-modal-overlay {
+    box-sizing: border-box !important;
+    align-items: center !important;
+    overflow-y: auto !important;
+    padding: max(8px, env(safe-area-inset-top)) 8px
+      max(8px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .drive-sync-modal-panel {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-height: calc(100vh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    min-height: 0 !important;
+  }
+
+  .drive-sync-modal-header {
+    padding: 14px 16px !important;
+    gap: 10px !important;
+  }
+
+  .drive-sync-modal-body {
+    box-sizing: border-box !important;
+    min-height: 0 !important;
+    padding: 16px !important;
+    gap: 14px !important;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .drive-sync-modal-footer {
+    flex-wrap: wrap !important;
+    padding: 12px 16px !important;
+  }
+
+  .drive-sync-modal-footer > button {
+    flex: 1 1 120px !important;
+    justify-content: center !important;
+  }
+
+  .drive-sync-image-grid {
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(min(100%, 145px), 1fr)
+    ) !important;
+  }
+
+  .drive-sync-image-actions {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .drive-sync-selected-file {
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+
+  .drive-sync-selected-file > input {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .drive-sync-camera-overlay,
+  .drive-sync-captured-overlay {
+    box-sizing: border-box !important;
+    padding: max(8px, env(safe-area-inset-top)) 8px
+      max(8px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .drive-sync-camera-panel,
+  .drive-sync-captured-panel {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 560px !important;
+    max-height: calc(100vh - 16px) !important;
+    max-height: calc(100dvh - 16px) !important;
+    overflow-y: auto !important;
+    padding: 14px !important;
+  }
+
+  .drive-sync-camera-video {
+    width: 100% !important;
+    max-height: 55vh !important;
+    object-fit: contain;
+  }
+
+  .drive-sync-photo-preview-large {
+    height: auto !important;
+    max-height: 58vh;
+  }
+}
+
+@media (max-width: 380px) {
+  .drive-sync-modal-header {
+    padding: 12px !important;
+  }
+
+  .drive-sync-modal-body {
+    padding: 12px !important;
+  }
+
+  .drive-sync-modal-footer {
+    padding: 10px 12px !important;
+  }
+
+  .drive-sync-image-actions > button {
+    flex: 1 1 100% !important;
+    justify-content: center !important;
+  }
+}

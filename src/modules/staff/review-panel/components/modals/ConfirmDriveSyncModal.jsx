@@ -17,6 +17,7 @@ import {
 
 import { useDriveConnection } from "../../../../../hooks/useDrive";
 import { imagesToPdf } from "../../../../../utils/imagesToPdf";
+import "./ConfirmDriveSyncModal.css";
 
 const MAX_FILES = 10;
 const APPROVED_FOLDER_NAME = "Approved";
@@ -31,7 +32,7 @@ const formatSize = (bytes) =>
     ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
     : `${(bytes / 1024).toFixed(1)} KB`;
 
-function ImagePreview({ file }) {
+function ImagePreview({ file, large = false }) {
   const [previewUrl, setPreviewUrl] = useState("");
 
   useEffect(() => {
@@ -42,6 +43,7 @@ function ImagePreview({ file }) {
 
   return previewUrl ? (
     <img
+      className={large ? "drive-sync-photo-preview-large" : "drive-sync-photo-preview"}
       src={previewUrl}
       alt={`Preview of ${file.name}`}
       style={{
@@ -64,6 +66,7 @@ function SelectedFileRow({
 }) {
   return (
     <li
+      className="drive-sync-selected-file"
       style={{
         display: "flex",
         alignItems: "center",
@@ -264,14 +267,20 @@ export default function ConfirmDriveSyncModal({
   const [cameraReplaceKey, setCameraReplaceKey] = useState(null);
   const [capturedImage, setCapturedImage] = useState(null);
   const [capturedReplaceKey, setCapturedReplaceKey] = useState(null);
+  const [cameraTarget, setCameraTarget] = useState("final");
+  const [capturedTarget, setCapturedTarget] = useState("final");
   const [isConvertingImages, setIsConvertingImages] = useState(false);
   const replaceImageInputRef = useRef(null);
   const [replaceImageKey, setReplaceImageKey] = useState(null);
+  const [replaceImageTarget, setReplaceImageTarget] = useState("final");
   const [draggingImageKey, setDraggingImageKey] = useState(null);
+  const [draggingImageTarget, setDraggingImageTarget] = useState("final");
   const [dragOverImageKey, setDragOverImageKey] = useState(null);
   const imageReviewRef = useRef(null);
+  const reportImageReviewRef = useRef(null);
   const imageFiles = finalFiles.filter(isImage);
-  const hasUnconvertedImages = imageFiles.length > 0;
+  const reportImageFiles = reportFiles.filter(isImage);
+  const hasUnconvertedImages = imageFiles.length > 0 || reportImageFiles.length > 0;
 
   const stopCamera = () => {
     cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
@@ -289,9 +298,10 @@ export default function ConfirmDriveSyncModal({
       cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
   }, [isOpen]);
 
-  const openCamera = async (replaceKey = null) => {
+  const openCamera = async (replaceKey = null, target = "final") => {
     setCameraError("");
     setCameraReplaceKey(replaceKey);
+    setCameraTarget(target);
     if (!navigator.mediaDevices?.getUserMedia) {
       setCameraError(
         "Camera access is unavailable in this browser or page context.",
@@ -335,6 +345,7 @@ export default function ConfirmDriveSyncModal({
         });
         setCapturedImage(file);
         setCapturedReplaceKey(cameraReplaceKey);
+        setCapturedTarget(cameraTarget);
         stopCamera();
       },
       "image/jpeg",
@@ -363,20 +374,22 @@ export default function ConfirmDriveSyncModal({
 
   const acceptCapturedImage = () => {
     if (!capturedImage) return;
+    const setFiles = capturedTarget === "report" ? setReportFiles : setFinalFiles;
     if (capturedReplaceKey) {
-      setFinalFiles((files) =>
+      setFiles((files) =>
         files.map((existing) =>
           fileKey(existing) === capturedReplaceKey ? capturedImage : existing,
         ),
       );
     } else {
-      addFiles([capturedImage]);
+      if (capturedTarget === "report") addReportFiles([capturedImage]);
+      else addFiles([capturedImage]);
     }
     setCapturedImage(null);
     setCapturedReplaceKey(null);
     setCameraReplaceKey(null);
     window.requestAnimationFrame(() =>
-      imageReviewRef.current?.scrollIntoView({
+      (capturedTarget === "report" ? reportImageReviewRef : imageReviewRef).current?.scrollIntoView({
         behavior: "smooth",
         block: "center",
       }),
@@ -385,17 +398,19 @@ export default function ConfirmDriveSyncModal({
 
   const retakeCapturedImage = () => {
     const replaceKey = capturedReplaceKey;
+    const target = capturedTarget;
     setCapturedImage(null);
     setCapturedReplaceKey(null);
-    openCamera(replaceKey);
+    openCamera(replaceKey, target);
   };
 
   const removeFile = (key) =>
     setFinalFiles((files) => files.filter((f) => fileKey(f) !== key));
 
-  const reorderImage = (targetKey) => {
-    if (!draggingImageKey || draggingImageKey === targetKey) return;
-    setFinalFiles((files) => {
+  const reorderImage = (targetKey, target = "final") => {
+    if (!draggingImageKey || draggingImageKey === targetKey || draggingImageTarget !== target) return;
+    const setFiles = target === "report" ? setReportFiles : setFinalFiles;
+    setFiles((files) => {
       const images = files.filter(isImage);
       const from = images.findIndex(
         (file) => fileKey(file) === draggingImageKey,
@@ -414,7 +429,8 @@ export default function ConfirmDriveSyncModal({
   const replaceImage = (event) => {
     const [replacement] = Array.from(event.target.files ?? []);
     if (replacement && isImage(replacement) && replaceImageKey) {
-      setFinalFiles((files) =>
+      const setFiles = replaceImageTarget === "report" ? setReportFiles : setFinalFiles;
+      setFiles((files) =>
         files.map((file) =>
           fileKey(file) === replaceImageKey ? replacement : file,
         ),
@@ -426,16 +442,20 @@ export default function ConfirmDriveSyncModal({
     event.target.value = "";
   };
 
-  const convertImagesToPdf = async () => {
-    if (!imageFiles.length || isConvertingImages) return;
+  const convertImagesToPdf = async (target = "final") => {
+    const filesToConvert = target === "report" ? reportImageFiles : imageFiles;
+    const setFiles = target === "report" ? setReportFiles : setFinalFiles;
+    const setError = target === "report" ? setReportFileError : setFileError;
+    if (!filesToConvert.length || isConvertingImages) return;
     setIsConvertingImages(true);
-    setFileError("");
+    setError("");
     try {
-      const firstImageIndex = finalFiles.findIndex(isImage);
+      const currentFiles = target === "report" ? reportFiles : finalFiles;
+      const firstImageIndex = currentFiles.findIndex(isImage);
       const firstName =
-        imageFiles[0].name.replace(/\.[^.]+$/, "") || "Scanned_Documents";
-      const pdfFile = await imagesToPdf(imageFiles, `${firstName}.pdf`);
-      setFinalFiles((files) => {
+        filesToConvert[0].name.replace(/\.[^.]+$/, "") || "Scanned_Documents";
+      const pdfFile = await imagesToPdf(filesToConvert, `${firstName}.pdf`);
+      setFiles((files) => {
         const withoutImages = files.filter((file) => !isImage(file));
         const insertAt = Math.min(firstImageIndex, withoutImages.length);
         return [
@@ -445,7 +465,7 @@ export default function ConfirmDriveSyncModal({
         ];
       });
     } catch (error) {
-      setFileError(error.message || "Could not convert the images to PDF.");
+      setError(error.message || "Could not convert the images to PDF.");
     } finally {
       setIsConvertingImages(false);
     }
@@ -459,13 +479,13 @@ export default function ConfirmDriveSyncModal({
 
   const addReportFiles = (incoming) => {
     const candidates = Array.from(incoming ?? []);
-    const pdfs = candidates.filter(isPdf);
+    const supportedFiles = candidates.filter(isSupportedUpload);
     const byKey = new Map(reportFiles.map((f) => [fileKey(f), f]));
-    pdfs.forEach((f) => byKey.set(fileKey(f), f));
+    supportedFiles.forEach((f) => byKey.set(fileKey(f), f));
     const merged = [...byKey.values()];
 
-    if (pdfs.length < candidates.length)
-      setReportFileError("Only PDF files (.pdf) are accepted.");
+    if (supportedFiles.length < candidates.length)
+      setReportFileError("Choose PDF or image files for the report.");
     else if (merged.length > MAX_FILES)
       setReportFileError(`You can attach up to ${MAX_FILES} files.`);
     else setReportFileError("");
@@ -543,6 +563,7 @@ export default function ConfirmDriveSyncModal({
 
   return (
     <div
+      className="drive-sync-modal-overlay"
       style={{
         position: "fixed",
         inset: 0,
@@ -559,6 +580,7 @@ export default function ConfirmDriveSyncModal({
     >
       {capturedImage && (
         <div
+          className="drive-sync-captured-overlay"
           role="dialog"
           aria-modal="true"
           aria-label="Review captured photo"
@@ -574,6 +596,7 @@ export default function ConfirmDriveSyncModal({
           }}
         >
           <div
+            className="drive-sync-captured-panel"
             style={{
               width: "100%",
               maxWidth: 600,
@@ -596,13 +619,17 @@ export default function ConfirmDriveSyncModal({
                   fontSize: 16,
                 }}
               >
-                Review your photo
+                {capturedTarget === "report"
+                  ? "Review accomplishment report photo"
+                  : "Review your photo"}
               </h3>
               <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 12 }}>
-                Retake the photo or add it to your selected images.
+                {capturedTarget === "report"
+                  ? "Retake it or add it to the report images for the Report folder."
+                  : "Retake the photo or add it to your selected images."}
               </p>
             </div>
-            <ImagePreview file={capturedImage} />
+            <ImagePreview file={capturedImage} large />
             <span style={{ color: "#475569", fontSize: 12 }}>
               {capturedImage.name}
             </span>
@@ -650,6 +677,7 @@ export default function ConfirmDriveSyncModal({
       )}
       {isCameraOpen && (
         <div
+          className="drive-sync-camera-overlay"
           style={{
             position: "fixed",
             inset: 0,
@@ -662,6 +690,7 @@ export default function ConfirmDriveSyncModal({
           }}
         >
           <div
+            className="drive-sync-camera-panel"
             style={{
               width: "100%",
               maxWidth: 560,
@@ -683,6 +712,7 @@ export default function ConfirmDriveSyncModal({
               Take a photo
             </h3>
             <video
+              className="drive-sync-camera-video"
               ref={cameraVideoRef}
               autoPlay
               playsInline
@@ -737,6 +767,7 @@ export default function ConfirmDriveSyncModal({
         </div>
       )}
       <div
+        className="drive-sync-modal-panel"
         style={{
           background: "#ffffff",
           borderRadius: "14px",
@@ -751,6 +782,7 @@ export default function ConfirmDriveSyncModal({
       >
         {/* Modal Header */}
         <div
+          className="drive-sync-modal-header"
           style={{
             background: "#1f5cae",
             padding: "18px 24px",
@@ -829,6 +861,7 @@ export default function ConfirmDriveSyncModal({
 
         {/* Modal Body */}
         <div
+          className="drive-sync-modal-body"
           style={{
             padding: "24px",
             overflowY: "auto",
@@ -999,14 +1032,12 @@ export default function ConfirmDriveSyncModal({
                   setIsReportDragging(false);
                   addReportFiles(e.dataTransfer.files);
                 }}
-                onClick={() => reportFileInputRef.current?.click()}
                 style={{
                   border: `2px dashed ${isReportDragging ? "#1f5cae" : "#93c5fd"}`,
                   backgroundColor: isReportDragging ? "#eff6ff" : "#ffffff",
                   borderRadius: "8px",
                   padding: "18px 14px",
                   textAlign: "center",
-                  cursor: "pointer",
                   display: "flex",
                   flexDirection: "column",
                   alignItems: "center",
@@ -1017,16 +1048,14 @@ export default function ConfirmDriveSyncModal({
                   ref={reportFileInputRef}
                   type="file"
                   multiple
-                  accept=".pdf,application/pdf"
+                  accept=".pdf,application/pdf,image/*"
                   onChange={(e) => {
                     addReportFiles(e.target.files);
                     e.target.value = "";
                   }}
                   style={{ display: "none" }}
                 />
-                <UploadCloud
-                  style={{ width: "18px", height: "18px", color: "#1f5cae" }}
-                />
+                <UploadCloud style={{ width: "18px", height: "18px", color: "#1f5cae" }} />
                 <p
                   style={{
                     fontFamily: "Inter, sans-serif",
@@ -1036,8 +1065,12 @@ export default function ConfirmDriveSyncModal({
                     margin: 0,
                   }}
                 >
-                  Click to browse or drop Accomplishment Report PDFs here
+                  Drop report PDFs or images here
                 </p>
+                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
+                  <button type="button" onClick={() => reportFileInputRef.current?.click()} style={{ border: "1px solid #bfdbfe", borderRadius: 6, padding: "7px 12px", background: "#fff", color: "#1e3a8a", cursor: "pointer", fontWeight: 700 }}>Select file</button>
+                  <button type="button" onClick={() => openCamera(null, "report")} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid #bfdbfe", borderRadius: 6, padding: "7px 12px", background: "#fff", color: "#1e3a8a", cursor: "pointer", fontWeight: 700 }}><Camera size={15} /> Open camera</button>
+                </div>
                 <p
                   style={{
                     fontFamily: "Inter, sans-serif",
@@ -1047,9 +1080,36 @@ export default function ConfirmDriveSyncModal({
                   }}
                 >
                   These files are archived in the Accomplishment Report folder,
-                  not the Approved subfolder.
+                  not the Approved subfolder. Images can be reviewed and combined into a PDF.
                 </p>
               </div>
+              {reportImageFiles.length > 0 && (
+                <div ref={reportImageReviewRef} style={{ border: "1px solid #bfdbfe", borderRadius: 8, padding: 12, background: "#fff", display: "flex", flexDirection: "column", gap: 10 }}>
+                  <div>
+                    <p style={{ margin: 0, color: "#1e3a8a", fontSize: 13, fontWeight: 700 }}>Review accomplishment report images</p>
+                    <p style={{ margin: "3px 0 0", color: "#64748b", fontSize: 11 }}>Arrange report pages, retake or replace photos, then convert them into a PDF for the Report folder.</p>
+                  </div>
+                  <div className="drive-sync-image-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(145px, 1fr))", gap: 10 }}>
+                    {reportImageFiles.map((file) => (
+                      <div key={fileKey(file)} onDragOver={(event) => { event.preventDefault(); setDragOverImageKey(fileKey(file)); }} onDragLeave={() => setDragOverImageKey((key) => key === fileKey(file) ? null : key)} onDrop={(event) => { event.preventDefault(); reorderImage(fileKey(file), "report"); }} style={{ minWidth: 0, border: `1px solid ${dragOverImageKey === fileKey(file) ? "#1f5cae" : "#dbeafe"}`, borderRadius: 8, padding: 8, background: dragOverImageKey === fileKey(file) ? "#eff6ff" : "#fff", display: "flex", flexDirection: "column", gap: 7 }}>
+                        <button type="button" draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; setDraggingImageKey(fileKey(file)); setDraggingImageTarget("report"); }} onDragEnd={() => { setDraggingImageKey(null); setDragOverImageKey(null); }} aria-label={`Drag to reorder ${file.name}`} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 4, border: "1px solid #d1d5db", borderRadius: 5, padding: "3px 6px", background: "#fff", color: "#475569", cursor: "grab", fontSize: 10 }}><GripVertical size={13} /> Drag to reorder pages</button>
+                        <ImagePreview file={file} />
+                        <span title={file.name} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11, color: "#334155" }}>{file.name}</span>
+                        <button type="button" onClick={() => openCamera(fileKey(file), "report")} style={{ border: "1px solid #bfdbfe", borderRadius: 5, padding: "6px 7px", background: "#fff", color: "#1e3a8a", cursor: "pointer", fontSize: 11 }}>Retake with camera</button>
+                        <button type="button" onClick={() => { setReplaceImageKey(fileKey(file)); setReplaceImageTarget("report"); replaceImageInputRef.current?.click(); }} style={{ border: "1px solid #d1d5db", borderRadius: 5, padding: "6px 7px", background: "#fff", color: "#334155", cursor: "pointer", fontSize: 11 }}>Replace image file</button>
+                        <button type="button" onClick={() => removeReportFile(fileKey(file))} style={{ border: 0, background: "transparent", color: "#b91c1c", cursor: "pointer", fontSize: 11 }}>Remove photo</button>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="drive-sync-image-actions" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
+                    <button type="button" onClick={() => openCamera(null, "report")} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid #bfdbfe", borderRadius: 6, padding: "8px 10px", background: "#fff", color: "#1e3a8a", cursor: "pointer", fontWeight: 700, fontSize: 12 }}><Camera size={14} /> Take another report photo</button>
+                    <button type="button" onClick={() => convertImagesToPdf("report")} disabled={isConvertingImages} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: 0, borderRadius: 6, padding: "8px 10px", background: "#1f5cae", color: "#fff", cursor: isConvertingImages ? "wait" : "pointer", fontWeight: 700, fontSize: 12, opacity: isConvertingImages ? 0.7 : 1 }}>
+                      {isConvertingImages ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                      {isConvertingImages ? "Converting…" : "Convert report images to PDF"}
+                    </button>
+                  </div>
+                </div>
+              )}
               {reportFiles.length > 0 && (
                 <ul
                   style={{
@@ -1073,6 +1133,7 @@ export default function ConfirmDriveSyncModal({
                         }))
                       }
                       onRemove={() => removeReportFile(fileKey(file))}
+                      onPreview={isPdf(file) ? () => previewPdf(file) : undefined}
                       tag="Report Document"
                     />
                   ))}
@@ -1291,6 +1352,7 @@ export default function ConfirmDriveSyncModal({
                   </p>
                 </div>
                 <div
+                  className="drive-sync-image-grid"
                   style={{
                     display: "grid",
                     gridTemplateColumns:
@@ -1331,9 +1393,10 @@ export default function ConfirmDriveSyncModal({
                       <button
                         type="button"
                         draggable
-                        onDragStart={(event) => {
+                    onDragStart={(event) => {
                           event.dataTransfer.effectAllowed = "move";
                           setDraggingImageKey(fileKey(file));
+                      setDraggingImageTarget("final");
                         }}
                         onDragEnd={() => {
                           setDraggingImageKey(null);
@@ -1389,6 +1452,7 @@ export default function ConfirmDriveSyncModal({
                         type="button"
                         onClick={() => {
                           setReplaceImageKey(fileKey(file));
+                          setReplaceImageTarget("final");
                           replaceImageInputRef.current?.click();
                         }}
                         style={{
@@ -1419,7 +1483,15 @@ export default function ConfirmDriveSyncModal({
                     </div>
                   ))}
                 </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                <div
+                  className="drive-sync-image-actions"
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "center",
+                    gap: 8,
+                  }}
+                >
                   <button
                     type="button"
                     onClick={() => openCamera()}
@@ -1968,6 +2040,7 @@ export default function ConfirmDriveSyncModal({
 
         {/* Modal Footer */}
         <div
+          className="drive-sync-modal-footer"
           style={{
             padding: "16px 24px",
             borderTop: "1px solid #e5e7eb",
