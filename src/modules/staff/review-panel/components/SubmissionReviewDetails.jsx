@@ -21,26 +21,19 @@ import { getOptimizedViewUrl, isPdfUrl } from "../../../../utils/fileOptimizer";
 
 const STATUS_ACTIONS = [
   "Select Action...",
-  "Start Review Process",
-  "Approve Submission",
-  "Mark as Flagged",
-  "Return for Revision",
-  "Reject Submission",
+  "On Process",
+  "Approved",
+  "Returned",
 ];
 
 const ACTION_TO_STATUS_MAP = {
-  "Start Review Process": "under_review",
-  "Approve Submission": "approved",
-  "Mark as Flagged": "rejected",
-  "Reject Submission": "rejected",
-  "Return for Revision": "resubmission_required",
+  "On Process": "under_review",
+  Approved: "approved",
+  Returned: "rejected",
 };
 
 // Only show Drive modal when approving a submission that needs a final Drive upload confirmation.
-const REQUIRES_DRIVE_CONFIRM = new Set([
-  "Approve Submission",
-  "Mark as Verified",
-]);
+const REQUIRES_DRIVE_CONFIRM = new Set(["Approved", "Returned"]);
 
 export default function SubmissionReviewDetails({ submission, onBack }) {
   const queryClient = useQueryClient();
@@ -206,13 +199,15 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       let queueFailures = 0;
       for (const { file, fileName, uploadKind } of uploads) {
         try {
-          queuedTasks.push(await startBackgroundDriveUpload({
-            submissionId: submission.id,
-            file,
-            fileName,
-            folderId: driveFolderData?.folder_id,
-            uploadKind,
-          }));
+          queuedTasks.push(
+            await startBackgroundDriveUpload({
+              submissionId: submission.id,
+              file,
+              fileName,
+              folderId: driveFolderData?.folder_id,
+              uploadKind,
+            }),
+          );
         } catch (uploadError) {
           queueFailures += 1;
           console.error("Could not queue Drive upload:", uploadError);
@@ -221,7 +216,9 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       watchTasks(queuedTasks);
 
       showNotification(
-        queueFailures ? "Decision Submitted with Upload Issues" : "Decision Submitted",
+        queueFailures
+          ? "Decision Submitted with Upload Issues"
+          : "Decision Submitted",
         uploads.length
           ? `${queuedTasks.length} file${queuedTasks.length === 1 ? " is" : "s are"} uploading to Google Drive in the background.${queueFailures ? ` ${queueFailures} could not be queued.` : ""}`
           : "Status updated.",
