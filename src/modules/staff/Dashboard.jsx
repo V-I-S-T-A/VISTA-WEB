@@ -1,8 +1,9 @@
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import SubmissionSummaryCards from "./dashboard/components/UserSummaryCards";
+import AnalyticsVisualGraphs from "./dashboard/components/AnalyticsVisualGraphs";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
 import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
 import AuditLogWidget from "./dashboard/components/AuditLogWidget";
@@ -14,6 +15,15 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const { data: currentUser, isLoading } = useCurrentUser();
   const { isOpen, open, close } = useSidebar();
+  const [selectedStatus, setSelectedStatus] = useState("All Status");
+  const tableRef = useRef(null);
+
+  const handleStatusSelect = (status) => {
+    setSelectedStatus(status);
+    if (tableRef.current) {
+      tableRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
 
   useEffect(() => {
     if (!isLoading) {
@@ -46,10 +56,23 @@ export default function Dashboard() {
           style={{ padding: "24px 28px" }}
         >
           <div className="w-full">
-            <SubmissionSummaryCards />
+            <SubmissionSummaryCards
+              selectedStatus={selectedStatus}
+              onSelectStatus={handleStatusSelect}
+            />
 
             <div style={{ marginTop: "20px" }}>
-              <RecentSubmissionsTable />
+              <AnalyticsVisualGraphs
+                selectedStatus={selectedStatus}
+                onStatusSelect={handleStatusSelect}
+              />
+            </div>
+
+            <div ref={tableRef} style={{ marginTop: "20px" }}>
+              <RecentSubmissionsTable
+                activeStatusFilter={selectedStatus}
+                onStatusChange={setSelectedStatus}
+              />
             </div>
 
             <div

@@ -28,6 +28,8 @@ export const API_ENDPOINTS = {
     STATUS: (submissionId) =>
       `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/${submissionId}/status/`,
     EXPORT_LIST: `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/export/list/`,
+    STATISTICS: `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/statistics/`,
+    EXPORT_DATA: `${API_CONFIG.ENDPOINTS.SUBMISSIONS}/export/data/`,
   },
   AUDIT_LOGS: {
     LIST: `${API_CONFIG.ENDPOINTS.AUDIT_LOGS}/`,

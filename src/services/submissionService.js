@@ -3,10 +3,15 @@ import { API_ENDPOINTS } from "../config/api";
 
 const STATUS_API_MAP = {
   "All Status": "",
+  all: "",
+  Process: "process",
+  process: "process",
   Pending: "pending",
   "Under Review": "under_review",
   Approved: "approved",
-  Returned: "rejected",
+  approved: "approved",
+  Returned: "returned",
+  returned: "returned",
   Rejected: "rejected",
   "Resubmission Required": "resubmission_required",
 };
@@ -98,5 +103,25 @@ export const submissionService = {
       params,
       responseType: "blob",
     });
+  },
+
+  async getStatistics({ dateFrom = "", dateTo = "", category = "", academicYear = "" } = {}) {
+    const params = new URLSearchParams();
+    if (dateFrom) params.append("date_from", dateFrom);
+    if (dateTo) params.append("date_to", dateTo);
+    if (category && category !== "All Categories") params.append("category", category);
+    if (academicYear) params.append("academic_year", academicYear);
+
+    const response = await apiClient.get(API_ENDPOINTS.SUBMISSIONS.STATISTICS, { params });
+    return response.data;
+  },
+
+  async getExportData({ dateFrom = "", dateTo = "" } = {}) {
+    const params = new URLSearchParams();
+    if (dateFrom) params.append("date_from", dateFrom);
+    if (dateTo) params.append("date_to", dateTo);
+
+    const response = await apiClient.get(API_ENDPOINTS.SUBMISSIONS.EXPORT_DATA, { params });
+    return response.data;
   },
 };
