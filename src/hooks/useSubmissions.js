@@ -28,6 +28,28 @@ export const useSubmissions = ({
   });
 };
 
+export const useSubmissionStatistics = ({
+  dateFrom = "",
+  dateTo = "",
+  category = "",
+  academicYear = "",
+} = {}) => {
+  return useQuery({
+    queryKey: [
+      "submission-statistics",
+      { dateFrom, dateTo, category, academicYear },
+    ],
+    queryFn: () =>
+      submissionService.getStatistics({
+        dateFrom,
+        dateTo,
+        category,
+        academicYear,
+      }),
+    staleTime: 30 * 1000,
+  });
+};
+
 export const useUpdateSubmissionStatus = () => {
   const queryClient = useQueryClient();
 
@@ -36,6 +58,7 @@ export const useUpdateSubmissionStatus = () => {
       submissionService.updateStatus(submissionId, status, remarksText),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["submission-statistics"] });
       queryClient.invalidateQueries({ queryKey: ["review-logs"] });
       queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
     },
