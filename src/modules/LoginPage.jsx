@@ -119,9 +119,9 @@ export default function LoginPage() {
       if (role === "admin") {
         navigate("/admin/dashboard");
       } else if (role === "staff") {
-        navigate("/staff/dashboard");
+        navigate("/staff/profile");
       } else if (role === "student") {
-        navigate("/student/dashboard");
+        navigate("/student/profile");
       } else {
         navigate("/login");
       }
@@ -197,14 +197,12 @@ export default function LoginPage() {
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="login-password-toggle"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={
+                      showPassword ? "Hide password" : "Show password"
+                    }
                     tabIndex={-1}
                   >
-                    {showPassword ? (
-                      <EyeOff size={18} />
-                    ) : (
-                      <Eye size={18} />
-                    )}
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
               </div>

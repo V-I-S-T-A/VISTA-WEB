@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
-import {
-  SquarePen,
-  Trash2,
-  Loader,
-  AlertCircle,
-} from "lucide-react";
+import { SquarePen, Trash2, Loader, AlertCircle } from "lucide-react";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
 import EditUserModal from "../modals/EditUserModal";
 import { useUsers } from "../../../../hooks/useUsers";
@@ -27,8 +22,6 @@ import {
 const PAGE_SIZE = 50;
 const CONTENT_PADDING = "30px";
 const SEARCH_DEBOUNCE_MS = 600;
-
-const ROLE_OPTIONS = ["All Roles", "staff", "student"];
 
 // Pulls the filename the backend suggested via Content-Disposition, falling
 // back to a sensible default if the header isn't present.
@@ -93,10 +86,11 @@ const UserRow = memo(function UserRow({
       </td>
       <td className="px-5 py-2.5">
         <span
-          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${user.role === "staff"
+          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${
+            user.role === "staff"
               ? "bg-[#dfe7fb] text-[#12345b]"
               : "bg-[#e8e3ff] text-[#4a3f99]"
-            }`}
+          }`}
           style={{ fontSize: "13px", minWidth: "80px" }}
         >
           {user.role}
@@ -116,10 +110,10 @@ const UserRow = memo(function UserRow({
       >
         {user.last_login
           ? new Date(user.last_login).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-          })
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })
           : "Never"}
       </td>
       <td className="px-5 py-2.5 whitespace-nowrap min-w-[120px]">
@@ -165,6 +159,15 @@ export default function RecentSubmissionsTable() {
   const [searchQuery, setSearchQuery] = useState(""); // For API calls
   const [roleFilter, setRoleFilter] = useState("All Roles");
 
+  const [statusFilter, setStatusFilter] = useState("All Status");
+
+  const isActiveParam =
+    statusFilter === "Active"
+      ? true
+      : statusFilter === "Inactive"
+        ? false
+        : null;
+
   // Filter state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [dateFilter] = useState(""); // Kept for api compatibility
@@ -189,8 +192,7 @@ export default function RecentSubmissionsTable() {
     pageSize: PAGE_SIZE,
     search: searchQuery.trim(),
     role: roleFilter === "All Roles" ? "" : roleFilter,
-    date: dateFilter, // Let the backend handle the date filtering
-    isActive: true, // Only fetch active users to follow the backend's soft-delete
+    isActive: isActiveParam,
   });
 
   // Setup mutations
@@ -299,16 +301,17 @@ export default function RecentSubmissionsTable() {
   const handleSaveEdit = useCallback(
     async (data) => {
       if (!editUser?.user_id) return;
-
+      const [first, ...rest] = (data.full_name || "").trim().split(/\s+/);
+      const last = rest.join(" ");
       try {
         await updateUserMutation.mutateAsync({
           userId: editUser.user_id,
           userData: {
-            full_name: data.full_name || data.fullName,
+            first_name: first,
+            ...(last ? { last_name: last } : {}),
             role: data.role,
             org_id: data.org_id ?? null,
-            is_active:
-              data.is_active !== undefined ? data.is_active : data.isActive,
+            is_active: data.is_active,
           },
         });
         setEditUser(null);
@@ -322,12 +325,16 @@ export default function RecentSubmissionsTable() {
   // Delete handler
   const handleDeleteUser = useCallback(
     async (userId) => {
-      if (!confirm("Are you sure you want to delete this user?")) return;
-
+      if (!confirm("Permanently delete this user? This cannot be undone."))
+        return;
       try {
         await deleteUserMutation.mutateAsync(userId);
       } catch (err) {
         console.error("Error deleting user:", err);
+        window.alert(
+          err.response?.data?.detail ||
+            "Could not delete this account. Check that you are an admin and try again.",
+        );
       }
     },
     [deleteUserMutation],
@@ -342,7 +349,7 @@ export default function RecentSubmissionsTable() {
       const response = await userService.exportUsers({
         search: searchQuery.trim(),
         role: roleFilter,
-        isActive: true,
+        isActive: isActiveParam,
       });
       const filename = extractFilename(
         response.headers?.["content-disposition"],
@@ -383,7 +390,9 @@ export default function RecentSubmissionsTable() {
     setEditUser(null);
   }, []);
 
-  const activeFilterCount = roleFilter !== "All Roles" ? 1 : 0;
+  const activeFilterCount =
+    (roleFilter !== "All Roles" ? 1 : 0) +
+    (statusFilter !== "All Status" ? 1 : 0);
 
   return (
     <>
@@ -407,18 +416,22 @@ export default function RecentSubmissionsTable() {
                 <FilterPopover
                   onClear={() => {
                     handleRoleFilterChange("All Roles");
+                    setStatusFilter("All Status");
                     setIsFilterOpen(false);
                   }}
                   onClose={() => setIsFilterOpen(false)}
                 >
-                  <FilterPopoverRow label="Role">
+                  <FilterPopoverRow label="Status">
                     <FilterSelect
-                      value={roleFilter}
-                      onChange={(e) => handleRoleFilterChange(e.target.value)}
+                      value={statusFilter}
+                      onChange={(e) => {
+                        setStatusFilter(e.target.value);
+                        setCurrentPage(1);
+                      }}
                     >
-                      {ROLE_OPTIONS.map((option) => (
-                        <option key={option} value={option}>
-                          {option}
+                      {STATUS_OPTIONS.map((o) => (
+                        <option key={o} value={o}>
+                          {o}
                         </option>
                       ))}
                     </FilterSelect>
@@ -427,10 +440,7 @@ export default function RecentSubmissionsTable() {
               )}
             </div>
 
-            <ExportButton
-              onClick={handleExport}
-              isLoading={isExporting}
-            />
+            <ExportButton onClick={handleExport} isLoading={isExporting} />
           </>
         }
         totalCount={totalCount}
@@ -516,8 +526,8 @@ export default function RecentSubmissionsTable() {
                   user={user}
                   onEdit={setEditUser}
                   onDelete={handleDeleteUser}
-                  isUpdating={updateUserMutation.isLoading}
-                  isDeleting={deleteUserMutation.isLoading}
+                  isUpdating={updateUserMutation.isPending}
+                  isDeleting={deleteUserMutation.isPending}
                 />
               ))}
           </tbody>

@@ -38,7 +38,12 @@ function EyeToggle({ shown, onToggle }) {
   );
 }
 
-export default function ChangePasswordSection() {
+/**
+ * Props:
+ *  - forceOpen {boolean} — when true (e.g. profile.must_change_password),
+ *    the section expands automatically and shows a temporary-password notice.
+ */
+export default function ChangePasswordSection({ forceOpen = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState("form"); // "form" | "verify"
   const [showOld, setShowOld] = useState(false);
@@ -56,6 +61,12 @@ export default function ChangePasswordSection() {
 
   const requestCode = useRequestPasswordChangeCode();
   const confirmChange = useConfirmPasswordChange();
+
+  // Profile data loads asynchronously, so open the panel as soon as the
+  // "must change password" flag arrives.
+  useEffect(() => {
+    if (forceOpen) setIsOpen(true);
+  }, [forceOpen]);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -182,20 +193,33 @@ export default function ChangePasswordSection() {
         >
           {step === "form" ? "Change Password" : "Verify Your Email"}
         </p>
-        <button
-          type="button"
-          onClick={resetAll}
-          className="font-inter text-white/70 hover:text-white"
-          style={{
-            fontSize: "12px",
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Cancel
-        </button>
+        {/* Hide Cancel while a change is required, so it can't be dismissed */}
+        {!forceOpen && (
+          <button
+            type="button"
+            onClick={resetAll}
+            className="font-inter text-white/70 hover:text-white"
+            style={{
+              fontSize: "12px",
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+            }}
+          >
+            Cancel
+          </button>
+        )}
       </div>
+
+      {forceOpen && step === "form" && (
+        <p
+          className="font-inter text-white/90"
+          style={{ fontSize: "12px", lineHeight: 1.5, margin: 0 }}
+        >
+          You're signed in with a temporary password. Please set a new one to
+          secure your account.
+        </p>
+      )}
 
       {step === "form" ? (
         <>
@@ -204,7 +228,11 @@ export default function ChangePasswordSection() {
               type={showOld ? "text" : "password"}
               value={form.oldPassword}
               onChange={(e) => set("oldPassword", e.target.value)}
-              placeholder="Current password"
+              placeholder={
+                forceOpen
+                  ? "Temporary password (from email)"
+                  : "Current password"
+              }
               className={PILL_CLASS}
               style={{ ...pillStyle, paddingRight: "44px" }}
             />

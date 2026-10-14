@@ -11,7 +11,7 @@ Successfully integrated Django REST Framework backend with React frontend for us
 - `GET /api/users/` - List users with optional filters and search
 - `POST /api/users/` - Create new user
 - `PATCH /api/users/{user_id}/` - Update user
-- `DELETE /api/users/{user_id}/` - Delete user (soft delete)
+- `DELETE /api/users/{user_id}/` - Permanently delete user (admin only)
 
 ### Frontend Structure
 

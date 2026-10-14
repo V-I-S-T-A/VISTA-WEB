@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, UserPlus, Eye, EyeOff } from "lucide-react";
+import { X, UserPlus, Mail } from "lucide-react";
 import { useOrganizations } from "../../../../hooks/useOrganizations";
 
 const ROLES = ["staff", "student"];
@@ -125,8 +125,6 @@ const EMPTY_FORM = {
   firstName: "",
   lastName: "",
   email: "",
-  password: "",
-  confirmPassword: "",
   role: "",
   orgId: "",
   isActive: true,
@@ -141,8 +139,7 @@ export default function AddUserModal({
 }) {
   const [form, setForm] = useState(EMPTY_FORM);
   const [errors, setErrors] = useState({});
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
+
   const [saving, setSaving] = useState(false);
   const overlayRef = useRef(null);
   const firstInputRef = useRef(null);
@@ -156,8 +153,6 @@ export default function AddUserModal({
     if (isOpen) {
       setForm(EMPTY_FORM);
       setErrors({});
-      setShowPassword(false);
-      setShowConfirm(false);
       setTimeout(() => firstInputRef.current?.focus(), 50);
     }
   }, [isOpen]);
@@ -185,16 +180,6 @@ export default function AddUserModal({
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       errs.email = "Enter a valid email address.";
     }
-    if (!form.password) {
-      errs.password = "Password is required.";
-    } else if (form.password.length < 8) {
-      errs.password = "Password must be at least 8 characters.";
-    }
-    if (!form.confirmPassword) {
-      errs.confirmPassword = "Please confirm the password.";
-    } else if (form.password !== form.confirmPassword) {
-      errs.confirmPassword = "Passwords do not match.";
-    }
     if (!form.role) errs.role = "Role is required.";
     if (form.role === "student" && !form.orgId)
       errs.orgId = "Organization is required for students.";
@@ -213,8 +198,6 @@ export default function AddUserModal({
         first_name: form.firstName.trim(),
         last_name: form.lastName.trim(),
         email: form.email.trim(),
-        password: form.password,
-        password_confirm: form.confirmPassword,
         role: form.role,
         org_id: form.role === "student" ? form.orgId : null,
         is_active: form.isActive,
@@ -354,7 +337,9 @@ export default function AddUserModal({
                 color: "#991b1b",
               }}
             >
-              {error.message || "Failed to create user. Please try again."}
+              {error.response?.data?.detail ||
+                error.message ||
+                "Failed to create user. Please try again."}
             </div>
           )}
 
@@ -399,91 +384,40 @@ export default function AddUserModal({
             />
           </Field>
 
-          {/* Password row */}
+          {/* Temporary password notice */}
           <div
             style={{
-              display: "grid",
-              gridTemplateColumns: "1fr 1fr",
-              gap: "12px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "10px",
+              background: "#eff6ff",
+              border: "1.5px solid #bfdbfe",
+              borderRadius: "8px",
+              padding: "12px 14px",
             }}
           >
-            <Field label="Password *" error={errors.password}>
-              <div style={{ position: "relative" }}>
-                <FocusInput
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Min. 8 characters"
-                  value={form.password}
-                  onChange={(e) => set("password", e.target.value)}
-                  style={{ paddingRight: "38px" }}
-                  disabled={saving || isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((p) => !p)}
-                  style={{
-                    position: "absolute",
-                    right: "10px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#9ca3af",
-                    display: "flex",
-                    padding: 0,
-                  }}
-                  tabIndex={-1}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <EyeOff style={{ width: "15px", height: "15px" }} />
-                  ) : (
-                    <Eye style={{ width: "15px", height: "15px" }} />
-                  )}
-                </button>
-              </div>
-            </Field>
-
-            <Field label="Confirm Password *" error={errors.confirmPassword}>
-              <div style={{ position: "relative" }}>
-                <FocusInput
-                  type={showConfirm ? "text" : "password"}
-                  placeholder="Re-enter password"
-                  value={form.confirmPassword}
-                  onChange={(e) => set("confirmPassword", e.target.value)}
-                  style={{ paddingRight: "38px" }}
-                  disabled={saving || isLoading}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirm((p) => !p)}
-                  style={{
-                    position: "absolute",
-                    right: "10px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    background: "none",
-                    border: "none",
-                    cursor: "pointer",
-                    color: "#9ca3af",
-                    display: "flex",
-                    padding: 0,
-                  }}
-                  tabIndex={-1}
-                  aria-label={
-                    showConfirm
-                      ? "Hide confirm password"
-                      : "Show confirm password"
-                  }
-                >
-                  {showConfirm ? (
-                    <EyeOff style={{ width: "15px", height: "15px" }} />
-                  ) : (
-                    <Eye style={{ width: "15px", height: "15px" }} />
-                  )}
-                </button>
-              </div>
-            </Field>
+            <Mail
+              style={{
+                width: "16px",
+                height: "16px",
+                color: "#1f5cae",
+                flexShrink: 0,
+                marginTop: "1px",
+              }}
+            />
+            <p
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontSize: "12px",
+                lineHeight: 1.5,
+                color: "#1e3a8a",
+                margin: 0,
+              }}
+            >
+              A randomly generated temporary password will be emailed to this
+              address. The user will be asked to change it after their first
+              login.
+            </p>
           </div>
 
           {/* Role */}

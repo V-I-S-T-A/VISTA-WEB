@@ -20,6 +20,9 @@ export const userService = {
   } = {}) {
     const params = new URLSearchParams();
 
+    if (page) params.append("page", page);
+    if (pageSize) params.append("page_size", pageSize);
+
     if (search) params.append("search", search);
     if (role && role !== "All Roles") params.append("role", role);
     if (isActive !== null) params.append("is_active", isActive);

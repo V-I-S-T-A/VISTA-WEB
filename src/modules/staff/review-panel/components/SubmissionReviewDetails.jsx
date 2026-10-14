@@ -33,7 +33,7 @@ const ACTION_TO_STATUS_MAP = {
 };
 
 // Only show Drive modal when approving a submission that needs a final Drive upload confirmation.
-const REQUIRES_DRIVE_CONFIRM = new Set(["Approved", "Returned"]);
+const REQUIRES_DRIVE_CONFIRM = new Set(["Approved"]);
 
 export default function SubmissionReviewDetails({ submission, onBack }) {
   const queryClient = useQueryClient();
@@ -130,7 +130,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       );
       return;
     }
-    // Only show Drive folder modal when marking as Verified (approved)
+    // Only an approval requires the final Drive folder confirmation.
     if (REQUIRES_DRIVE_CONFIRM.has(statusAction)) {
       setShowConfirmModal(true);
     } else {

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import ProfileAvatarUpload from "./ProfileAvatarUpload";
 import osaLogo from "../../../../assets/shared/osa_logo.png";
 import ChangePasswordSection from "../../../../components/ChangePasswordSection";
+import DateOfBirthField from "../../../../components/DateOfBirthField";
 import { useProfile, useUpdateProfile } from "../../../../hooks/useProfile";
 
 const GENDER_OPTIONS = ["Male", "Female", "Prefer not to say"];
@@ -147,16 +148,15 @@ export default function ProfileForm() {
             />
           </div>
 
-          <ChangePasswordSection />
+          <ChangePasswordSection forceOpen={!!profile?.must_change_password} />
 
           {/* Date of Birth + Gender */}
           <div className="grid grid-cols-2" style={{ gap: "12px" }}>
-            <input
-              type="date"
+            <DateOfBirthField
+              key={form.dob}
               value={form.dob}
-              onChange={(e) => set("dob", e.target.value)}
-              className={PILL_CLASS}
-              style={{ ...pillStyle, color: form.dob ? "#111827" : "#9ca3af" }}
+              onChange={(value) => set("dob", value)}
+              disabled={isLoading}
             />
             <select
               value={form.gender}
