@@ -16,20 +16,24 @@ export default function UserManagementHeader() {
 
   async function handleAddUser(data) {
     try {
-      await createUserMutation.mutateAsync({
+      const createdUser = await createUserMutation.mutateAsync({
         first_name: data.first_name || data.firstName,
         last_name: data.last_name || data.lastName,
         email: data.email,
-        password: data.password,
-        password_confirm: data.password_confirm || data.confirmPassword,
         role: data.role,
         org_id: data.org_id ?? data.orgId ?? null,
         is_active:
           data.is_active !== undefined ? data.is_active : data.isActive,
       });
+      if (!createdUser.welcome_email_sent) {
+        window.alert(
+          "The account was created, but its temporary-password email could not be sent. Check the Django server log and email settings before sharing login details.",
+        );
+      }
       setShowAddModal(false);
     } catch (error) {
       console.error("Error creating user:", error.response?.data ?? error);
+      throw error;
     }
   }
 
