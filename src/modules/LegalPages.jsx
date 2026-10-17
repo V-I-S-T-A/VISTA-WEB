@@ -1,16 +1,19 @@
-import { useEffect } from "react";
+import { Children, useEffect } from "react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, Mail, ShieldCheck, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/footer";
+import backgroundImage from "../assets/shared/vista_background.png";
+import "./LegalPages.css";
 
 const CONTACT = "moyarojo@gmail.com";
 const UPDATED = "October 17, 2026";
 
 function Section({ id, title, children }) {
   return (
-    <section id={id} className="scroll-mt-24 border-t border-slate-200 pt-7">
-      <h2 className="mb-3 text-xl font-semibold text-[#142b49]">{title}</h2>
-      <div className="space-y-3 text-base leading-8 text-slate-700">{children}</div>
+    <section id={id} className="legal-section">
+      <h2><span className="legal-section-number" aria-hidden="true">{title.split(".")[0].padStart(2, "0")}</span>{title.replace(/^\d+\.\s*/, "")}</h2>
+      <div className="legal-section-copy">{children}</div>
     </section>
   );
 }
@@ -20,6 +23,9 @@ function Contact() {
 }
 
 function LegalLayout({ title, summary, children }) {
+  const sections = Children.toArray(children);
+  const isPrivacy = title === "Privacy Policy";
+  const DocumentIcon = isPrivacy ? ShieldCheck : FileText;
   useEffect(() => {
     const previousTitle = document.title;
     document.title = `${title} | VISTA`;
@@ -28,22 +34,32 @@ function LegalLayout({ title, summary, children }) {
   }, [title]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="legal-page">
       <Header />
-      <main id="main-content" className="mx-auto w-full max-w-4xl px-5 py-12 sm:px-8 sm:py-16">
-        <Link to="/" className="text-sm font-medium text-[#1a51a5] underline underline-offset-4">Back to VISTA</Link>
-        <article className="mt-7 rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-slate-500">VISTA · Account and document services</p>
-          <h1 className="text-3xl font-semibold tracking-tight text-[#142b49] sm:text-4xl">{title}</h1>
-          <p className="mt-4 text-sm text-slate-500">Effective and last updated: {UPDATED}</p>
-          <p className="mt-6 text-lg leading-8 text-slate-700">{summary}</p>
-          <div className="mt-9 space-y-8">{children}</div>
-        </article>
-        <nav aria-label="Legal documents" className="mt-7 flex flex-wrap gap-x-6 gap-y-3 text-sm text-[#1a51a5]">
-          <Link className="underline underline-offset-4" to="/privacy-policy">Privacy Policy</Link>
-          <Link className="underline underline-offset-4" to="/terms-of-service">Terms of Service</Link>
-          <Contact />
-        </nav>
+      <main id="main-content">
+        <section className="legal-hero" style={{ backgroundImage: `url(${backgroundImage})` }}>
+          <div className="legal-hero-inner">
+            <Link to="/" className="legal-back"><ArrowLeft size={16} aria-hidden="true" />Back to VISTA</Link>
+            <div className="legal-eyebrow"><span /> Transparency &amp; trust</div>
+            <h1>{title}</h1>
+            <p>{isPrivacy ? "Your information. Handled with care." : "Clear guidelines. Shared responsibilities."}</p>
+            <div className="legal-updated"><CalendarDays size={15} aria-hidden="true" />Effective &amp; last updated {UPDATED}</div>
+          </div>
+        </section>
+        <div className="legal-workspace">
+          <aside className="legal-sidebar">
+            <nav aria-label="On this page" className="legal-toc">
+              <p className="legal-nav-label">On this page</p>
+              {sections.map((section, index) => <a key={section.props.id} href={`#${section.props.id}`}><span>{String(index + 1).padStart(2, "0")}</span>{section.props.title.replace(/^\d+\.\s*/, "")}</a>)}
+            </nav>
+            <div className="legal-help"><Mail size={20} aria-hidden="true" /><h2>Have a question?</h2><p>Contact the VISTA project administrator for assistance.</p><Contact /></div>
+          </aside>
+          <article className="legal-document" aria-label={title}>
+            <div className="legal-intro"><div className="legal-document-icon"><DocumentIcon size={23} aria-hidden="true" /></div><div><p className="legal-nav-label">VISTA / {isPrivacy ? "Privacy" : "Terms"}</p><p className="legal-summary">{summary}</p></div></div>
+            {children}
+            <div className="legal-related"><div><span className="legal-nav-label">Related document</span><Link to={isPrivacy ? "/terms-of-service" : "/privacy-policy"}>{isPrivacy ? "Terms of Service" : "Privacy Policy"}<ArrowUpRight size={20} aria-hidden="true" /></Link></div><Link to="/" className="legal-home-link">Return to homepage <ArrowUpRight size={16} aria-hidden="true" /></Link></div>
+          </article>
+        </div>
       </main>
       <Footer />
     </div>
