@@ -303,10 +303,10 @@ export default function RecentSubmissionsTable({
   }
 
   return (
-    <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <section className="w-full overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Toolbar */}
       <div
-        className="flex items-center justify-between gap-3 flex-wrap bg-[#1f5cae]"
+        className="flex items-center justify-between gap-3 flex-wrap rounded-t-xl bg-[#1f5cae]"
         style={{
           paddingLeft: CONTENT_PADDING,
           paddingRight: CONTENT_PADDING,
