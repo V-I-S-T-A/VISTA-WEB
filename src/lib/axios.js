@@ -51,7 +51,9 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
-        if (window.location.pathname !== "/login" && window.location.pathname !== "/") {
+        const publicPaths = ["/", "/login", "/privacy-policy", "/terms-of-service"];
+        const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
+        if (!publicPaths.includes(currentPath)) {
           window.location.href = "/login";
         }
         return Promise.reject(refreshError);

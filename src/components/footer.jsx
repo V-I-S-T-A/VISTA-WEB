@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import vistaLogo from "../assets/shared/vista_logo.png";
 import osaLogo from "../assets/shared/osa_logo.png";
 import ustpLogo from "../assets/shared/ustp_logo.png";
@@ -138,6 +139,11 @@ export default function Footer() {
         </div>
 
         <div className="footer-divider" />
+
+        <nav aria-label="Legal information" className="mb-5 flex flex-wrap gap-x-6 gap-y-3 text-sm">
+          <Link to="/privacy-policy" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-offset-4">Privacy Policy</Link>
+          <Link to="/terms-of-service" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-offset-4">Terms of Service</Link>
+        </nav>
 
         <div className="footer-bottom">
           <p className="footer-bottom-left">
