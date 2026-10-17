@@ -27,7 +27,7 @@ export { default as TablePagination } from "./TablePagination";
 export { default as TableSearchBar } from "./TableSearchBar";
 
 // Existing layout components (already in this folder)
-export { default as Footer } from "./Footer";
+export { default as Footer } from "./footer";
 export { default as Header } from "./Header";
 export { default as Sidebar } from "./Sidebar";
 export { default as StatusModal } from "./StatusModal";

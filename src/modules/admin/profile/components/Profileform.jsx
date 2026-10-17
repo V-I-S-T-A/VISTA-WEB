@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import ProfileAvatarUpload from "./ProfileAvatarUpload";
+import ProfileAvatarUpload from "./Profileavatarupload";
 import osaLogo from "../../../../assets/shared/osa_logo.png";
 import ChangePasswordSection from "../../../../components/ChangePasswordSection";
 import DateOfBirthField from "../../../../components/DateOfBirthField";
