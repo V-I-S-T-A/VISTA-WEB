@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import LandingPage from "./modules/LandingPage";
 import LoginPage from "./modules/LoginPage";
+import { PrivacyPolicy, TermsOfService } from "./modules/LegalPages";
 import AdminDashboard from "./modules/admin/Dashboard";
 import AdminRegisteredOrg from "./modules/admin/dashboard/RegisteredOrg";
 import AdminAuditLogs from "./modules/admin/AuditLogs";
@@ -28,6 +29,8 @@ function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms-of-service" element={<TermsOfService />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
         <Route
           path="/admin/dashboard/registeredorg"
