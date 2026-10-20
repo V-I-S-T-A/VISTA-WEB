@@ -503,8 +503,13 @@ body {
     gap: 5px;
   }
 
-  /* Hide 'Get the app' button on mobile to save space */
-  .header-right .btn-outline {
+  .header-right .get-app-link {
+    display: inline-flex;
+    padding: 7px 8px;
+    white-space: nowrap;
+  }
+
+  .header-right > img {
     display: none;
   }
 
@@ -535,6 +540,88 @@ body {
   .footer-bottom-right {
     text-align: center;
   }
+}
+
+.get-app-qr-button {
+  display: inline-flex;
+  width: 38px;
+  height: 38px;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #fff;
+  color: #1a51a5;
+  cursor: pointer;
+}
+
+.get-app-qr-button svg {
+  width: 19px;
+  height: 19px;
+}
+
+.app-download-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(15 23 42 / 55%);
+}
+
+.app-download-dialog {
+  position: relative;
+  width: min(100%, 360px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 22px 24px;
+  border-radius: 16px;
+  background: #fff;
+  color: #334155;
+  text-align: center;
+  box-shadow: 0 20px 60px rgb(15 23 42 / 25%);
+}
+
+.app-download-dialog h2 {
+  padding-right: 18px;
+  color: #1a51a5;
+  font-size: 1.25rem;
+}
+
+.app-download-dialog > a {
+  color: #1a51a5;
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+.app-download-qr {
+  width: 220px;
+  height: 220px;
+  object-fit: contain;
+}
+
+.app-download-fallback {
+  padding: 22px 12px;
+  color: #64748b;
+}
+
+.app-download-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
 }
 
 @media (max-width: 480px) {

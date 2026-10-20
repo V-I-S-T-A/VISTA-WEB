@@ -743,19 +743,26 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               .filter((l) => l.remarks_text)
               .map((log) => (
                 <div key={log.log_id} className="flex gap-3">
-                  {/* Avatar placeholder */}
                   <div
                     className="flex-shrink-0 flex items-center justify-center rounded-full bg-[#eef1f9] font-inter font-bold text-[#1f5cae]"
                     style={{ width: "38px", height: "38px", fontSize: "13px" }}
                   >
-                    {log.changed_by_name
-                      ? log.changed_by_name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")
-                          .slice(0, 2)
-                          .toUpperCase()
-                      : "?"}
+                    {log.changed_by_image_url ? (
+                      <img
+                        src={log.changed_by_image_url}
+                        alt={log.changed_by_name || "Staff profile"}
+                        className="h-full w-full rounded-full object-cover"
+                      />
+                    ) : log.changed_by_name ? (
+                      log.changed_by_name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()
+                    ) : (
+                      "?"
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-baseline justify-between gap-2 flex-wrap">

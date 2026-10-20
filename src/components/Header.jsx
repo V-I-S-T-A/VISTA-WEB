@@ -1,9 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight, Download, Menu } from "lucide-react";
+import { ArrowRight, Download, Menu, QrCode, X } from "lucide-react";
 import vistaLogo from "../assets/shared/vista_logo.png";
 import { getHeaderConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
+
+const ANDROID_APK_URL =
+  "https://github.com/V-I-S-T-A/VISTA-MOBILE/releases/latest/download/vista-mobile.apk";
 
 export default function Header({ layout = "public", profilePath, onMenuToggle }) {
   const navigate = useNavigate();
@@ -11,6 +14,8 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
   const { data: currentUser } = useCurrentUser();
   const logoutMutation = useLogout();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isAppQrOpen, setIsAppQrOpen] = useState(false);
+  const [isQrUnavailable, setIsQrUnavailable] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
@@ -27,7 +32,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
     try {
       const refresh = localStorage.getItem("refresh_token");
       await logoutMutation.mutateAsync({ refresh });
-    } catch (err) {
+    } catch {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       window.location.href = "/login";
@@ -159,9 +164,26 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
           <ArrowRight className="btn-icon" aria-hidden="true" />
         </button>
 
-        <button type="button" className="btn btn-outline">
+        <a
+          className="btn btn-outline get-app-link"
+          href={ANDROID_APK_URL}
+          download="vista-mobile.apk"
+          aria-label="Download the VISTA Android app APK"
+        >
           Get the app
           <Download className="btn-icon" aria-hidden="true" />
+        </a>
+        <button
+          type="button"
+          className="get-app-qr-button"
+          onClick={() => {
+            setIsQrUnavailable(false);
+            setIsAppQrOpen(true);
+          }}
+          aria-label="Show QR code to download the VISTA Android app"
+          title="Scan to download on your phone"
+        >
+          <QrCode aria-hidden="true" />
         </button>
 
         <img
@@ -171,6 +193,47 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
           aria-hidden="true"
         />
       </div>
+      {isAppQrOpen && (
+        <div
+          className="app-download-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setIsAppQrOpen(false);
+          }}
+        >
+          <section
+            className="app-download-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="app-download-title"
+          >
+            <button
+              type="button"
+              className="app-download-close"
+              onClick={() => setIsAppQrOpen(false)}
+              aria-label="Close download dialog"
+            >
+              <X size={20} />
+            </button>
+            <h2 id="app-download-title">Get VISTA for Android</h2>
+            {!isQrUnavailable ? (
+              <img
+                className="app-download-qr"
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(ANDROID_APK_URL)}`}
+                alt="QR code linking directly to the VISTA Android APK download"
+                onError={() => setIsQrUnavailable(true)}
+              />
+            ) : (
+              <p className="app-download-fallback">
+                QR code is unavailable. Open this page on your phone or use the download link below.
+              </p>
+            )}
+            <p>Scan with your phone camera to download the APK.</p>
+            <a href={ANDROID_APK_URL} download="vista-mobile.apk">
+              Download vista-mobile.apk
+            </a>
+          </section>
+        </div>
+      )}
     </header>
   );
 }

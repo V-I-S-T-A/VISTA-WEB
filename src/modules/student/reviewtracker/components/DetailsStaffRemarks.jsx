@@ -102,7 +102,7 @@ export default function DetailsStaffRemarks({ submissionId }) {
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <img
-                    src={defaultAvatar} // Kept your default avatar
+                    src={remark.changed_by_image_url || defaultAvatar}
                     alt="Staff Avatar"
                     style={{
                       width: "36px",
