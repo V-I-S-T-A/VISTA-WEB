@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useEffect } from "react";
 import {
@@ -178,9 +179,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       );
     } catch (error) {
       console.error("Submission error:", error);
-      const backendError = error.response?.data
-        ? JSON.stringify(error.response.data, null, 2)
-        : error.message || "Failed to submit decision.";
+      const backendError = getApiErrorMessage(error, "Could not submit the decision.");
       showNotification("Submission Error", backendError, "error");
     } finally {
       setIsSubmitting(false);
@@ -241,9 +240,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       setShowConfirmModal(false);
     } catch (error) {
       console.error("Submission error:", error);
-      const backendError = error.response?.data
-        ? JSON.stringify(error.response.data, null, 2)
-        : error.message || "Failed to submit decision.";
+      const backendError = getApiErrorMessage(error, "Could not submit the decision.");
       showNotification("Submission Error", backendError, "error");
     } finally {
       setIsSubmitting(false);

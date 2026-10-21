@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useRef, useState } from "react";
 import { X, SquarePen, ImagePlus, Trash2 } from "lucide-react";
 
@@ -407,8 +408,7 @@ export default function EditOrgModal({
                 fontFamily: "Inter, sans-serif",
               }}
             >
-              {apiError.message ||
-                "Failed to update organization. Please check inputs."}
+              {getApiErrorMessage(apiError, "Could not update the organization.")}
             </div>
           )}
 

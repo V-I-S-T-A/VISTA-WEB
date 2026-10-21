@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
@@ -77,8 +78,7 @@ export default function GdriveCallback() {
         );
         setStatus("error");
         setMessage(
-          err?.response?.data?.detail ||
-            "Failed to complete Google Drive connection.",
+          getApiErrorMessage(err, "Could not complete the Google Drive connection."),
         );
       }
     })();

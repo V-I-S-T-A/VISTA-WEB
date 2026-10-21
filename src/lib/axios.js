@@ -1,5 +1,6 @@
 import axios from "axios";
 import { API_CONFIG } from "../config/api";
+import { getApiErrorMessage } from "../utils/apiErrorMessage";
 
 const apiClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
@@ -27,9 +28,10 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
+    error.message = getApiErrorMessage(error);
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
@@ -49,6 +51,7 @@ apiClient.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${access}`;
         return apiClient(originalRequest);
       } catch (refreshError) {
+        refreshError.message = "Your session has expired. Please sign in again.";
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
         const publicPaths = ["/", "/login", "/privacy-policy", "/terms-of-service"];

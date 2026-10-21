@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useRef, useState } from "react";
 import { X, UserPlus, Mail } from "lucide-react";
 import { useOrganizations } from "../../../../hooks/useOrganizations";
@@ -337,9 +338,7 @@ export default function AddUserModal({
                 color: "#991b1b",
               }}
             >
-              {error.response?.data?.detail ||
-                error.message ||
-                "Failed to create user. Please try again."}
+              {getApiErrorMessage(error, "Could not create the account.")}
             </div>
           )}
 
