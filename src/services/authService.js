@@ -30,7 +30,7 @@ export const authService = {
     const { data, config } = toRequestConfig(profileData);
     // Keep intentional clears when an avatar makes this a multipart request.
     if (data instanceof FormData) {
-      for (const field of ["birth_date", "gender"]) {
+      for (const field of ["birth_date", "gender", "phone_number"]) {
         if (Object.hasOwn(profileData, field)) {
           data.set(field, profileData[field] ?? "");
         }

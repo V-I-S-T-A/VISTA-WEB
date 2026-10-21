@@ -5,6 +5,7 @@ import ChangePasswordSection from "../../../../components/ChangePasswordSection"
 import DateOfBirthField from "../../../../components/DateOfBirthField";
 import { useProfile, useUpdateProfile } from "../../../../hooks/useProfile";
 
+import PhoneNumberField from "../../../../components/PhoneNumberField";
 import GenderField from "../../../../components/GenderField";
 
 const PILL_CLASS =
@@ -27,8 +28,7 @@ export default function ProfileForm() {
     firstName: profile?.first_name ?? "",
     lastName: profile?.last_name ?? "",
     email: profile?.email ?? "",
-    // Phone remains local-only.
-    phone: "",
+    phone: profile?.phone_number ?? "",
     dob: profile?.birth_date ?? "",
     gender: profile?.gender ?? "",
     ...draft,
@@ -46,6 +46,7 @@ export default function ProfileForm() {
       last_name: form.lastName,
       birth_date: form.dob || null,
       gender: form.gender,
+      phone_number: form.phone,
       ...(avatarFile && avatarFile !== "REMOVE" ? { image: avatarFile } : {}),
       ...(avatarFile === "REMOVE" ? { remove_image: true } : {}),
     };
@@ -54,14 +55,14 @@ export default function ProfileForm() {
       onSuccess: () => {
         setAvatarFile(null);
         setFormVersion((version) => version + 1);
-        setForm((previous) => ({ phone: previous.phone ?? "" }));
+        setForm({});
       },
     });
   }
 
   function handleCancel() {
     if (!profile) return;
-    setForm((previous) => ({ phone: previous.phone ?? "" }));
+    setForm({});
     setAvatarFile(null);
     setFormVersion((version) => version + 1);
   }
@@ -114,52 +115,38 @@ export default function ProfileForm() {
             title="Email can't be changed from this form yet"
           />
 
-          {/* Phone number with country code */}
-          <div
-            className="flex items-center bg-white rounded-full"
-            style={{ height: "46px", padding: "0 20px" }}
-          >
-            <span style={{ fontSize: "18px" }} aria-hidden="true">
-              🇵🇭
-            </span>
-            <span
-              className="font-inter text-gray-700"
-              style={{ fontSize: "14px", margin: "0 10px 0 8px" }}
-            >
-              +63
-            </span>
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(e) => set("phone", e.target.value)}
-              placeholder="Phone number"
-              className="flex-1 font-inter text-gray-900 placeholder:text-gray-400 outline-none border-none bg-transparent"
-              style={{ fontSize: "14px" }}
-            />
-          </div>
+          <PhoneNumberField
+            value={form.phone}
+            onChange={(value) => set("phone", value)}
+            disabled={isLoading || updateProfile.isPending}
+          />
 
           <ChangePasswordSection forceOpen={!!profile?.must_change_password} />
 
           {/* Date of Birth + Gender */}
-          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: "12px" }}>
-            <div>
-              <p className="mb-1.5 block px-2 text-xs font-semibold text-white">
-                Birth date <span className="font-normal text-white/80">(optional)</span>
-              </p>
-              <DateOfBirthField
-                key={`${formVersion}-${form.dob}`}
-                value={form.dob}
-                onChange={(value) => set("dob", value)}
-                disabled={isLoading}
+          <section className="profile-personal-section" aria-label="Personal details">
+            <p className="profile-personal-heading">A little about you</p>
+            <div className="profile-personal-fields">
+              <div>
+                <p className="profile-field-label">
+                  Birth date <span>Optional</span>
+                </p>
+                <DateOfBirthField
+                  key={`${formVersion}-${form.dob}`}
+                  value={form.dob}
+                  onChange={(value) => set("dob", value)}
+                  disabled={isLoading || updateProfile.isPending}
+                />
+                <p className="profile-field-help">Type MM/DD/YYYY or choose a date from the calendar.</p>
+              </div>
+              <GenderField
+                key={formVersion}
+                value={form.gender}
+                onChange={(value) => set("gender", value)}
+                disabled={isLoading || updateProfile.isPending}
               />
             </div>
-            <GenderField
-              key={formVersion}
-              value={form.gender}
-              onChange={(value) => set("gender", value)}
-              disabled={isLoading || updateProfile.isPending}
-            />
-          </div>
+          </section>
 
           {updateProfile.isError && (
             <p style={{ color: "#ffe1e1", fontSize: "13px", margin: 0 }}>
