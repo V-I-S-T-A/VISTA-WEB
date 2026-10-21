@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { submissionService } from "../../../services/submissionService";
@@ -42,28 +43,16 @@ export default function ReviewTrackerDetails() {
     );
   }
 
-  // ENHANCED ERROR SCREEN: This will tell us exactly why it is failing!
   if (isError || !submission) {
     return (
       <div className="flex min-h-screen bg-white items-center justify-center flex-col gap-4">
         <div className="p-8 bg-red-50 border border-red-200 rounded-xl text-center max-w-lg">
           <h2 className="text-2xl font-bold text-red-700 mb-2">
-            Submission Not Found
+            Unable to load submission
           </h2>
-          <p className="text-gray-700 mb-4">
-            We could not load this document's details.
+          <p role="alert" className="text-gray-700 mb-4">
+            {getApiErrorMessage(error, "We could not load this submission. Please return to the tracker and try again.")}
           </p>
-
-          <div className="bg-white p-4 rounded text-left border border-gray-200 mb-6 shadow-inner text-sm font-mono text-gray-600">
-            <p>
-              <strong>Extracted URL ID:</strong> {id || "UNDEFINED"}
-            </p>
-            {error && (
-              <p className="mt-2 text-red-600">
-                <strong>Backend Error:</strong> {error.message}
-              </p>
-            )}
-          </div>
 
           <button
             onClick={() => navigate("/student/review-tracker")}

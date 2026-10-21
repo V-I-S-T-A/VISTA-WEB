@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../utils/apiErrorMessage";
 import { useEffect, useState } from "react";
 import { Eye, EyeOff, ShieldCheck, Mail } from "lucide-react";
 import {
@@ -115,8 +116,7 @@ export default function ChangePasswordSection({ forceOpen = false }) {
       setCooldown(RESEND_COOLDOWN);
     } catch (err) {
       setError(
-        err?.response?.data?.detail ||
-          "Couldn't send a verification code. Please try again.",
+        getApiErrorMessage(err, "Could not send a verification code. Please try again."),
       );
     }
   }
@@ -128,7 +128,7 @@ export default function ChangePasswordSection({ forceOpen = false }) {
       await requestCode.mutateAsync();
       setCooldown(RESEND_COOLDOWN);
     } catch (err) {
-      setError(err?.response?.data?.detail || "Couldn't resend the code.");
+      setError(getApiErrorMessage(err, "Could not resend the code."));
     }
   }
 
@@ -148,10 +148,7 @@ export default function ChangePasswordSection({ forceOpen = false }) {
       setTimeout(resetAll, 1800);
     } catch (err) {
       setError(
-        err?.response?.data?.detail ||
-          err?.response?.data?.code?.[0] ||
-          err?.response?.data?.old_password?.[0] ||
-          "Invalid or expired code. Please try again.",
+        getApiErrorMessage(err, "Could not change your password. Check the code and entered details."),
       );
     }
   }

@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../components/ErrorNotice";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
@@ -264,12 +265,7 @@ export default function DocumentEntry() {
       navigate("/staff/dashboard");
     } catch (err) {
       console.error("Submission failed:", err);
-      let errorMessage =
-        "An error occurred while creating the submission in the database.";
-      if (err.response?.data?.detail) {
-        errorMessage = err.response.data.detail;
-      }
-      setError(errorMessage);
+      setError(getApiErrorMessage(err, "Could not create the submission."));
       setActiveView("form"); // Bump them back to the form so they can fix it
     } finally {
       setIsSubmitting(false);
