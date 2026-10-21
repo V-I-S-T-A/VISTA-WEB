@@ -1,3 +1,4 @@
+import ErrorNotice from "../../components/ErrorNotice";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
@@ -18,7 +19,7 @@ import registrationSider from "../assets/registration_sider.png";
 export default function Gdrive() {
   const navigate = useNavigate();
   const { data: currentUser, isLoading } = useCurrentUser();
-  const { data: connection, isLoading: isLoadingConnection } =
+  const { data: connection, isLoading: isLoadingConnection, isError, refetch, isFetching } =
     useDriveConnection();
   const [pickingFolder, setPickingFolder] = useState(false);
   const { isOpen, open, close } = useSidebar();
@@ -89,6 +90,8 @@ export default function Gdrive() {
                         }}
                       />
                     </div>
+                  ) : isError ? (
+                    <ErrorNotice message="Could not check your Google Drive connection." onRetry={() => refetch()} retrying={isFetching} />
                   ) : !isConnected ? (
                     <GoogleSignInCard />
                   ) : !hasFolder || pickingFolder ? (

@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useMemo, useRef, useEffect } from "react";
 import {
   Download,
@@ -157,7 +158,7 @@ export default function AnalyticsVisualGraphs({
     };
   }, [timeRange]);
 
-  const { data: stats, isLoading } = useSubmissionStatistics({
+  const { data: stats, isLoading, isError, refetch, isFetching } = useSubmissionStatistics({
     dateFrom,
     dateTo,
     category: categoryFilter,
@@ -304,6 +305,8 @@ export default function AnalyticsVisualGraphs({
       setIsExportOpen(false);
     }
   }
+
+  if (isError) return <ErrorNotice message="Could not load submission analytics." onRetry={() => refetch()} retrying={isFetching} />;
 
   return (
     <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mb-5">

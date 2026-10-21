@@ -78,7 +78,16 @@ export function watchTasks(taskIds) {
     failures: [],
   };
   const batchId = `drive-upload-${++nextBatchId}`;
-  taskIds.forEach((taskId) => activePolls.set(taskId, { batchId, batch }));
+  taskIds.forEach((taskId) =>
+    activePolls.set(taskId, {
+      batchId,
+      batch,
+      startedAt: Date.now(),
+      pollFailures: 0,
+      warned: false,
+      delayWarned: false,
+    }),
+  );
   persistActivePolls();
 }
 
@@ -102,7 +111,18 @@ export function useDriveUploadWatcher() {
             const { data } = await apiClient.get(
               API_ENDPOINTS.DRIVE.UPLOAD_STATUS(taskId),
             );
-            if (data.status === "pending") continue;
+            if (tracking.warned) {
+              showToast("Google Drive upload status checks have resumed.", "success");
+            }
+            tracking.pollFailures = 0;
+            tracking.warned = false;
+            if (data.status === "pending") {
+              if (!tracking.delayWarned && Date.now() - tracking.startedAt > 120000) {
+                tracking.delayWarned = true;
+                showToast("Google Drive is taking longer than expected. The upload is still unconfirmed; we will keep checking.", "error", 15000);
+              }
+              continue;
+            }
 
             activePolls.delete(taskId);
             persistActivePolls();
@@ -127,6 +147,11 @@ export function useDriveUploadWatcher() {
               queryClient.invalidateQueries({ queryKey: ["audit-logs"] });
             }
           } catch {
+            tracking.pollFailures += 1;
+            if (tracking.pollFailures >= 3 && !tracking.warned) {
+              tracking.warned = true;
+              showToast("Could not check a Google Drive upload. Its completion is unconfirmed. Check your connection; we will keep retrying automatically.", "error", 15000);
+            }
             // Retain the task so temporary network failures are retried.
           }
         }

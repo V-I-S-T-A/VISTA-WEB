@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState } from "react";
 import { Search, FolderPlus, Folder, Loader2 } from "lucide-react";
 import {
@@ -10,7 +11,7 @@ export default function FolderPicker({ onDone }) {
   const [search, setSearch] = useState("");
   const [newFolderName, setNewFolderName] = useState("");
   const [mode, setMode] = useState("browse"); // browse | create
-  const { data, isLoading, isFetching } = useDriveFolders(search);
+  const { data, isLoading, isFetching, isError, refetch } = useDriveFolders(search);
   const selectFolder = useSelectDriveFolder();
   const createFolder = useCreateDriveFolder();
 
@@ -142,7 +143,9 @@ export default function FolderPicker({ onDone }) {
             />
           </div>
 
-          {isLoading ? (
+          {isError ? (
+            <ErrorNotice message="Could not load Google Drive folders. Check your connection and try again." onRetry={() => refetch()} retrying={isFetching} />
+          ) : isLoading ? (
             <div
               className="flex items-center justify-center"
               style={{ padding: "24px 0" }}

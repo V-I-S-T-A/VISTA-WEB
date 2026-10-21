@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { CheckCircle2, Folder, LogOut } from "lucide-react";
 import { useState } from "react";
 import { useDisconnectDrive } from "../../../../hooks/useDrive";
@@ -145,6 +146,7 @@ export default function ConnectedStatusCard({ connection, onChangeFolder }) {
         </button>
       </div>
 
+      <ErrorNotice message={disconnectDrive.isError ? "Could not disconnect Google Drive. Please try again." : ""} />
       {!confirmOpen ? (
         <button
           type="button"

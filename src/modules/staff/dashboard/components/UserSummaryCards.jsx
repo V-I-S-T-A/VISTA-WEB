@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { FolderOpen, Clock, ClipboardCheck, RotateCcw } from "lucide-react";
 import { useSubmissionStatistics } from "../../../../hooks/useSubmissions";
 
@@ -5,7 +6,7 @@ export default function SubmissionSummaryCards({
   selectedStatus = "All Status",
   onSelectStatus,
 } = {}) {
-  const { data: stats, isLoading } = useSubmissionStatistics();
+  const { data: stats, isLoading, isError, refetch, isFetching } = useSubmissionStatistics();
 
   const total = stats?.total ?? 0;
   const statusCounts = stats?.status_counts ?? {};
@@ -60,6 +61,8 @@ export default function SubmissionSummaryCards({
       onSelectStatus(filterValue);
     }
   };
+
+  if (isError) return <ErrorNotice message="Could not load submission totals." onRetry={() => refetch()} retrying={isFetching} />;
 
   return (
     <div className="w-full" style={{ marginBottom: "16px" }}>
