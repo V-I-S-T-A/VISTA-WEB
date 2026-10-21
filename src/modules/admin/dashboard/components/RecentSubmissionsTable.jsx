@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { SquarePen, Trash2, Loader, AlertCircle } from "lucide-react";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
@@ -334,8 +335,7 @@ export default function RecentSubmissionsTable() {
       } catch (err) {
         console.error("Error deleting user:", err);
         window.alert(
-          err.response?.data?.detail ||
-            "Could not delete this account. Check that you are an admin and try again.",
+          getApiErrorMessage(err, "Could not delete this account."),
         );
       }
     },

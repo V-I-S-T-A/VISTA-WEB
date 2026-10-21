@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useRef, useState } from 'react'
 import { X, Building2, ImagePlus, Trash2 } from 'lucide-react'
 
@@ -388,7 +389,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                             fontSize: '13px',
                             color: '#991b1b',
                         }}>
-                            {error.message || 'Failed to create organization. Please try again.'}
+                            {getApiErrorMessage(error, "Could not create the organization.")}
                         </div>
                     )}
 

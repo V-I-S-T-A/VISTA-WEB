@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useState, useEffect, useRef } from "react";
 import { AlertTriangle, Loader2, X, Trash2 } from "lucide-react";
 import api from "../../../../lib/axios";
@@ -52,7 +53,7 @@ export default function DeleteConfirmModal({
       onClose();
     } catch (err) {
       console.error(`Error deleting ${activeTab}:`, err);
-      setError("Failed to delete. It may be tied to existing records.");
+      setError(getApiErrorMessage(err, "Could not delete this entry. It may be used by existing records."));
     } finally {
       setIsDeleting(false);
     }

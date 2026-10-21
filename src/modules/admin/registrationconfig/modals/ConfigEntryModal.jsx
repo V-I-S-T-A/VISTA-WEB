@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useState, useEffect, useRef } from "react";
 import {
   X,
@@ -253,18 +254,7 @@ export default function ConfigEntryModal({
       onClose();
     } catch (err) {
       console.error(`Error saving ${activeTab}:`, err);
-      const errorData = err.response?.data;
-      if (typeof errorData === "object" && errorData !== null) {
-        const firstErrorKey = Object.keys(errorData)[0];
-        const errorMsg = Array.isArray(errorData[firstErrorKey])
-          ? errorData[firstErrorKey][0]
-          : errorData[firstErrorKey];
-        setError(`${firstErrorKey}: ${errorMsg}`);
-      } else {
-        setError(
-          "Failed to save entry. Please check your inputs and try again.",
-        );
-      }
+      setError(getApiErrorMessage(err, "Could not save this entry."));
     } finally {
       setIsSubmitting(false);
     }

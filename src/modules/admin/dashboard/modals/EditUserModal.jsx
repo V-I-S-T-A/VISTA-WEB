@@ -1,3 +1,4 @@
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useEffect, useRef, useState } from "react";
 import { X, SquarePen } from "lucide-react";
@@ -211,14 +212,7 @@ export default function EditUserModal({
       });
       onClose();
     } catch (error) {
-      const data = error.response?.data;
-      const detail = error.response?.status < 500 && data && typeof data === "object"
-        ? Object.entries(data).map(([field, messages]) => {
-            const text = Array.isArray(messages) ? messages.filter(m => typeof m === "string").join(" ") : typeof messages === "string" ? messages : "";
-            return text ? `${field === "detail" || field === "non_field_errors" ? "" : `${field}: `}${text}` : "";
-          }).filter(Boolean).join(" ")
-        : "";
-      setSaveError(detail || "Could not save the user. Your changes have been kept. Please check the fields and try again.");
+      setSaveError(getApiErrorMessage(error, "Could not save the user. Your changes have been kept. Please try again."));
     } finally {
       setSaving(false);
     }
