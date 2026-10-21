@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import ProfileAvatarUpload from "./Profileavatarupload";
 import osaLogo from "../../../../assets/shared/osa_logo.png";
 import ChangePasswordSection from "../../../../components/ChangePasswordSection";
 import DateOfBirthField from "../../../../components/DateOfBirthField";
 import { useProfile, useUpdateProfile } from "../../../../hooks/useProfile";
 
-const GENDER_OPTIONS = ["Male", "Female", "Prefer not to say"];
+import GenderField from "../../../../components/GenderField";
 
 const PILL_CLASS =
   "w-full bg-white font-inter text-gray-900 placeholder:text-gray-400 outline-none rounded-full border-none";
@@ -21,28 +21,18 @@ export default function ProfileForm() {
   const updateProfile = useUpdateProfile();
 
   const [avatarFile, setAvatarFile] = useState(null);
-  const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    // NOTE: phone/dob/gender aren't fields on the backend User model yet.
-    // They're kept here as local-only UI state and are NOT sent on submit.
-    // Add them to the Django model + UserUpdateSerializer to persist them.
+  const [formVersion, setFormVersion] = useState(0);
+  const [draft, setForm] = useState({});
+  const form = {
+    firstName: profile?.first_name ?? "",
+    lastName: profile?.last_name ?? "",
+    email: profile?.email ?? "",
+    // Phone remains local-only.
     phone: "",
-    dob: "",
-    gender: "",
-  });
-
-  // Populate the form once the current user's profile has loaded.
-  useEffect(() => {
-    if (!profile) return;
-    setForm((f) => ({
-      ...f,
-      firstName: profile.first_name ?? "",
-      lastName: profile.last_name ?? "",
-      email: profile.email ?? "",
-    }));
-  }, [profile]);
+    dob: profile?.birth_date ?? "",
+    gender: profile?.gender ?? "",
+    ...draft,
+  };
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -51,29 +41,29 @@ export default function ProfileForm() {
   function handleSubmit(e) {
     e.preventDefault();
 
-    // Only send fields the backend's UserUpdateSerializer actually accepts.
-    // email/role/is_active are not editable through this endpoint.
     const payload = {
       first_name: form.firstName,
       last_name: form.lastName,
+      birth_date: form.dob || null,
+      gender: form.gender,
       ...(avatarFile && avatarFile !== "REMOVE" ? { image: avatarFile } : {}),
       ...(avatarFile === "REMOVE" ? { remove_image: true } : {}),
     };
 
     updateProfile.mutate(payload, {
-      onSuccess: () => setAvatarFile(null),
+      onSuccess: () => {
+        setAvatarFile(null);
+        setFormVersion((version) => version + 1);
+        setForm((previous) => ({ phone: previous.phone ?? "" }));
+      },
     });
   }
 
   function handleCancel() {
     if (!profile) return;
-    setForm((f) => ({
-      ...f,
-      firstName: profile.first_name ?? "",
-      lastName: profile.last_name ?? "",
-      email: profile.email ?? "",
-    }));
+    setForm((previous) => ({ phone: previous.phone ?? "" }));
     setAvatarFile(null);
+    setFormVersion((version) => version + 1);
   }
 
   return (
@@ -151,33 +141,24 @@ export default function ProfileForm() {
           <ChangePasswordSection />
 
           {/* Date of Birth + Gender */}
-          <div className="grid grid-cols-2" style={{ gap: "12px" }}>
-            <DateOfBirthField
-              key={form.dob}
-              value={form.dob}
-              onChange={(value) => set("dob", value)}
-              disabled={isLoading}
-            />
-            <select
+          <div className="grid grid-cols-1 sm:grid-cols-2" style={{ gap: "12px" }}>
+            <div>
+              <p className="mb-1.5 block px-2 text-xs font-semibold text-white">
+                Birth date <span className="font-normal text-white/80">(optional)</span>
+              </p>
+              <DateOfBirthField
+                key={`${formVersion}-${form.dob}`}
+                value={form.dob}
+                onChange={(value) => set("dob", value)}
+                disabled={isLoading}
+              />
+            </div>
+            <GenderField
+              key={formVersion}
               value={form.gender}
-              onChange={(e) => set("gender", e.target.value)}
-              className={PILL_CLASS}
-              style={{
-                ...pillStyle,
-                color: form.gender ? "#111827" : "#9ca3af",
-                appearance: "none",
-                cursor: "pointer",
-              }}
-            >
-              <option value="" disabled hidden>
-                Gender
-              </option>
-              {GENDER_OPTIONS.map((option) => (
-                <option key={option} value={option}>
-                  {option}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => set("gender", value)}
+              disabled={isLoading || updateProfile.isPending}
+            />
           </div>
 
           {updateProfile.isError && (

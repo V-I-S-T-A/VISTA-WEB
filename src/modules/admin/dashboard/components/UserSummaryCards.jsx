@@ -3,7 +3,7 @@ import { useUsers } from '../../../../hooks/useUsers'
 
 export default function UserSummaryCards() {
   // Fetch all users to calculate stats
-  const { data: usersData = [] } = useUsers({ pageSize: 1000 })
+  const { data: usersData = [] } = useUsers({ pageSize: 1000, excludeAdmin: true })
 
   const users = Array.isArray(usersData) ? usersData : (usersData.results || [])
 

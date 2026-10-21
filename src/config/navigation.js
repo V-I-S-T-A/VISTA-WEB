@@ -53,7 +53,7 @@ export const sidebarConfig = {
     brand: "V.I.S.T.A.",
     accessLabel: "ADMIN ACCESS",
     user: {
-      name: "Super Admin",
+      name: "Admin",
       id: "2021-00451",
       avatar: defaultUser,
     },

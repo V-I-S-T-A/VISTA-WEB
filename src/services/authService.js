@@ -28,6 +28,14 @@ export const authService = {
 
   async updateMe(profileData) {
     const { data, config } = toRequestConfig(profileData);
+    // Keep intentional clears when an avatar makes this a multipart request.
+    if (data instanceof FormData) {
+      for (const field of ["birth_date", "gender"]) {
+        if (Object.hasOwn(profileData, field)) {
+          data.set(field, profileData[field] ?? "");
+        }
+      }
+    }
     const resp = await apiClient.patch(API_ENDPOINTS.AUTH.ME, data, config);
     return resp.data;
   },

@@ -17,6 +17,7 @@ export const userService = {
     search = "",
     role = "",
     isActive = null,
+    excludeAdmin = false,
   } = {}) {
     const params = new URLSearchParams();
 
@@ -26,6 +27,7 @@ export const userService = {
     if (search) params.append("search", search);
     if (role && role !== "All Roles") params.append("role", role);
     if (isActive !== null) params.append("is_active", isActive);
+    if (excludeAdmin) params.append("exclude_admin", "true");
 
     const response = await apiClient.get(API_ENDPOINTS.USERS.LIST, { params });
 
@@ -87,12 +89,13 @@ export const userService = {
    * — this just triggers the request and hands back the raw response so
    * the caller can turn it into a download.
    */
-  async exportUsers({ search = "", role = "", isActive = null } = {}) {
+  async exportUsers({ search = "", role = "", isActive = null, excludeAdmin = false } = {}) {
     const params = new URLSearchParams();
 
     if (search) params.append("search", search);
     if (role && role !== "All Roles") params.append("role", role);
     if (isActive !== null) params.append("is_active", isActive);
+    if (excludeAdmin) params.append("exclude_admin", "true");
 
     return apiClient.get(`${API_ENDPOINTS.USERS.LIST}export/list/`, {
       params,
