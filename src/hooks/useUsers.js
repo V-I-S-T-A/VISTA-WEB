@@ -11,9 +11,10 @@ export const useUsers = ({
   search = "",
   role = "",
   isActive = null,
+  excludeAdmin = false,
 } = {}) => {
   return useQuery({
-    queryKey: ["users", { page, pageSize, search, role, isActive }],
+    queryKey: ["users", { page, pageSize, search, role, isActive, excludeAdmin }],
     queryFn: () =>
       userService.getUsers({
         page,
@@ -21,6 +22,7 @@ export const useUsers = ({
         search,
         role,
         isActive,
+        excludeAdmin,
       }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes

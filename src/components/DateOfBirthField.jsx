@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
 const MONTHS = [
@@ -33,6 +33,7 @@ function parseDate(value) {
 }
 
 export default function DateOfBirthField({ value, onChange, disabled = false }) {
+  const inputRef = useRef(null);
   const selectedDate = value ? new Date(`${value}T00:00:00`) : null;
   const initialDate = selectedDate && selectedDate <= new Date() ? selectedDate : new Date();
   const [isOpen, setIsOpen] = useState(false);
@@ -83,6 +84,7 @@ export default function DateOfBirthField({ value, onChange, disabled = false }) 
 
     const isoDate = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
     onChange(isoDate);
+    inputRef.current?.setCustomValidity("");
     setInputValue(formatDate(isoDate));
     setError("");
     setIsOpen(false);
@@ -95,12 +97,17 @@ export default function DateOfBirthField({ value, onChange, disabled = false }) 
     <div className="relative">
       <div className="flex items-center rounded-full bg-white" style={{ height: "46px" }}>
         <input
+          ref={inputRef}
           type="text"
           inputMode="numeric"
           value={inputValue}
           onChange={(event) => {
             setInputValue(event.target.value);
             setError("");
+            const text = event.target.value.trim();
+            event.target.setCustomValidity(
+              text && !parseDate(text) ? "Use a valid birth date in MM/DD/YYYY format." : "",
+            );
           }}
           onBlur={commitInput}
           onKeyDown={(event) => {

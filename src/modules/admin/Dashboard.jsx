@@ -3,7 +3,6 @@ import Sidebar from "../../components/Sidebar";
 import UserManagementHeader from "./dashboard/components/UserManagementHeader";
 import UserSummaryCards from "./dashboard/components/UserSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
-import systemScopeBanner from "../../assets/shared/systemscope.png";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCurrentUser } from "../../hooks/useAuth";
@@ -42,13 +41,6 @@ export default function Dashboard() {
             <UserManagementHeader />
             <UserSummaryCards />
             <RecentSubmissionsTable />
-            <div style={{ paddingTop: "48px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="w-3/4 h-auto"
-              />
-            </div>
           </div>
         </main>
       </div>

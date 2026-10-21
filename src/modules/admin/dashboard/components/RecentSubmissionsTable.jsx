@@ -189,6 +189,7 @@ export default function RecentSubmissionsTable() {
     isLoading,
     error,
   } = useUsers({
+    excludeAdmin: true,
     page: currentPage,
     pageSize: PAGE_SIZE,
     search: searchQuery.trim(),
@@ -207,7 +208,7 @@ export default function RecentSubmissionsTable() {
   );
 
   const totalCount = useMemo(
-    () => usersData.count || users.length,
+    () => usersData.count ?? users.length,
     [usersData, users.length],
   );
 
@@ -349,6 +350,7 @@ export default function RecentSubmissionsTable() {
     setExportError("");
     try {
       const response = await userService.exportUsers({
+        excludeAdmin: true,
         search: searchQuery.trim(),
         role: roleFilter,
         isActive: isActiveParam,
