@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../components/ErrorNotice";
 import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { AlertCircle, Loader2 } from "lucide-react";
@@ -20,6 +21,9 @@ export default function DocumentEntry() {
   const [isScanning, setIsScanning] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [dropdownError, setDropdownError] = useState("");
+  const [dropdownRetry, setDropdownRetry] = useState(0);
+  const [loadingDropdowns, setLoadingDropdowns] = useState(true);
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     type: "success",
@@ -73,6 +77,8 @@ export default function DocumentEntry() {
 
   useEffect(() => {
     const fetchDropdowns = async () => {
+      setDropdownError("");
+      setLoadingDropdowns(true);
       try {
         const [orgRes, userRes, acadRes, docTypeRes, catRes] =
           await Promise.all([
@@ -89,10 +95,13 @@ export default function DocumentEntry() {
         setCategories(catRes.data.results || catRes.data || []);
       } catch (err) {
         console.error("Failed to load dropdown data:", err);
+        setDropdownError("Could not load the form options. Please try again before submitting.");
+      } finally {
+        setLoadingDropdowns(false);
       }
     };
     fetchDropdowns();
-  }, []);
+  }, [dropdownRetry]);
 
   const availableUsers = useMemo(() => {
     if (!formData.org_id) return [];
@@ -161,6 +170,10 @@ export default function DocumentEntry() {
 
   // 1. Move to Review Screen (Does NOT save to DB yet)
   const handleNextReview = () => {
+    if (loadingDropdowns || dropdownError) {
+      setError("Please wait for the form options to load, or retry loading them before continuing.");
+      return;
+    }
     if (
       !formData.org_id ||
       !formData.submitted_by ||
@@ -196,6 +209,7 @@ export default function DocumentEntry() {
 
   // 3. Finalize and Save to Database
   const handleFinalApprove = async () => {
+    if (loadingDropdowns || dropdownError) return;
     setIsSubmitting(true);
     setError("");
 
@@ -294,6 +308,7 @@ export default function DocumentEntry() {
         <main className="dashboard-main flex-1 overflow-y-auto">
           <div style={{ padding: "20px 24px" }}>
             <DocumentEntryHeader />
+            <ErrorNotice message={dropdownError} onRetry={() => setDropdownRetry(c => c + 1)} retrying={loadingDropdowns} />
 
             <div
               style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}

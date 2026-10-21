@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useEffect, useMemo } from "react";
 import { Eye } from "lucide-react";
 import api from "../../../../lib/axios";
@@ -28,6 +29,8 @@ const ACTION_COLORS = {
 
 export default function AuditLogTable({ onViewLog }) {
   const [logs, setLogs] = useState([]);
+  const [loadError, setLoadError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -50,6 +53,7 @@ export default function AuditLogTable({ onViewLog }) {
     const fetchAuditLogs = async () => {
       try {
         setIsLoading(true);
+        setLoadError("");
         let allLogs = [];
         let page = 1;
         let hasNextPage = true;
@@ -75,13 +79,14 @@ export default function AuditLogTable({ onViewLog }) {
         setLogs(allLogs);
       } catch (error) {
         console.error("Error fetching audit logs:", error);
+        setLoadError("Could not load audit logs. Please try again.");
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchAuditLogs();
-  }, []);
+  }, [retryCount]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "N/A";
@@ -302,6 +307,8 @@ export default function AuditLogTable({ onViewLog }) {
                   Loading audit logs...
                 </td>
               </tr>
+            ) : loadError ? (
+              <tr><td colSpan={4}><ErrorNotice message={loadError} onRetry={() => setRetryCount(c => c + 1)} /></td></tr>
             ) : paginatedLogs.length === 0 ? (
               <tr>
                 <td

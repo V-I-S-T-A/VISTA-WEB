@@ -34,6 +34,7 @@ export function ToastProvider({ children }) {
         {toasts.map((t) => (
           <div
             key={t.id}
+            role={t.type === "error" ? "alert" : "status"}
             className="flex items-center gap-2 rounded-lg shadow-lg font-inter"
             style={{
               padding: "12px 16px",

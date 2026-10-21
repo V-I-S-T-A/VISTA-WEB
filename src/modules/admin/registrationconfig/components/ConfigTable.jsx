@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   SquarePen,
@@ -33,6 +34,8 @@ export default function ConfigTable({
   onDelete,
 }) {
   const [data, setData] = useState([]);
+  const [loadError, setLoadError] = useState("");
+  const [retryCount, setRetryCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
@@ -55,19 +58,21 @@ export default function ConfigTable({
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setLoadError("");
       try {
         const response = await api.get(getEndpoint(activeTab));
         setData(response.data.results || response.data || []);
       } catch (error) {
         console.error(`Error fetching data for ${activeTab}:`, error);
         setData([]);
+        setLoadError(`Could not load ${tabLabel.toLowerCase()}. Please try again.`);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, [activeTab, refreshTrigger]);
+  }, [activeTab, refreshTrigger, tabLabel, retryCount]);
 
   const getItemId = (item) => {
     return (
@@ -481,6 +486,8 @@ export default function ConfigTable({
                 </div>
               </td>
             </tr>
+          ) : loadError ? (
+            <tr><td colSpan={headers.length}><ErrorNotice message={loadError} onRetry={() => setRetryCount(c => c + 1)} /></td></tr>
           ) : paginatedData.length === 0 ? (
             <tr>
               <td

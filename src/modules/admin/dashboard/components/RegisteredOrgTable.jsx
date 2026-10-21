@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import {
   SquarePen,
@@ -430,7 +431,7 @@ export default function RegisteredOrgTable() {
                   key={org.org_id}
                   org={org}
                   onEdit={setEditOrg}
-                  onDelete={setDeleteConfirmOrg}
+                  onDelete={(org) => { deleteOrgMutation.reset(); setDeleteConfirmOrg(org); }}
                   isUpdating={updateOrgMutation.isPending}
                   isDeleting={deleteOrgMutation.isPending}
                 />
@@ -572,6 +573,7 @@ export default function RegisteredOrgTable() {
               </p>
             </div>
 
+            <ErrorNotice message={deleteOrgMutation.isError ? "Could not delete the organization. Please try again." : ""} />
             {/* Modal Footer */}
             <div
               style={{

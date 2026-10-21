@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { useEffect, useRef, useState } from "react";
 import { X, SquarePen } from "lucide-react";
 import { useOrganizations } from "../../../../hooks/useOrganizations";
@@ -145,6 +146,7 @@ export default function EditUserModal({
   });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const overlayRef = useRef(null);
   const firstInputRef = useRef(null);
 
@@ -164,6 +166,7 @@ export default function EditUserModal({
         orgId: user.org_id ?? "",
       });
       setErrors({});
+      setSaveError("");
       setTimeout(() => firstInputRef.current?.focus(), 50);
     }
   }, [isOpen, user]);
@@ -198,6 +201,7 @@ export default function EditUserModal({
       return;
     }
     setSaving(true);
+    setSaveError("");
     try {
       await onSave?.({
         full_name: form.fullName.trim(),
@@ -206,6 +210,15 @@ export default function EditUserModal({
         is_active: form.isActive,
       });
       onClose();
+    } catch (error) {
+      const data = error.response?.data;
+      const detail = error.response?.status < 500 && data && typeof data === "object"
+        ? Object.entries(data).map(([field, messages]) => {
+            const text = Array.isArray(messages) ? messages.filter(m => typeof m === "string").join(" ") : typeof messages === "string" ? messages : "";
+            return text ? `${field === "detail" || field === "non_field_errors" ? "" : `${field}: `}${text}` : "";
+          }).filter(Boolean).join(" ")
+        : "";
+      setSaveError(detail || "Could not save the user. Your changes have been kept. Please check the fields and try again.");
     } finally {
       setSaving(false);
     }
@@ -410,6 +423,7 @@ export default function EditUserModal({
             gap: "16px",
           }}
         >
+          <ErrorNotice message={saveError} />
           {/* Full Name */}
           <Field label="Full Name *" error={errors.fullName}>
             <FocusInput

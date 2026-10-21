@@ -153,6 +153,8 @@ const UserRow = memo(function UserRow({
   );
 });
 
+const STATUS_OPTIONS = ["All Status", "Active", "Inactive"];
+
 export default function RecentSubmissionsTable() {
   // State
   const [searchInput, setSearchInput] = useState(""); // For input control
@@ -170,7 +172,6 @@ export default function RecentSubmissionsTable() {
 
   // Filter state
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [dateFilter] = useState(""); // Kept for api compatibility
 
   const [currentPage, setCurrentPage] = useState(1);
   const [editUser, setEditUser] = useState(null);
@@ -317,6 +318,7 @@ export default function RecentSubmissionsTable() {
         setEditUser(null);
       } catch (err) {
         console.error("Error updating user:", err);
+        throw err;
       }
     },
     [editUser, updateUserMutation],
@@ -362,7 +364,7 @@ export default function RecentSubmissionsTable() {
     } finally {
       setIsExporting(false);
     }
-  }, [searchQuery, roleFilter]);
+  }, [searchQuery, roleFilter, isActiveParam]);
 
   // Pagination numbers
   const pageNumbers = useMemo(() => {

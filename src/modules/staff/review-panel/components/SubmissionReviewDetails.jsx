@@ -1,3 +1,4 @@
+import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useEffect } from "react";
 import {
   Building2,
@@ -51,6 +52,10 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   });
 
   const [submissionDetails, setSubmissionDetails] = useState(null);
+  const [detailsError, setDetailsError] = useState("");
+  const [logsError, setLogsError] = useState("");
+  const [detailsRetry, setDetailsRetry] = useState(0);
+  const [logsRetry, setLogsRetry] = useState(0);
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
   const [reviewLogs, setReviewLogs] = useState([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
@@ -89,22 +94,27 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       if (!submission?.id) return;
       try {
         setIsLoadingDetails(true);
+        setDetailsError("");
+        setSubmissionDetails(null);
         const data = await submissionService.getSubmissionById(submission.id);
         setSubmissionDetails(data);
       } catch (error) {
         console.error("Failed to fetch full submission details:", error);
+        setDetailsError("Could not load the submission files. Please try again.");
       } finally {
         setIsLoadingDetails(false);
       }
     }
     fetchFullDetails();
-  }, [submission]);
+  }, [submission, detailsRetry]);
 
   useEffect(() => {
     async function fetchLogs() {
       if (!submission?.id) return;
       try {
         setIsLoadingLogs(true);
+        setLogsError("");
+        setReviewLogs([]);
         const data = await reviewLogService.getReviewLogs({
           submissionId: submission.id,
           pageSize: 50,
@@ -112,12 +122,13 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         setReviewLogs(data?.results ?? []);
       } catch (error) {
         console.error("Failed to fetch review logs:", error);
+        setLogsError("Could not load the review history. Please try again.");
       } finally {
         setIsLoadingLogs(false);
       }
     }
     fetchLogs();
-  }, [submission]);
+  }, [submission, logsRetry]);
 
   if (!submission) return null;
 
@@ -404,6 +415,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               <Loader2 className="h-4 w-4 animate-spin" />
               Fetching documents...
             </div>
+          ) : detailsError ? (
+            <ErrorNotice message={detailsError} onRetry={() => setDetailsRetry(c => c + 1)} />
           ) : submissionDetails?.documents?.length > 0 ? (
             <div className="flex flex-col gap-2">
               {submissionDetails.documents.map((doc, idx) => (
@@ -616,6 +629,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading history…
             </div>
+          ) : logsError ? (
+            <ErrorNotice message={logsError} onRetry={() => setLogsRetry(c => c + 1)} />
           ) : reviewLogs.length === 0 ? (
             <p className="font-inter text-[13px] italic text-gray-400">
               No status changes recorded yet.
