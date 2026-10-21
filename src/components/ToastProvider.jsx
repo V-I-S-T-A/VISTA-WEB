@@ -40,7 +40,8 @@ export function ToastProvider({ children }) {
               padding: "12px 16px",
               background: "#fff",
               border: `1px solid ${t.type === "error" ? "#fecaca" : "#bbf7d0"}`,
-              minWidth: 280,
+              width: "min(400px, calc(100vw - 40px))",
+              boxSizing: "border-box",
             }}
           >
             {t.type === "error" ? (
@@ -48,7 +49,7 @@ export function ToastProvider({ children }) {
             ) : (
               <CheckCircle2 className="text-green-600 w-4 h-4 flex-shrink-0" />
             )}
-            <span style={{ fontSize: 13, color: "#374151" }}>{t.message}</span>
+            <span style={{ fontSize: 13, color: "#374151", minWidth: 0, overflowWrap: "anywhere" }}>{t.message}</span>
             <button
               onClick={() => setToasts((ts) => ts.filter((x) => x.id !== t.id))}
               style={{
