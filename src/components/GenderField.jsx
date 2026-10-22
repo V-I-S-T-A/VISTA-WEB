@@ -1,5 +1,7 @@
 import { useId, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, UserRound } from "lucide-react";
+
+import "./ProfileFields.css";
 
 const OPTIONS = [
   ["Female", "Woman"],
@@ -17,11 +19,12 @@ export default function GenderField({ value, onChange, disabled = false }) {
   const custom = selfDescribe || (!knownValue && Boolean(value));
 
   return (
-    <div className="min-w-0 font-inter">
-      <label htmlFor={id} className="mb-1.5 block px-2 text-xs font-semibold text-white">
-        Gender <span className="font-normal text-white/80">(optional)</span>
+    <div className="profile-field">
+      <label htmlFor={id} className="profile-field-label">
+        Gender <span>Optional</span>
       </label>
-      <div className="relative">
+      <div className="profile-field-control">
+        <UserRound size={17} className="profile-field-icon profile-gender-icon" aria-hidden="true" />
         <select
           id={id}
           value={custom ? "self-describe" : value}
@@ -32,33 +35,35 @@ export default function GenderField({ value, onChange, disabled = false }) {
             setSelfDescribe(selected === "self-describe");
             onChange(selected === "self-describe" ? "" : selected);
           }}
-          className="h-[46px] w-full appearance-none rounded-full border-0 bg-white py-0 pl-5 pr-10 text-sm text-gray-900 outline-none focus-visible:ring-2 focus-visible:ring-yellow-300 disabled:opacity-60"
+          className="profile-gender-select"
         >
           <option value="">Select gender</option>
           {OPTIONS.map(([option, label]) => <option key={option} value={option}>{label}</option>)}
           <option value="self-describe">Let me describe</option>
         </select>
-        <ChevronDown className="pointer-events-none absolute right-4 top-3.5 h-4 w-4 text-[#1f5cae]" aria-hidden="true" />
+        <ChevronDown size={16} className="profile-gender-chevron" aria-hidden="true" />
       </div>
       {custom && (
-        <div className="mt-2">
-          <label htmlFor={`${id}-custom`} className="mb-1 block px-2 text-xs text-white">Your gender, in your words</label>
-          <input
-            id={`${id}-custom`}
-            type="text"
-            value={value}
-            onChange={(event) => {
-              setSelfDescribe(true);
-              onChange(event.target.value);
-            }}
-            disabled={disabled}
-            maxLength={100}
-            placeholder="Describe your gender"
-            className="h-[46px] w-full rounded-full border-0 bg-white px-5 text-sm text-gray-900 outline-none focus-visible:ring-2 focus-visible:ring-yellow-300"
-          />
+        <div className="profile-self-description">
+          <label htmlFor={`${id}-custom`} className="profile-field-label">Your gender, in your words</label>
+          <div className="profile-field-control">
+            <input
+              id={`${id}-custom`}
+              type="text"
+              value={value}
+              onChange={(event) => {
+                setSelfDescribe(true);
+                onChange(event.target.value);
+              }}
+              disabled={disabled}
+              maxLength={100}
+              placeholder="Describe your gender"
+              className="profile-field-input"
+            />
+          </div>
         </div>
       )}
-      <p id={`${id}-help`} className="mt-1.5 px-2 text-xs leading-relaxed text-white/85">Share only what feels right for you.</p>
+      <p id={`${id}-help`} className="profile-field-help">Choose what fits you, describe it in your own words, or leave this blank.</p>
     </div>
   );
 }
