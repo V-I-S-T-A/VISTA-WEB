@@ -1,6 +1,7 @@
 import apiClient from "../lib/axios";
 import { API_ENDPOINTS } from "../config/api";
 import { toRequestConfig } from "../utils/multipartFormData";
+import { assertPhoneNumberSaved } from "../utils/phoneNumber";
 
 export const authService = {
   async login({ email, password }) {
@@ -37,6 +38,9 @@ export const authService = {
       }
     }
     const resp = await apiClient.patch(API_ENDPOINTS.AUTH.ME, data, config);
+    if (Object.hasOwn(profileData, "phone_number")) {
+      assertPhoneNumberSaved(profileData.phone_number, resp.data);
+    }
     return resp.data;
   },
 

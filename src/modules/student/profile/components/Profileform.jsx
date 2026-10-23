@@ -7,6 +7,7 @@ import { useProfile, useUpdateProfile } from "../../../../hooks/useProfile";
 
 import PhoneNumberField from "../../../../components/PhoneNumberField";
 import GenderField from "../../../../components/GenderField";
+import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 
 const PILL_CLASS =
   "w-full bg-white font-inter text-gray-900 placeholder:text-gray-400 outline-none rounded-full border-none";
@@ -150,7 +151,7 @@ export default function ProfileForm() {
 
           {updateProfile.isError && (
             <p style={{ color: "#ffe1e1", fontSize: "13px", margin: 0 }}>
-              Couldn't update your profile. Please try again.
+              {getApiErrorMessage(updateProfile.error, "Couldn't update your profile. Please try again.")}
             </p>
           )}
           {updateProfile.isSuccess && (

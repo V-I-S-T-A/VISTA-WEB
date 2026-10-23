@@ -23,7 +23,6 @@ import {
 } from "../../../../components";
 
 const CONTENT_PADDING = "30px";
-const PAGE_SIZE = 10;
 const STATUS_OPTIONS = ["All", "Active", "Inactive"];
 
 export default function ConfigTable({
@@ -33,6 +32,7 @@ export default function ConfigTable({
   onEdit,
   onDelete,
 }) {
+  const pageSize = activeTab === "organizations" ? 5 : 10;
   const [data, setData] = useState([]);
   const [loadError, setLoadError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
@@ -129,15 +129,15 @@ export default function ConfigTable({
   }, [data, searchTerm, statusFilter, activeTab]);
 
   const totalCount = filteredData.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
   const safeCurrentPage = Math.min(currentPage, totalPages);
 
   const paginatedData = useMemo(() => {
-    const start = (safeCurrentPage - 1) * PAGE_SIZE;
-    return filteredData.slice(start, start + PAGE_SIZE);
-  }, [filteredData, safeCurrentPage]);
+    const start = (safeCurrentPage - 1) * pageSize;
+    return filteredData.slice(start, start + pageSize);
+  }, [filteredData, safeCurrentPage, pageSize]);
 
-  const showPagination = totalCount > PAGE_SIZE;
+  const showPagination = totalCount > pageSize;
 
   const pageNumbers = useMemo(() => {
     if (totalPages <= 5) {
@@ -241,18 +241,18 @@ export default function ConfigTable({
         return {
           idHeader: "ORG ID",
           headers: [
-            { label: "ORG ID", className: "w-[100px] min-w-[100px]" },
-            { label: "ORG NAME", className: "min-w-[190px]" },
-            { label: "ACRONYM", className: "w-[110px] min-w-[110px]" },
-            { label: "DESCRIPTION", className: "min-w-[160px] max-w-[200px]" },
-            { label: "STATUS", className: "w-[90px] min-w-[90px]" },
-            { label: "DATE ADDED", className: "w-[110px] min-w-[110px]" },
-            { label: "ACTIONS", className: "w-[170px] min-w-[170px] pl-6" },
+            { label: "ORG ID" },
+            { label: "ORG NAME" },
+            { label: "ACRONYM" },
+            { label: "DESCRIPTION" },
+            { label: "STATUS" },
+            { label: "DATE ADDED" },
+            { label: "ACTIONS" },
           ],
           renderRow: (item) => (
             <>
-              <td className="px-5 py-2.5 min-w-[190px]">
-                <div className="flex items-center gap-3">
+              <td className="px-6 py-4 align-middle">
+                <div className="flex min-w-0 items-center gap-4">
                   <img
                     src={item.image_url || defaultUser}
                     alt=""
@@ -263,30 +263,30 @@ export default function ConfigTable({
                     }}
                     aria-hidden="true"
                   />
-                  <div className="min-w-0">
-                    <p className="font-inter font-bold text-gray-900 text-[15px] leading-tight">
+                  <div className="min-w-0 flex-1">
+                    <p className="font-inter font-bold text-gray-900 text-[15px] leading-relaxed [overflow-wrap:anywhere]">
                       {item.name || "N/A"}
                     </p>
                   </div>
                 </div>
               </td>
-              <td className="px-5 py-2.5 w-[110px] min-w-[110px]">
-                <p className="font-inter font-medium text-gray-700 text-[13px] leading-tight break-words">
+              <td className="px-6 py-4 align-middle">
+                <p className="font-inter font-medium text-gray-700 text-[13px] leading-relaxed [overflow-wrap:anywhere]">
                   {item.acronym || "N/A"}
                 </p>
               </td>
-              <td className="px-5 py-2.5 min-w-[160px] max-w-[200px]">
+              <td className="px-6 py-4 align-middle">
                 <p
-                  className="font-inter font-medium text-gray-500 text-[13px] truncate"
+                  className="line-clamp-2 font-inter font-medium text-gray-500 text-[13px] leading-relaxed [overflow-wrap:anywhere]"
                   title={item.description}
                 >
                   {item.description || "N/A"}
                 </p>
               </td>
-              <td className="px-5 py-2.5 w-[90px] min-w-[90px] whitespace-nowrap">
+              <td className="px-6 py-4 align-middle whitespace-nowrap">
                 <StatusBadge isActive={item.is_active} />
               </td>
-              <td className="px-5 py-2.5 w-[110px] min-w-[110px] font-inter font-medium text-gray-500 whitespace-nowrap text-[13px]">
+              <td className="px-6 py-4 align-middle font-inter font-medium text-gray-500 whitespace-nowrap text-[13px]">
                 {item.created_at
                   ? new Date(item.created_at).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -457,13 +457,24 @@ export default function ConfigTable({
       onGoToPage={goToPage}
       errorMessage={exportError}
     >
-      <table className="min-w-full border-collapse">
+      <table className={activeTab === "organizations" ? "w-full min-w-[1400px] table-fixed border-collapse" : "min-w-full border-collapse"}>
+        {activeTab === "organizations" && (
+          <colgroup>
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "26%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "19%" }} />
+            <col style={{ width: "9%" }} />
+            <col style={{ width: "11%" }} />
+            <col style={{ width: "15%" }} />
+          </colgroup>
+        )}
         <thead>
           <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
             {headers.map((col, idx) => (
               <th
                 key={col.label}
-                className={`px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${col.className || ""}`}
+                className={`${activeTab === "organizations" ? "px-6 py-4" : "px-5 py-2.5"} text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${col.className || ""}`}
                 style={{
                   ...(idx === 0 ? { paddingLeft: CONTENT_PADDING } : {}),
                   ...(idx === headers.length - 1 ? { paddingRight: CONTENT_PADDING } : {}),
@@ -517,7 +528,7 @@ export default function ConfigTable({
                 className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
               >
                 <td
-                  className={`px-5 py-2.5 whitespace-nowrap ${headers[0]?.className || "w-[110px] min-w-[110px]"}`}
+                  className={`${activeTab === "organizations" ? "px-6 py-4" : "px-5 py-2.5"} whitespace-nowrap ${activeTab === "organizations" ? "" : headers[0]?.className || "w-[110px] min-w-[110px]"}`}
                   style={{ paddingLeft: CONTENT_PADDING }}
                 >
                   <span className="font-mono text-[12px] font-semibold text-gray-400">
@@ -528,7 +539,7 @@ export default function ConfigTable({
                 {renderRow(item)}
 
                 <td
-                  className={`px-5 py-2.5 pl-6 whitespace-nowrap ${headers[headers.length - 1]?.className || "w-[170px] min-w-[170px]"}`}
+                  className={`${activeTab === "organizations" ? "px-6 py-4" : "px-5 py-2.5 pl-6"} whitespace-nowrap ${activeTab === "organizations" ? "" : headers[headers.length - 1]?.className || "w-[170px] min-w-[170px]"}`}
                   style={{ paddingRight: CONTENT_PADDING }}
                 >
                   <div className="flex items-center gap-2">
