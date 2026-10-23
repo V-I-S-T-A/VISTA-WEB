@@ -88,7 +88,11 @@ export default function ConfigEntryModal({
 
   useEffect(() => {
     if (isOpen) {
-      setFormData(initialData || {});
+      setFormData(
+        activeTab === "organizations"
+          ? { is_active: true, ...initialData }
+          : initialData || {},
+      );
       setSelectedFile(null);
       setError("");
       setTimeout(() => firstInputRef.current?.focus(), 50);
@@ -401,6 +405,36 @@ export default function ConfigEntryModal({
               />
             </Field>
           ))}
+
+          {activeTab === "organizations" && (
+            <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div>
+                <p id="config-org-active-label" className="text-sm font-semibold text-gray-700">
+                  Active Organization
+                </p>
+                <p id="config-org-active-help" className="mt-1 text-xs text-gray-500">
+                  {formData.is_active
+                    ? "This organization is marked active."
+                    : "This organization is marked inactive. Turn on to reactivate it."}
+                </p>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={Boolean(formData.is_active)}
+                aria-labelledby="config-org-active-label"
+                aria-describedby="config-org-active-help"
+                disabled={isSubmitting}
+                onClick={() => setFormData((previous) => ({ ...previous, is_active: !previous.is_active }))}
+                className={`relative h-6 w-11 shrink-0 rounded-full transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:cursor-not-allowed disabled:opacity-50 ${formData.is_active ? "bg-green-600" : "bg-gray-400"}`}
+              >
+                <span
+                  aria-hidden="true"
+                  className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${formData.is_active ? "translate-x-5" : "translate-x-0"}`}
+                />
+              </button>
+            </div>
+          )}
 
           {/* Image Upload Field specifically for Organizations */}
           {activeTab === "organizations" && (
