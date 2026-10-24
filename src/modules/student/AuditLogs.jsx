@@ -31,7 +31,7 @@ export default function StudentAuditLogs() {
 
       <Sidebar role="student" isOpen={isOpen} onClose={close} />
 
-      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+      <div className="dashboard-content flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header layout="student" profilePath="/student/profile" onMenuToggle={open} />
 
         <main

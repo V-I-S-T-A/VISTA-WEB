@@ -1,27 +1,21 @@
 import { Users, ShieldCheck, GraduationCap, FileClock } from 'lucide-react'
-import { useUsers } from '../../../../hooks/useUsers'
+import { useUserSummary } from '../../../../hooks/useUsers'
+import ErrorNotice from '../../../../components/ErrorNotice'
 
 export default function UserSummaryCards() {
-  // Fetch all users to calculate stats
-  const { data: usersData = [] } = useUsers({ pageSize: 1000, excludeAdmin: true })
-
-  const users = Array.isArray(usersData) ? usersData : (usersData.results || [])
-
-  // Calculate statistics
-  const totalUsers = users.length
-  const staffCount = users.filter((u) => u.role === 'staff').length
-  const studentCount = users.filter((u) => u.role === 'student').length
-  const inactiveCount = users.filter((u) => !u.is_active).length
+  const { data, isPending, error, refetch } = useUserSummary()
+  const count = key => isPending ? '…' : error ? '—' : String(data?.[key] ?? 0)
 
   const CARDS = [
-    { label: 'Total Users', value: totalUsers.toString(), icon: Users, bg: 'bg-[#1a51a5]' },
-    { label: 'Staffs', value: staffCount.toString(), icon: ShieldCheck, bg: 'bg-[#2d9f6f]' },
-    { label: 'Students', value: studentCount.toString(), icon: GraduationCap, bg: 'bg-[#3cb8a0]' },
-    { label: 'Inactive', value: inactiveCount.toString(), icon: FileClock, bg: 'bg-[#f7941d]' },
+    { label: 'Total Users', value: count('total'), icon: Users, bg: 'bg-[#1a51a5]' },
+    { label: 'Staffs', value: count('staff'), icon: ShieldCheck, bg: 'bg-[#2d9f6f]' },
+    { label: 'Students', value: count('students'), icon: GraduationCap, bg: 'bg-[#3cb8a0]' },
+    { label: 'Inactive', value: count('inactive'), icon: FileClock, bg: 'bg-[#f7941d]' },
   ]
 
   return (
     <div className="w-full" style={{ marginBottom: '12px' }}>
+      {error && <ErrorNotice message="Could not load user totals. Please try again." onRetry={refetch} />}
       <div className="admin-cards-grid grid grid-cols-5" style={{ gap: '10px' }}>
         {CARDS.map(({ label, value, icon: Icon, bg }, index) => (
           <div

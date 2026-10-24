@@ -28,7 +28,7 @@ export default function AuditLogs() {
 
             <Sidebar role="admin" isOpen={isOpen} onClose={close} />
 
-            <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+            <div className="dashboard-content flex min-w-0 flex-1 flex-col overflow-hidden">
                 <Header layout="auditlog" profilePath="/admin/profile" onMenuToggle={open} />
 
                 <main className="dashboard-main flex-1 overflow-y-auto" style={{ padding: '20px 24px' }}>

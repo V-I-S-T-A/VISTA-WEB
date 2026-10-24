@@ -1,0 +1,112 @@
+.admin-data-table {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.admin-data-table .table-header-bar {
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.admin-data-table .table-header-bar h3 {
+  padding-left: 0 !important;
+}
+
+.admin-data-table .table-header-controls {
+  min-width: 0;
+  flex-wrap: wrap;
+  padding-right: 0 !important;
+}
+
+.admin-data-table table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+.admin-data-table th,
+.admin-data-table td[data-label] {
+  min-width: 0 !important;
+  width: auto;
+  padding: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.admin-data-table th:first-child,
+.admin-data-table td[data-label]:first-child {
+  padding-left: 24px !important;
+}
+
+.admin-data-table th:last-child,
+.admin-data-table td[data-label]:last-child {
+  padding-right: 24px !important;
+}
+
+.admin-data-table td[data-label="Organization"] span {
+  white-space: normal;
+}
+
+.admin-data-table td[data-label="Actions"] > div {
+  flex-wrap: wrap;
+}
+
+.admin-data-table .table-footer-row {
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-inline: 24px !important;
+  border-radius: 0 0 12px 12px;
+}
+
+@container (max-width: 1000px) {
+  .admin-data-table table,
+  .admin-data-table tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .admin-data-table colgroup {
+    display: none;
+  }
+
+  .admin-data-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .admin-data-table tbody tr {
+    display: block;
+    height: auto;
+    padding: 12px 0;
+  }
+
+  .admin-data-table td[data-label] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+    align-items: center;
+    gap: 12px;
+    padding: 8px 24px !important;
+    text-align: left;
+  }
+
+  .admin-data-table td[data-label]::before {
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+  }
+
+  .admin-data-table td[data-label] > * {
+    min-width: 0;
+  }
+
+  .admin-data-table .table-header-controls {
+    width: 100%;
+  }
+
+  .admin-data-table .table-search-bar {
+    flex: 1 1 240px;
+  }
+}

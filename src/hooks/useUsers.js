@@ -15,7 +15,7 @@ export const useUsers = ({
 } = {}) => {
   return useQuery({
     queryKey: ["users", { page, pageSize, search, role, isActive, excludeAdmin }],
-    queryFn: () =>
+    queryFn: ({ signal }) =>
       userService.getUsers({
         page,
         pageSize,
@@ -23,11 +23,21 @@ export const useUsers = ({
         role,
         isActive,
         excludeAdmin,
+        signal,
       }),
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 30_000,
+    gcTime: 120_000,
+    retry: 1,
   });
 };
+
+export const useUserSummary = () => useQuery({
+  queryKey: ["users", "summary", { excludeAdmin: true }],
+  queryFn: ({ signal }) => userService.getSummary({ signal }),
+  staleTime: 30_000,
+  gcTime: 120_000,
+  retry: 1,
+});
 
 /**
  * Hook to fetch a single user

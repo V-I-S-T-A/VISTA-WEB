@@ -1,6 +1,7 @@
 import apiClient from "../lib/axios";
 import { API_ENDPOINTS } from "../config/api";
 import { toRequestConfig } from "../utils/multipartFormData";
+import { fetchTablePage } from "../utils/tablePagination";
 
 /**
  * User Service
@@ -18,6 +19,7 @@ export const userService = {
     role = "",
     isActive = null,
     excludeAdmin = false,
+    signal,
   } = {}) {
     const params = new URLSearchParams();
 
@@ -29,11 +31,16 @@ export const userService = {
     if (isActive !== null) params.append("is_active", isActive);
     if (excludeAdmin) params.append("exclude_admin", "true");
 
-    const response = await apiClient.get(API_ENDPOINTS.USERS.LIST, { params });
+    return fetchTablePage(apiClient, API_ENDPOINTS.USERS.LIST, {
+      params: Object.fromEntries(params), signal,
+    });
+  },
 
-    // Backend returns paginated data, handle accordingly
-    // If backend supports page param, add it here
-    return response.data;
+  async getSummary({ signal } = {}) {
+    const { data } = await apiClient.get(`${API_ENDPOINTS.USERS.LIST}summary/`, {
+      params: { exclude_admin: true }, signal,
+    });
+    return data;
   },
 
   /**
