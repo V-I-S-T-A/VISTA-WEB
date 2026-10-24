@@ -1,7 +1,7 @@
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useRef, useState } from "react";
 import { X, UserPlus, Mail } from "lucide-react";
-import { useOrganizations } from "../../../../hooks/useOrganizations";
+import OrganizationPicker from "../../../../components/OrganizationPicker";
 
 const ROLES = ["staff", "student"];
 
@@ -52,10 +52,10 @@ const FIELD_STYLES = {
   },
 };
 
-function Field({ label, error, children }) {
+function Field({ label, error, children, htmlFor }) {
   return (
     <div>
-      <label style={FIELD_STYLES.label}>{label}</label>
+      <label htmlFor={htmlFor} style={FIELD_STYLES.label}>{label}</label>
       {children}
       {error && <p style={FIELD_STYLES.error}>{error}</p>}
     </div>
@@ -131,7 +131,11 @@ const EMPTY_FORM = {
   isActive: true,
 };
 
-export default function AddUserModal({
+export default function AddUserModal(props) {
+  return props.isOpen ? <AddUserForm {...props} /> : null;
+}
+
+function AddUserForm({
   isOpen,
   onClose,
   onSave,
@@ -142,30 +146,23 @@ export default function AddUserModal({
   const [errors, setErrors] = useState({});
 
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
   const overlayRef = useRef(null);
   const firstInputRef = useRef(null);
 
-  const { data: orgData } = useOrganizations();
-  const organizations = Array.isArray(orgData)
-    ? orgData
-    : orgData?.results || [];
-
   useEffect(() => {
-    if (isOpen) {
-      setForm(EMPTY_FORM);
-      setErrors({});
-      setTimeout(() => firstInputRef.current?.focus(), 50);
-    }
-  }, [isOpen]);
+    const timer = setTimeout(() => firstInputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
     function onKey(e) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !e.defaultPrevented && !saving && !isLoading) onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, saving, isLoading]);
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -194,6 +191,7 @@ export default function AddUserModal({
       return;
     }
     setSaving(true);
+    setSaveError("");
     try {
       await onSave({
         first_name: form.firstName.trim(),
@@ -204,6 +202,8 @@ export default function AddUserModal({
         is_active: form.isActive,
       });
       onClose();
+    } catch (error) {
+      setSaveError(getApiErrorMessage(error, "Could not create the account. Your entries have been kept. Please try again."));
     } finally {
       setSaving(false);
     }
@@ -327,7 +327,7 @@ export default function AddUserModal({
             gap: "16px",
           }}
         >
-          {error && (
+          {(saveError || error) && (
             <div
               style={{
                 background: "#fee2e2",
@@ -338,7 +338,7 @@ export default function AddUserModal({
                 color: "#991b1b",
               }}
             >
-              {getApiErrorMessage(error, "Could not create the account.")}
+              {saveError || getApiErrorMessage(error, "Could not create the account.")}
             </div>
           )}
 
@@ -440,19 +440,14 @@ export default function AddUserModal({
 
           {/* Organization (Dynamic) */}
           {form.role === "student" && (
-            <Field label="Organization *" error={errors.orgId}>
-              <FocusSelect
+            <Field label="Organization *" htmlFor="add-user-organization">
+              <OrganizationPicker
+                id="add-user-organization"
                 value={form.orgId}
-                onChange={(e) => set("orgId", e.target.value)}
+                onChange={(orgId) => set("orgId", orgId)}
                 disabled={saving || isLoading}
-              >
-                <option value="">Select organization</option>
-                {organizations.map((org) => (
-                  <option key={org.org_id} value={org.org_id}>
-                    {org.acronym} - {org.name}
-                  </option>
-                ))}
-              </FocusSelect>
+                error={errors.orgId}
+              />
             </Field>
           )}
 
