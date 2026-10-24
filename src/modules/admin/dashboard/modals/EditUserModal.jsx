@@ -1,7 +1,7 @@
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useEffect, useRef, useState } from "react";
-import { X, SquarePen, Trash2 } from "lucide-react";
+import { X, SquarePen } from "lucide-react";
 import OrganizationPicker from "../../../../components/OrganizationPicker";
 
 const ROLES = ["staff", "student"];
@@ -141,7 +141,6 @@ function EditUserForm({
   onClose,
   user,
   onSave,
-  onDelete,
   isLoading = false,
 }) {
   const [form, setForm] = useState({
@@ -152,7 +151,6 @@ function EditUserForm({
   });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
-  const [deleting, setDeleting] = useState(false);
   const [saveError, setSaveError] = useState("");
   const overlayRef = useRef(null);
   const firstInputRef = useRef(null);
@@ -165,11 +163,11 @@ function EditUserForm({
   useEffect(() => {
     if (!isOpen) return;
     function onKey(e) {
-      if (e.key === "Escape" && !e.defaultPrevented && !saving && !deleting && !isLoading) onClose();
+      if (e.key === "Escape" && !e.defaultPrevented && !saving && !isLoading) onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose, saving, deleting, isLoading]);
+  }, [isOpen, onClose, saving, isLoading]);
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -183,19 +181,6 @@ function EditUserForm({
     if (form.role === "student" && !form.orgId)
       errs.orgId = "Organization is required for students.";
     return errs;
-  }
-
-  async function handleDelete() {
-    if (saving || deleting || isLoading) return;
-    setDeleting(true);
-    setSaveError("");
-    try {
-      await onDelete(user.user_id);
-    } catch (error) {
-      setSaveError(getApiErrorMessage(error, "Could not delete this account. Please try again."));
-    } finally {
-      setDeleting(false);
-    }
   }
 
   async function handleSave() {
@@ -312,19 +297,19 @@ function EditUserForm({
           <button
             type="button"
             onClick={onClose}
-            disabled={saving || deleting || isLoading}
+            disabled={saving || isLoading}
             style={{
               background: "rgba(255,255,255,0.12)",
               border: "none",
               borderRadius: "7px",
               width: "30px",
               height: "30px",
-              cursor: saving || deleting || isLoading ? "not-allowed" : "pointer",
+              cursor: saving || isLoading ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#fff",
-              opacity: saving || deleting || isLoading ? 0.5 : 1,
+              opacity: saving || isLoading ? 0.5 : 1,
             }}
             aria-label="Close modal"
           >
@@ -428,7 +413,7 @@ function EditUserForm({
               type="text"
               value={form.fullName}
               onChange={(e) => set("fullName", e.target.value)}
-              disabled={saving || deleting || isLoading}
+              disabled={saving || isLoading}
             />
           </Field>
 
@@ -440,7 +425,7 @@ function EditUserForm({
                 set("role", e.target.value);
                 if (e.target.value !== "student") set("orgId", "");
               }}
-              disabled={saving || deleting || isLoading}
+              disabled={saving || isLoading}
             >
               <option value="">Select role</option>
               {ROLES.map((r) => (
@@ -458,7 +443,7 @@ function EditUserForm({
                 id="edit-user-organization"
                 value={form.orgId}
                 onChange={(orgId) => set("orgId", orgId)}
-                disabled={saving || deleting || isLoading}
+                disabled={saving || isLoading}
                 error={errors.orgId}
                 selectedLabel={form.orgId === user.org_id ? user.department : ""}
               />
@@ -507,18 +492,18 @@ function EditUserForm({
               role="switch"
               aria-checked={form.isActive}
               onClick={() => set("isActive", !form.isActive)}
-              disabled={saving || deleting || isLoading}
+              disabled={saving || isLoading}
               style={{
                 width: "42px",
                 height: "24px",
                 borderRadius: "999px",
                 border: "none",
                 background: form.isActive ? "#1f5cae" : "#d1d5db",
-                cursor: saving || deleting || isLoading ? "not-allowed" : "pointer",
+                cursor: saving || isLoading ? "not-allowed" : "pointer",
                 position: "relative",
                 transition: "background 0.2s",
                 flexShrink: 0,
-                opacity: saving || deleting || isLoading ? 0.5 : 1,
+                opacity: saving || isLoading ? 0.5 : 1,
               }}
             >
               <span
@@ -551,22 +536,10 @@ function EditUserForm({
             flexWrap: "wrap",
           }}
         >
-          {onDelete && (
-            <button
-              type="button"
-              onClick={handleDelete}
-              disabled={saving || deleting || isLoading}
-              className="inline-flex items-center gap-1.5 rounded border border-red-700 bg-red-500 px-3 py-2 font-inter text-xs font-bold text-white hover:bg-red-600 disabled:opacity-50"
-              style={{ marginRight: "auto" }}
-            >
-              <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-              {deleting ? "Deleting..." : "Delete user"}
-            </button>
-          )}
           <button
             type="button"
             onClick={onClose}
-            disabled={saving || deleting || isLoading}
+            disabled={saving || isLoading}
             style={{
               fontFamily: "Inter, sans-serif",
               fontSize: "12px",
@@ -576,7 +549,7 @@ function EditUserForm({
               border: "1.5px solid #d1d5db",
               borderRadius: "7px",
               padding: "7px 16px",
-              cursor: saving || deleting || isLoading ? "not-allowed" : "pointer",
+              cursor: saving || isLoading ? "not-allowed" : "pointer",
               transition: "all 0.15s",
             }}
           >
@@ -585,7 +558,7 @@ function EditUserForm({
           <button
             type="button"
             onClick={handleSave}
-            disabled={saving || deleting || isLoading}
+            disabled={saving || isLoading}
             style={{
               fontFamily: "Inter, sans-serif",
               fontSize: "12px",
@@ -595,9 +568,9 @@ function EditUserForm({
               border: "none",
               borderRadius: "7px",
               padding: "7px 24px",
-              cursor: saving || deleting || isLoading ? "not-allowed" : "pointer",
+              cursor: saving || isLoading ? "not-allowed" : "pointer",
               transition: "all 0.15s",
-              opacity: saving || deleting || isLoading ? 0.7 : 1,
+              opacity: saving || isLoading ? 0.7 : 1,
             }}
           >
             {saving ? "Saving..." : "Save Changes"}
