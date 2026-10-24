@@ -1,0 +1,101 @@
+.registration-orgs {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.registration-orgs .table-header-bar {
+  gap: 16px;
+  padding: 16px 24px;
+}
+
+.registration-orgs .table-header-bar h3 {
+  padding-left: 0 !important;
+}
+
+.registration-orgs .table-header-controls {
+  min-width: 0;
+  flex-wrap: wrap;
+  padding-right: 0 !important;
+}
+
+.registration-orgs th,
+.registration-orgs td[data-label] {
+  padding: 12px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.registration-orgs th:first-child,
+.registration-orgs td[data-label]:first-child {
+  padding-left: 24px !important;
+}
+
+.registration-orgs th:last-child,
+.registration-orgs td[data-label]:last-child {
+  padding-right: 24px !important;
+}
+
+.registration-orgs td[data-label="Actions"] > div {
+  flex-wrap: wrap;
+}
+
+.registration-orgs .table-footer-row {
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-inline: 24px !important;
+  border-radius: 0 0 12px 12px;
+}
+
+/* Use labeled rows when seven columns no longer fit comfortably. */
+@container (max-width: 1000px) {
+  .registration-orgs table,
+  .registration-orgs tbody {
+    display: block;
+    width: 100%;
+  }
+
+  .registration-orgs colgroup {
+    display: none;
+  }
+
+  .registration-orgs thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .registration-orgs tbody tr {
+    display: block;
+    height: auto;
+    padding: 12px 0;
+  }
+
+  .registration-orgs td[data-label] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 3fr);
+    align-items: center;
+    gap: 12px;
+    padding: 8px 24px !important;
+  }
+
+  .registration-orgs td[data-label]::before {
+    content: attr(data-label);
+    font-size: 12px;
+    font-weight: 700;
+    color: #6b7280;
+  }
+
+  .registration-orgs td[data-label] > * {
+    min-width: 0;
+  }
+
+  .registration-orgs .table-header-controls {
+    width: 100%;
+  }
+
+  .registration-orgs .table-search-bar {
+    flex: 1 1 240px;
+  }
+}

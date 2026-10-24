@@ -1,5 +1,6 @@
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   SquarePen,
   Trash2,
@@ -10,6 +11,9 @@ import {
   Tag,
 } from "lucide-react";
 import api from "../../../../lib/axios";
+import { fetchAllPages } from "../../../../utils/fetchAllPages";
+import { fetchOrganizationPage, organizationFilters } from "../../../../utils/organizationPagination";
+import "./ConfigTable.css";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
 import {
   TableContainer,
@@ -32,46 +36,71 @@ export default function ConfigTable({
   onEdit,
   onDelete,
 }) {
-  const pageSize = activeTab === "organizations" ? 5 : 10;
+  const pageSize = activeTab === "organizations" ? 8 : 10;
+  const isOrganizations = activeTab === "organizations";
   const [data, setData] = useState([]);
-  const [loadError, setLoadError] = useState("");
+  const [localLoadError, setLoadError] = useState("");
   const [retryCount, setRetryCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLocalLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState("");
 
+  useEffect(() => {
+    if (!isOrganizations || searchTerm.trim() === debouncedSearch) return;
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm.trim());
+      setCurrentPage(1);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm, isOrganizations, debouncedSearch]);
+
+  const organizations = useQuery({
+    queryKey: ["registration-organizations", currentPage, debouncedSearch, statusFilter, refreshTrigger, retryCount],
+    queryFn: ({ signal }) => fetchOrganizationPage(api, {
+      page: currentPage, search: debouncedSearch, status: statusFilter, signal,
+    }),
+    enabled: isOrganizations,
+    staleTime: 30_000,
+    gcTime: 120_000,
+    retry: 1,
+  });
+  const isLoading = isOrganizations ? organizations.isFetching : isLocalLoading;
+  const loadError = isOrganizations
+    ? (organizations.error ? "Could not load organizations. Please try again." : "")
+    : localLoadError;
+
   const getEndpoint = (tab) => {
     return `/${tab.replace("_", "-")}/`;
   };
 
   useEffect(() => {
-    setSearchTerm("");
-    setStatusFilter("All");
-    setCurrentPage(1);
-    setExportError("");
-  }, [activeTab]);
-
-  useEffect(() => {
+    if (activeTab === "organizations") return;
+    const controller = new AbortController();
     const fetchData = async () => {
       setIsLoading(true);
       setLoadError("");
       try {
-        const response = await api.get(getEndpoint(activeTab));
-        setData(response.data.results || response.data || []);
+        const endpoint = getEndpoint(activeTab);
+        const items = await api.get(endpoint, { signal: controller.signal })
+          .then(({ data }) => data.results || data || []);
+        if (!controller.signal.aborted) setData(items);
       } catch (error) {
+        if (controller.signal.aborted) return;
         console.error(`Error fetching data for ${activeTab}:`, error);
         setData([]);
         setLoadError(`Could not load ${tabLabel.toLowerCase()}. Please try again.`);
       } finally {
-        setIsLoading(false);
+        if (!controller.signal.aborted) setIsLoading(false);
       }
     };
 
     fetchData();
+    return () => controller.abort();
   }, [activeTab, refreshTrigger, tabLabel, retryCount]);
 
   const getItemId = (item) => {
@@ -85,6 +114,7 @@ export default function ConfigTable({
   };
 
   const filteredData = useMemo(() => {
+    if (isOrganizations) return organizations.data?.results || [];
     const query = searchTerm.trim().toLowerCase();
 
     return data.filter((item) => {
@@ -96,14 +126,6 @@ export default function ConfigTable({
 
       if (!query) return true;
 
-      if (activeTab === "organizations") {
-        return (
-          String(item.name || "").toLowerCase().includes(query) ||
-          String(item.acronym || "").toLowerCase().includes(query) ||
-          String(item.description || "").toLowerCase().includes(query) ||
-          String(item.org_id || "").toLowerCase().includes(query)
-        );
-      }
       if (activeTab === "academic_years") {
         return (
           String(item.year || item.name || "").toLowerCase().includes(query) ||
@@ -126,16 +148,19 @@ export default function ConfigTable({
       }
       return false;
     });
-  }, [data, searchTerm, statusFilter, activeTab]);
+  }, [data, searchTerm, statusFilter, activeTab, isOrganizations, organizations.data]);
 
-  const totalCount = filteredData.length;
+  const totalCount = isOrganizations ? (organizations.data?.count || 0) : filteredData.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
-  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const safeCurrentPage = isOrganizations
+    ? (organizations.data?.current_page || currentPage)
+    : Math.min(currentPage, totalPages);
 
   const paginatedData = useMemo(() => {
+    if (isOrganizations) return filteredData;
     const start = (safeCurrentPage - 1) * pageSize;
     return filteredData.slice(start, start + pageSize);
-  }, [filteredData, safeCurrentPage, pageSize]);
+  }, [filteredData, safeCurrentPage, pageSize, isOrganizations]);
 
   const showPagination = totalCount > pageSize;
 
@@ -160,11 +185,17 @@ export default function ConfigTable({
     [totalPages]
   );
 
-  const handleExportCSV = useCallback(() => {
+  const handleExportCSV = useCallback(async () => {
     setIsExporting(true);
     setExportError("");
     try {
-      if (!filteredData.length) {
+      // Full-list loading happens only when explicitly exporting.
+      const exportData = isOrganizations
+        ? await fetchAllPages(api, "/organizations/", {
+          params: organizationFilters(searchTerm, statusFilter),
+        })
+        : filteredData;
+      if (!exportData.length) {
         setExportError(`No ${tabLabel.toLowerCase()} data to export.`);
         return;
       }
@@ -174,7 +205,7 @@ export default function ConfigTable({
 
       if (activeTab === "organizations") {
         headers = ["Org ID", "Org Name", "Acronym", "Description", "Status", "Date Added"];
-        rows = filteredData.map((item) => [
+        rows = exportData.map((item) => [
           `"${item.org_id || ""}"`,
           `"${(item.name || "").replace(/"/g, '""')}"`,
           `"${(item.acronym || "").replace(/"/g, '""')}"`,
@@ -223,7 +254,7 @@ export default function ConfigTable({
     } finally {
       setIsExporting(false);
     }
-  }, [filteredData, activeTab, tabLabel]);
+  }, [filteredData, activeTab, tabLabel, isOrganizations, searchTerm, statusFilter]);
 
   const renderEmptyIcon = () => {
     if (activeTab === "organizations")
@@ -251,7 +282,7 @@ export default function ConfigTable({
           ],
           renderRow: (item) => (
             <>
-              <td className="px-6 py-4 align-middle">
+              <td data-label="Organization" className="px-6 py-4 align-middle">
                 <div className="flex min-w-0 items-center gap-4">
                   <img
                     src={item.image_url || defaultUser}
@@ -270,12 +301,12 @@ export default function ConfigTable({
                   </div>
                 </div>
               </td>
-              <td className="px-6 py-4 align-middle">
+              <td data-label="Acronym" className="px-6 py-4 align-middle">
                 <p className="font-inter font-medium text-gray-700 text-[13px] leading-relaxed [overflow-wrap:anywhere]">
                   {item.acronym || "N/A"}
                 </p>
               </td>
-              <td className="px-6 py-4 align-middle">
+              <td data-label="Description" className="px-6 py-4 align-middle">
                 <p
                   className="line-clamp-2 font-inter font-medium text-gray-500 text-[13px] leading-relaxed [overflow-wrap:anywhere]"
                   title={item.description}
@@ -283,10 +314,10 @@ export default function ConfigTable({
                   {item.description || "N/A"}
                 </p>
               </td>
-              <td className="px-6 py-4 align-middle whitespace-nowrap">
+              <td data-label="Status" className="px-6 py-4 align-middle whitespace-nowrap">
                 <StatusBadge isActive={item.is_active} />
               </td>
-              <td className="px-6 py-4 align-middle font-inter font-medium text-gray-500 whitespace-nowrap text-[13px]">
+              <td data-label="Date added" className="px-6 py-4 align-middle font-inter font-medium text-gray-500 whitespace-nowrap text-[13px]">
                 {item.created_at
                   ? new Date(item.created_at).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -393,6 +424,7 @@ export default function ConfigTable({
   const hasStatusFilter = activeTab !== "categories";
 
   return (
+    <div className={activeTab === "organizations" ? "registration-orgs" : undefined}>
     <TableContainer
       title={`${tabLabel} Database`}
       headerRight={
@@ -401,7 +433,7 @@ export default function ConfigTable({
             value={searchTerm}
             onChange={(e) => {
               setSearchTerm(e.target.value);
-              setCurrentPage(1);
+              if (!isOrganizations) setCurrentPage(1);
             }}
             placeholder={`Search ${tabLabel.toLowerCase()}...`}
           />
@@ -457,16 +489,16 @@ export default function ConfigTable({
       onGoToPage={goToPage}
       errorMessage={exportError}
     >
-      <table className={activeTab === "organizations" ? "w-full min-w-[1400px] table-fixed border-collapse" : "min-w-full border-collapse"}>
+      <table className={activeTab === "organizations" ? "w-full table-fixed border-collapse" : "min-w-full border-collapse"}>
         {activeTab === "organizations" && (
           <colgroup>
-            <col style={{ width: "9%" }} />
-            <col style={{ width: "26%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "27%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "16%" }} />
+            <col style={{ width: "10%" }} />
             <col style={{ width: "11%" }} />
-            <col style={{ width: "19%" }} />
-            <col style={{ width: "9%" }} />
-            <col style={{ width: "11%" }} />
-            <col style={{ width: "15%" }} />
+            <col style={{ width: "18%" }} />
           </colgroup>
         )}
         <thead>
@@ -528,6 +560,7 @@ export default function ConfigTable({
                 className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
               >
                 <td
+                  data-label={headers[0].label}
                   className={`${activeTab === "organizations" ? "px-6 py-4" : "px-5 py-2.5"} whitespace-nowrap ${activeTab === "organizations" ? "" : headers[0]?.className || "w-[110px] min-w-[110px]"}`}
                   style={{ paddingLeft: CONTENT_PADDING }}
                 >
@@ -539,6 +572,7 @@ export default function ConfigTable({
                 {renderRow(item)}
 
                 <td
+                  data-label="Actions"
                   className={`${activeTab === "organizations" ? "px-6 py-4" : "px-5 py-2.5 pl-6"} whitespace-nowrap ${activeTab === "organizations" ? "" : headers[headers.length - 1]?.className || "w-[170px] min-w-[170px]"}`}
                   style={{ paddingRight: CONTENT_PADDING }}
                 >
@@ -575,5 +609,6 @@ export default function ConfigTable({
         </tbody>
       </table>
     </TableContainer>
+    </div>
   );
 }
