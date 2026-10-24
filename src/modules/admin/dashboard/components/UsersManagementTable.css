@@ -1,0 +1,33 @@
+.users-management-table td[data-label="User"] {
+  overflow-wrap: normal;
+}
+
+.users-management-table td[data-label="User"] > div > div {
+  flex: 1;
+}
+
+.users-management-table td[data-label="User"] p:first-child {
+  word-break: normal;
+  overflow-wrap: break-word;
+}
+
+.users-management-table td[data-label="Actions"] button {
+  cursor: pointer;
+}
+
+.users-management-table td[data-label="Actions"] button:focus-visible {
+  outline: 2px solid #1f5cae;
+  outline-offset: 2px;
+}
+
+@container (min-width: 1001px) {
+  .users-management-table table {
+    min-width: 1050px;
+  }
+}
+
+@container (max-width: 480px) {
+  .users-management-table td[data-label="Actions"] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

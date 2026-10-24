@@ -1,9 +1,10 @@
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
-import { SquarePen, Loader, Mail } from "lucide-react";
+import { SquarePen, Trash2, Loader, Mail } from "lucide-react";
 import { useToast } from "../../../../components/toastContext";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import "../../../../components/AdminDataTable.css";
+import "./UsersManagementTable.css";
 import { TABLE_PAGE_SIZE, pageNumbers as getPageNumbers } from "../../../../utils/tablePagination";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
 import EditUserModal from "../modals/EditUserModal";
@@ -28,11 +29,7 @@ import {
 const PAGE_SIZE = TABLE_PAGE_SIZE;
 const CONTENT_PADDING = "30px";
 const SEARCH_DEBOUNCE_MS = 350;
-const ACTION_BUTTON_STYLE = {
-  width: "150px", height: "36px", padding: "0 10px", fontSize: "12px",
-  display: "inline-flex", alignItems: "center", justifyContent: "center",
-  gap: "6px", borderRadius: "5px", boxSizing: "border-box", lineHeight: "1",
-};
+const ACTION_BUTTON_STYLE = { fontSize: "12px", padding: "4px 12px", minHeight: "28px" };
 
 // Pulls the filename the backend suggested via Content-Disposition, falling
 // back to a sensible default if the header isn't present.
@@ -57,6 +54,7 @@ function downloadBlob(blob, filename) {
 const UserRow = memo(function UserRow({
   user,
   onEdit,
+  onDelete,
   isUpdating,
   isDeleting,
   onResend,
@@ -129,7 +127,7 @@ const UserRow = memo(function UserRow({
         <StatusBadge isActive={user.is_active} />
       </td>
       <td data-label="Actions" className="px-5 py-2.5">
-        <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap [&>button]:shrink-0">
+        <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap [&>button]:shrink-0">
           <button
             type="button"
             onClick={handleEdit}
@@ -143,6 +141,16 @@ const UserRow = memo(function UserRow({
             />
             EDIT
           </button>
+          <button
+            type="button"
+            onClick={() => onDelete(user.user_id)}
+            disabled={isUpdating || isDeleting || isResending}
+            className="inline-flex items-center gap-1 rounded bg-[#ef4444] font-inter font-bold text-white transition hover:bg-[#dc2626] active:scale-95 border border-[#b91c1c]/50 disabled:opacity-50"
+            style={ACTION_BUTTON_STYLE}
+          >
+            <Trash2 style={{ width: "12px", height: "12px" }} aria-hidden="true" />
+            DELETE
+          </button>
           {user.is_active && !user.last_login && user.must_change_password && (
             <button
               type="button"
@@ -150,10 +158,13 @@ const UserRow = memo(function UserRow({
               disabled={isUpdating || isDeleting || isResending}
               className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-3 py-1 font-inter text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-50"
               aria-label={`Resend invitation to ${user.email}`}
-              style={ACTION_BUTTON_STYLE}
+              title={isResending ? "Sending invitation..." : "Resend invitation"}
+              aria-busy={isResending}
+              style={{ width: "32px", height: "28px", padding: 0, justifyContent: "center" }}
             >
-              <Mail className="h-3 w-3" aria-hidden="true" />
-              {isResending ? "Sending..." : "Resend invitation"}
+              {isResending
+                ? <Loader className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+                : <Mail className="h-3.5 w-3.5" aria-hidden="true" />}
             </button>
           )}
         </div>
@@ -213,6 +224,7 @@ export default function RecentSubmissionsTable() {
   // Export state
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   // Refs
   const debounceTimerRef = useRef(null);
@@ -365,9 +377,13 @@ export default function RecentSubmissionsTable() {
     async (userId) => {
       if (!confirm("Permanently delete this user? This cannot be undone."))
         return;
-      await deleteUserMutation.mutateAsync(userId);
-      setEditUser(null);
-      showToast("User account deleted.", "success");
+      setDeleteError("");
+      try {
+        await deleteUserMutation.mutateAsync(userId);
+        showToast("User account deleted.", "success");
+      } catch (error) {
+        setDeleteError(getApiErrorMessage(error, "Could not delete this account. Please try again."));
+      }
     },
     [deleteUserMutation, showToast],
   );
@@ -411,7 +427,7 @@ export default function RecentSubmissionsTable() {
 
   return (
     <>
-      <div className="admin-data-table">
+      <div className="admin-data-table users-management-table">
       <TableContainer
         title="Users Management"
         headerRight={
@@ -467,16 +483,16 @@ export default function RecentSubmissionsTable() {
         totalPages={totalPages}
         pageNumbers={pageNumbers}
         onGoToPage={goToPage}
-        errorMessage={exportError}
+        errorMessage={deleteError || exportError}
       >
         <table className="min-w-full border-collapse">
           <colgroup>
-            <col />
-            <col style={{ width: "10%" }} />
             <col style={{ width: "26%" }} />
+            <col style={{ width: "10%" }} />
+            <col />
             <col style={{ width: "12%" }} />
             <col style={{ width: "10%" }} />
-            <col style={{ width: "350px" }} />
+            <col style={{ width: "270px" }} />
           </colgroup>
           <thead>
             <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
@@ -544,6 +560,7 @@ export default function RecentSubmissionsTable() {
                   key={user.user_id}
                   user={user}
                   onEdit={setEditUser}
+                  onDelete={handleDeleteUser}
                   onResend={(user) => { setInvitationError(""); setInvitationUser(user); }}
                   isResending={resendingUserId === user.user_id}
                   isUpdating={updateUserMutation.isPending}
@@ -569,7 +586,6 @@ export default function RecentSubmissionsTable() {
         onClose={handleCloseEditModal}
         user={editUser}
         onSave={handleSaveEdit}
-        onDelete={handleDeleteUser}
         isLoading={updateUserMutation.isPending || deleteUserMutation.isPending}
       />
     </>
