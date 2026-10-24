@@ -1,6 +1,9 @@
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
-import { SquarePen, Trash2, Loader, AlertCircle } from "lucide-react";
+import { SquarePen, Trash2, Loader } from "lucide-react";
+import ErrorNotice from "../../../../components/ErrorNotice";
+import "../../../../components/AdminDataTable.css";
+import { TABLE_PAGE_SIZE, pageNumbers as getPageNumbers } from "../../../../utils/tablePagination";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
 import EditUserModal from "../modals/EditUserModal";
 import { useUsers } from "../../../../hooks/useUsers";
@@ -20,9 +23,9 @@ import {
   StatusBadge,
 } from "../../../../components";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = TABLE_PAGE_SIZE;
 const CONTENT_PADDING = "30px";
-const SEARCH_DEBOUNCE_MS = 600;
+const SEARCH_DEBOUNCE_MS = 350;
 
 // Pulls the filename the backend suggested via Content-Disposition, falling
 // back to a sensible default if the header isn't present.
@@ -59,8 +62,8 @@ const UserRow = memo(function UserRow({
 
   return (
     <tr className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]">
-      <td className="px-5 py-2.5" style={{ paddingLeft: CONTENT_PADDING }}>
-        <div className="flex items-center gap-3">
+      <td data-label="User" className="px-5 py-2.5" style={{ paddingLeft: CONTENT_PADDING }}>
+        <div className="flex min-w-0 items-center gap-3">
           <img
             src={user.image_url || defaultUser}
             alt=""
@@ -85,19 +88,19 @@ const UserRow = memo(function UserRow({
           </div>
         </div>
       </td>
-      <td className="px-5 py-2.5">
+      <td data-label="Role" className="px-5 py-2.5">
         <span
-          className={`inline-flex items-center justify-center rounded-full px-7 py-3 font-inter font-semibold capitalize ${
+          className={`inline-flex items-center justify-center rounded-full px-3 py-1 font-inter font-semibold capitalize ${
             user.role === "staff"
               ? "bg-[#dfe7fb] text-[#12345b]"
               : "bg-[#e8e3ff] text-[#4a3f99]"
           }`}
-          style={{ fontSize: "13px", minWidth: "80px" }}
+          style={{ fontSize: "13px" }}
         >
           {user.role}
         </span>
       </td>
-      <td className="px-5 py-2.5">
+      <td data-label="Organization" className="px-5 py-2.5">
         <span
           className="font-inter font-medium text-gray-700 whitespace-nowrap uppercase"
           style={{ fontSize: "13px" }}
@@ -106,6 +109,7 @@ const UserRow = memo(function UserRow({
         </span>
       </td>
       <td
+        data-label="Last login"
         className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
         style={{ fontSize: "13px" }}
       >
@@ -117,10 +121,10 @@ const UserRow = memo(function UserRow({
             })
           : "Never"}
       </td>
-      <td className="px-5 py-2.5 whitespace-nowrap min-w-[120px]">
+      <td data-label="Status" className="px-5 py-2.5">
         <StatusBadge isActive={user.is_active} />
       </td>
-      <td className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
+      <td data-label="Actions" className="px-5 py-2.5">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -187,8 +191,9 @@ export default function RecentSubmissionsTable() {
   // Fetch users from API
   const {
     data: usersData = [],
-    isLoading,
+    isFetching: isLoading,
     error,
+    refetch,
   } = useUsers({
     excludeAdmin: true,
     page: currentPage,
@@ -219,11 +224,11 @@ export default function RecentSubmissionsTable() {
   );
 
   const safeCurrentPage = useMemo(
-    () => Math.min(currentPage, totalPages),
-    [currentPage, totalPages],
+    () => usersData.current_page || Math.min(currentPage, totalPages),
+    [usersData.current_page, currentPage, totalPages],
   );
 
-  const showPagination = useMemo(() => totalCount >= 50, [totalCount]);
+  const showPagination = totalCount > PAGE_SIZE;
 
   // Handle search with debounce
   const handleSearchInputChange = useCallback(
@@ -369,25 +374,7 @@ export default function RecentSubmissionsTable() {
   }, [searchQuery, roleFilter, isActiveParam]);
 
   // Pagination numbers
-  const pageNumbers = useMemo(() => {
-    if (totalPages <= 5) {
-      return Array.from({ length: totalPages }, (_, i) => i + 1);
-    }
-
-    const half = 2;
-    let start = Math.max(1, safeCurrentPage - half);
-    let end = Math.min(totalPages, safeCurrentPage + half);
-
-    if (end - start < 4) {
-      if (start === 1) {
-        end = Math.min(totalPages, 5);
-      } else {
-        start = Math.max(1, end - 4);
-      }
-    }
-
-    return Array.from({ length: end - start + 1 }, (_, i) => start + i);
-  }, [totalPages, safeCurrentPage]);
+  const pageNumbers = useMemo(() => getPageNumbers(safeCurrentPage, totalPages), [totalPages, safeCurrentPage]);
 
   // Close edit modal
   const handleCloseEditModal = useCallback(() => {
@@ -400,6 +387,7 @@ export default function RecentSubmissionsTable() {
 
   return (
     <>
+      <div className="admin-data-table">
       <TableContainer
         title="Users Management"
         headerRight={
@@ -458,6 +446,9 @@ export default function RecentSubmissionsTable() {
         errorMessage={exportError}
       >
         <table className="min-w-full border-collapse">
+          <colgroup>
+            {[27, 10, 26, 11, 10, 16].map((width, i) => <col key={i} style={{ width: `${width}%` }} />)}
+          </colgroup>
           <thead>
             <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
               {[
@@ -470,12 +461,10 @@ export default function RecentSubmissionsTable() {
               ].map((heading) => (
                 <th
                   key={heading}
-                  className={`px-5 py-2.5 text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 whitespace-nowrap ${
-                    heading === "ACTION" ? "pl-6 w-[170px]" : ""
-                  } ${heading === "STATUS" ? "min-w-[120px]" : ""}`}
+                  className="text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500"
                   style={
                     heading === "USER"
-                      ? { paddingLeft: CONTENT_PADDING, minWidth: "220px" }
+                      ? { paddingLeft: CONTENT_PADDING }
                       : undefined
                   }
                 >
@@ -498,16 +487,13 @@ export default function RecentSubmissionsTable() {
                 </td>
               </tr>
             )}
-            {error && (
+            {!isLoading && error && (
               <tr>
                 <td
                   colSpan={6}
                   className="px-5 py-10 text-center font-inter text-sm text-red-500"
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    Failed to load users. Please try again.
-                  </div>
+                  <ErrorNotice message="Failed to load users. Please try again." onRetry={refetch} />
                 </td>
               </tr>
             )}
@@ -537,6 +523,7 @@ export default function RecentSubmissionsTable() {
           </tbody>
         </table>
       </TableContainer>
+      </div>
 
       <EditUserModal
         isOpen={editUser !== null}

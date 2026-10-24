@@ -1,11 +1,20 @@
 import apiClient from "../lib/axios";
 import { API_ENDPOINTS } from "../config/api";
+import { fetchTablePage } from "../utils/tablePagination";
 
 /**
  * Talks to GET /api/audit-logs/ (audit_logs.AuditLogViewSet).
  * Param names map 1:1 to audit_logs/filters.py's AuditLogFilter fields.
  */
 export const auditLogService = {
+  getPage(params, { signal } = {}) {
+    return fetchTablePage(apiClient, API_ENDPOINTS.AUDIT_LOGS.LIST, { params, signal });
+  },
+
+  async getDetail(id, { signal } = {}) {
+    const { data } = await apiClient.get(`${API_ENDPOINTS.AUDIT_LOGS.LIST}${id}/`, { signal });
+    return data;
+  },
   async getAuditLogs({
     page = 1,
     pageSize = 10,

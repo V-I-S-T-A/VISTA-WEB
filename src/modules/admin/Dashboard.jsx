@@ -30,7 +30,7 @@ export default function Dashboard() {
 
       <Sidebar role="admin" isOpen={isOpen} onClose={close} />
 
-      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+      <div className="dashboard-content flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header layout="admin" profilePath="/admin/profile" onMenuToggle={open} />
 
         <main
