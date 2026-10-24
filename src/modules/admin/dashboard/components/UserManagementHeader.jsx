@@ -7,7 +7,7 @@ import { useToast } from "../../../../components/toastContext";
 
 export default function UserManagementHeader() {
   const [showAddModal, setShowAddModal] = useState(false);
-  const [emailResult, setEmailResult] = useState(null);
+  const { showToast } = useToast();
   const createUserMutation = useCreateUser();
 
   async function handleAddUser(data) {
@@ -26,10 +26,10 @@ export default function UserManagementHeader() {
         sent === true
           ? "Account created. Email accepted for sending; ask the user to check their inbox or spam folder."
           : sent === false
-            ? "Account created, but the email could not be sent. Contact your system administrator; do not create the account again."
-            : "Account created. Email status is unavailable. Contact your system administrator to check delivery.",
+            ? "Account created, but the welcome email could not be sent. Ask your system administrator to check the email service and renew the Gmail authorization token if needed. Do not create the account again."
+            : "Account created, but email delivery could not be confirmed. Ask your system administrator to check the email service. Do not create the account again.",
         sent === true ? "success" : "error",
-        sent === true ? 7000 : 12000,
+        sent === true ? 7000 : 20000,
       );
       setShowAddModal(false);
     } catch (error) {
@@ -66,7 +66,6 @@ export default function UserManagementHeader() {
         isLoading={createUserMutation.isPending}
         error={createUserMutation.error}
       />
-
     </>
   );
 }

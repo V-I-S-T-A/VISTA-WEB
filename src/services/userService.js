@@ -67,9 +67,17 @@ export const userService = {
   },
 
   /**
-   * Update a user.
-   * Pass `image` as a File in userData to replace the avatar — the request
-   * automatically switches to multipart/form-data when a file is present.
+   * Send a new invitation for an account that has not signed in yet.
+   */
+  async resendInvitation(userId) {
+    const response = await apiClient.post(
+      `${API_ENDPOINTS.USERS.DETAIL(userId)}resend-invitation/`,
+    );
+    return response.data;
+  },
+
+  /**
+   * Update a user, optionally uploading an avatar through multipart/form-data.
    */
   async updateUser(userId, userData) {
     const { data, config } = toRequestConfig(userData);

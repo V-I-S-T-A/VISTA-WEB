@@ -1,6 +1,7 @@
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
-import { SquarePen, Trash2, Loader } from "lucide-react";
+import { SquarePen, Loader, Mail } from "lucide-react";
+import { useToast } from "../../../../components/toastContext";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import "../../../../components/AdminDataTable.css";
 import { TABLE_PAGE_SIZE, pageNumbers as getPageNumbers } from "../../../../utils/tablePagination";
@@ -50,15 +51,12 @@ function downloadBlob(blob, filename) {
 const UserRow = memo(function UserRow({
   user,
   onEdit,
-  onDelete,
   isUpdating,
   isDeleting,
+  onResend,
+  isResending,
 }) {
   const handleEdit = useCallback(() => onEdit(user), [user, onEdit]);
-  const handleDelete = useCallback(
-    () => onDelete(user.user_id),
-    [user.user_id, onDelete],
-  );
 
   return (
     <tr className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]">
@@ -125,11 +123,11 @@ const UserRow = memo(function UserRow({
         <StatusBadge isActive={user.is_active} />
       </td>
       <td data-label="Actions" className="px-5 py-2.5">
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full flex-nowrap items-center gap-2 overflow-x-auto whitespace-nowrap [&>button]:shrink-0">
           <button
             type="button"
             onClick={handleEdit}
-            disabled={isUpdating || isDeleting}
+            disabled={isUpdating || isDeleting || isResending}
             className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50 disabled:opacity-50"
             style={{ fontSize: "12px", padding: "4px 12px" }}
           >
@@ -139,19 +137,18 @@ const UserRow = memo(function UserRow({
             />
             EDIT
           </button>
-          <button
-            type="button"
-            onClick={handleDelete}
-            disabled={isUpdating || isDeleting}
-            className="inline-flex items-center gap-1 rounded bg-[#ef4444] font-inter font-bold text-white transition hover:bg-[#dc2626] active:scale-95 border border-[#b91c1c]/50 disabled:opacity-50"
-            style={{ fontSize: "12px", padding: "4px 12px" }}
-          >
-            <Trash2
-              style={{ width: "12px", height: "12px" }}
-              aria-hidden="true"
-            />
-            DELETE
-          </button>
+          {user.is_active && !user.last_login && user.must_change_password && (
+            <button
+              type="button"
+              onClick={() => onResend(user)}
+              disabled={isUpdating || isDeleting || isResending}
+              className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-3 py-1 font-inter text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-50"
+              aria-label={`Resend invitation to ${user.email}`}
+            >
+              <Mail className="h-3 w-3" aria-hidden="true" />
+              {isResending ? "Sending..." : "Resend invitation"}
+            </button>
+          )}
         </div>
       </td>
     </tr>
@@ -161,6 +158,28 @@ const UserRow = memo(function UserRow({
 const STATUS_OPTIONS = ["All Status", "Active", "Inactive"];
 
 export default function RecentSubmissionsTable() {
+  const { showToast } = useToast();
+  const [resendingUserId, setResendingUserId] = useState(null);
+  const resendInProgress = useRef(false);
+
+  const handleResendInvitation = useCallback(async (user) => {
+    if (resendInProgress.current) return;
+    if (!window.confirm(`Send a new invitation to ${user.email}? If sending succeeds, their previous temporary password will be replaced. Ask them to use the newest invitation.`)) return;
+    resendInProgress.current = true;
+    setResendingUserId(user.user_id);
+    try {
+      const result = await userService.resendInvitation(user.user_id);
+      showToast(result.detail, "success", 12000);
+    } catch (error) {
+      const message = error.response?.status === 503 && error.response?.data?.code === "invitation_email_failed"
+        ? "The invitation could not be sent. Ask your system administrator to check the email service and renew the Gmail authorization token if needed. The existing password has not changed. Try again after the email service is restored."
+        : getApiErrorMessage(error, "Could not confirm whether the invitation was sent. Ask your administrator to check the email service before trying again.");
+      showToast(message, "error", 20000);
+    } finally {
+      resendInProgress.current = false;
+      setResendingUserId(null);
+    }
+  }, [showToast]);
   // State
   const [searchInput, setSearchInput] = useState(""); // For input control
   const [searchQuery, setSearchQuery] = useState(""); // For API calls
@@ -336,16 +355,11 @@ export default function RecentSubmissionsTable() {
     async (userId) => {
       if (!confirm("Permanently delete this user? This cannot be undone."))
         return;
-      try {
-        await deleteUserMutation.mutateAsync(userId);
-      } catch (err) {
-        console.error("Error deleting user:", err);
-        window.alert(
-          getApiErrorMessage(err, "Could not delete this account."),
-        );
-      }
+      await deleteUserMutation.mutateAsync(userId);
+      setEditUser(null);
+      showToast("User account deleted.", "success");
     },
-    [deleteUserMutation],
+    [deleteUserMutation, showToast],
   );
 
   // Export handler — streams the backend-generated PDF (respecting the
@@ -452,7 +466,7 @@ export default function RecentSubmissionsTable() {
             <col style={{ width: "26%" }} />
             <col style={{ width: "12%" }} />
             <col style={{ width: "10%" }} />
-            <col style={{ width: "210px" }} />
+            <col style={{ width: "290px" }} />
           </colgroup>
           <thead>
             <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
@@ -462,7 +476,7 @@ export default function RecentSubmissionsTable() {
                 "ORGANIZATION",
                 "LAST LOGIN",
                 "STATUS",
-                "ACTION",
+                "ACTIONS",
               ].map((heading) => (
                 <th
                   key={heading}
@@ -520,7 +534,8 @@ export default function RecentSubmissionsTable() {
                   key={user.user_id}
                   user={user}
                   onEdit={setEditUser}
-                  onDelete={handleDeleteUser}
+                  onResend={handleResendInvitation}
+                  isResending={resendingUserId === user.user_id}
                   isUpdating={updateUserMutation.isPending}
                   isDeleting={deleteUserMutation.isPending}
                 />
@@ -535,6 +550,8 @@ export default function RecentSubmissionsTable() {
         onClose={handleCloseEditModal}
         user={editUser}
         onSave={handleSaveEdit}
+        onDelete={handleDeleteUser}
+        isLoading={updateUserMutation.isPending || deleteUserMutation.isPending}
       />
     </>
   );
