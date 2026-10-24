@@ -30,13 +30,24 @@
   padding-left: 24px !important;
 }
 
+.registration-orgs th {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
 .registration-orgs th:last-child,
 .registration-orgs td[data-label]:last-child {
   padding-right: 24px !important;
 }
 
 .registration-orgs td[data-label="Actions"] > div {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.registration-orgs td[data-label="Actions"] button {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .registration-orgs .table-footer-row {

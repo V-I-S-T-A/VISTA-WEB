@@ -46,8 +46,42 @@
   white-space: normal;
 }
 
+.admin-data-table td[data-label="Role"] > span {
+  padding: 6px 12px;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
 .admin-data-table td[data-label="Actions"] > div {
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.admin-data-table td[data-label="Actions"] button {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.admin-data-table .audit-action-badge {
+  align-items: center;
+  justify-content: center;
+  padding: 6px 12px;
+  line-height: 16px;
+  white-space: nowrap;
+}
+
+.admin-data-table .audit-details-button {
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 12px;
+  min-height: 34px;
+  line-height: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.admin-data-table .audit-details-button svg {
+  flex-shrink: 0;
 }
 
 .admin-data-table .table-footer-row {

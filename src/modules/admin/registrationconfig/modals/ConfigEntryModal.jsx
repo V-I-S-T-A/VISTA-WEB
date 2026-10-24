@@ -45,22 +45,26 @@ const FIELD_STYLES = {
   },
 };
 
-function Field({ label, error, children }) {
+function Field({ label, htmlFor, error, children }) {
   return (
     <div style={{ marginBottom: "16px" }}>
-      <label style={FIELD_STYLES.label}>{label}</label>
+      <label htmlFor={htmlFor} style={FIELD_STYLES.label}>{label}</label>
       {children}
       {error && <p style={FIELD_STYLES.error}>{error}</p>}
     </div>
   );
 }
 
-function FocusInput({ ...props }) {
+function FocusInput({ multiline = false, ...props }) {
   const [focused, setFocused] = useState(false);
+  const Input = multiline ? "textarea" : "input";
   return (
-    <input
+    <Input
       {...props}
-      style={FIELD_STYLES.input(focused)}
+      style={{
+        ...FIELD_STYLES.input(focused),
+        ...(multiline ? { minHeight: "112px", resize: "vertical", lineHeight: "1.6", display: "block" } : {}),
+      }}
       onFocus={() => setFocused(true)}
       onBlur={(e) => {
         setFocused(false);
@@ -147,7 +151,7 @@ export default function ConfigEntryModal({
           {
             key: "description",
             label: "Description",
-            type: "text",
+            type: "textarea",
             required: false,
             placeholder: "Optional organization description...",
           },
@@ -393,10 +397,13 @@ export default function ConfigEntryModal({
           )}
 
           {fields.map((field, index) => (
-            <Field key={field.key} label={field.label}>
+            <Field key={field.key} label={field.label} htmlFor={`config-entry-${field.key}`}>
               <FocusInput
                 ref={index === 0 ? firstInputRef : null}
-                type={field.type}
+                id={`config-entry-${field.key}`}
+                multiline={field.type === "textarea"}
+                type={field.type === "textarea" ? undefined : field.type}
+                rows={field.type === "textarea" ? 4 : undefined}
                 name={field.key}
                 placeholder={field.placeholder}
                 value={formData[field.key] || ""}
@@ -407,15 +414,20 @@ export default function ConfigEntryModal({
           ))}
 
           {activeTab === "organizations" && (
-            <div className="mb-4 flex items-center justify-between gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <div>
-                <p id="config-org-active-label" className="text-sm font-semibold text-gray-700">
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px",
+              padding: "16px", marginBottom: "24px", borderRadius: "10px",
+              border: `1px solid ${formData.is_active ? "#bbf7d0" : "#e5e7eb"}`,
+              backgroundColor: formData.is_active ? "#f0fdf4" : "#f9fafb",
+            }}>
+              <div style={{ minWidth: 0 }}>
+                <p id="config-org-active-label" style={{ fontSize: "13px", fontWeight: 600, color: "#374151", lineHeight: "1.5" }}>
                   Active Organization
                 </p>
-                <p id="config-org-active-help" className="mt-1 text-xs text-gray-500">
+                <p id="config-org-active-help" style={{ marginTop: "6px", fontSize: "12px", color: "#6b7280", lineHeight: "1.6" }}>
                   {formData.is_active
-                    ? "This organization is marked active."
-                    : "This organization is marked inactive. Turn on to reactivate it."}
+                    ? "Currently active. Turn off to mark this organization inactive."
+                    : "Currently inactive. Turn on to reactivate this organization."}
                 </p>
               </div>
               <button

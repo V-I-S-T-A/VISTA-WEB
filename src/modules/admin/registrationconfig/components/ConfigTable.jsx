@@ -493,12 +493,12 @@ export default function ConfigTable({
         {activeTab === "organizations" && (
           <colgroup>
             <col style={{ width: "10%" }} />
-            <col style={{ width: "27%" }} />
-            <col style={{ width: "8%" }} />
+            <col />
+            <col style={{ width: "10%" }} />
             <col style={{ width: "16%" }} />
             <col style={{ width: "10%" }} />
             <col style={{ width: "11%" }} />
-            <col style={{ width: "18%" }} />
+            <col style={{ width: "210px" }} />
           </colgroup>
         )}
         <thead>
