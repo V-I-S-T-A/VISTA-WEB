@@ -7,6 +7,7 @@ import "../../../../components/AdminDataTable.css";
 import { TABLE_PAGE_SIZE, pageNumbers as getPageNumbers } from "../../../../utils/tablePagination";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
 import EditUserModal from "../modals/EditUserModal";
+import ResendInvitationModal from "../modals/ResendInvitationModal";
 import { useUsers } from "../../../../hooks/useUsers";
 import {
   useUpdateUser,
@@ -27,6 +28,11 @@ import {
 const PAGE_SIZE = TABLE_PAGE_SIZE;
 const CONTENT_PADDING = "30px";
 const SEARCH_DEBOUNCE_MS = 350;
+const ACTION_BUTTON_STYLE = {
+  width: "150px", height: "36px", padding: "0 10px", fontSize: "12px",
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  gap: "6px", borderRadius: "5px", boxSizing: "border-box", lineHeight: "1",
+};
 
 // Pulls the filename the backend suggested via Content-Disposition, falling
 // back to a sensible default if the header isn't present.
@@ -129,7 +135,7 @@ const UserRow = memo(function UserRow({
             onClick={handleEdit}
             disabled={isUpdating || isDeleting || isResending}
             className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50 disabled:opacity-50"
-            style={{ fontSize: "12px", padding: "4px 12px" }}
+            style={ACTION_BUTTON_STYLE}
           >
             <SquarePen
               style={{ width: "12px", height: "12px" }}
@@ -144,6 +150,7 @@ const UserRow = memo(function UserRow({
               disabled={isUpdating || isDeleting || isResending}
               className="inline-flex items-center gap-1 rounded border border-blue-200 bg-blue-50 px-3 py-1 font-inter text-xs font-semibold text-blue-800 hover:bg-blue-100 disabled:opacity-50"
               aria-label={`Resend invitation to ${user.email}`}
+              style={ACTION_BUTTON_STYLE}
             >
               <Mail className="h-3 w-3" aria-hidden="true" />
               {isResending ? "Sending..." : "Resend invitation"}
@@ -160,21 +167,24 @@ const STATUS_OPTIONS = ["All Status", "Active", "Inactive"];
 export default function RecentSubmissionsTable() {
   const { showToast } = useToast();
   const [resendingUserId, setResendingUserId] = useState(null);
+  const [invitationUser, setInvitationUser] = useState(null);
+  const [invitationError, setInvitationError] = useState("");
   const resendInProgress = useRef(false);
 
   const handleResendInvitation = useCallback(async (user) => {
     if (resendInProgress.current) return;
-    if (!window.confirm(`Send a new invitation to ${user.email}? If sending succeeds, their previous temporary password will be replaced. Ask them to use the newest invitation.`)) return;
+    setInvitationError("");
     resendInProgress.current = true;
     setResendingUserId(user.user_id);
     try {
       const result = await userService.resendInvitation(user.user_id);
       showToast(result.detail, "success", 12000);
+      setInvitationUser(null);
     } catch (error) {
       const message = error.response?.status === 503 && error.response?.data?.code === "invitation_email_failed"
         ? "The invitation could not be sent. Ask your system administrator to check the email service and renew the Gmail authorization token if needed. The existing password has not changed. Try again after the email service is restored."
         : getApiErrorMessage(error, "Could not confirm whether the invitation was sent. Ask your administrator to check the email service before trying again.");
-      showToast(message, "error", 20000);
+      setInvitationError(message);
     } finally {
       resendInProgress.current = false;
       setResendingUserId(null);
@@ -466,7 +476,7 @@ export default function RecentSubmissionsTable() {
             <col style={{ width: "26%" }} />
             <col style={{ width: "12%" }} />
             <col style={{ width: "10%" }} />
-            <col style={{ width: "290px" }} />
+            <col style={{ width: "350px" }} />
           </colgroup>
           <thead>
             <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
@@ -534,7 +544,7 @@ export default function RecentSubmissionsTable() {
                   key={user.user_id}
                   user={user}
                   onEdit={setEditUser}
-                  onResend={handleResendInvitation}
+                  onResend={(user) => { setInvitationError(""); setInvitationUser(user); }}
                   isResending={resendingUserId === user.user_id}
                   isUpdating={updateUserMutation.isPending}
                   isDeleting={deleteUserMutation.isPending}
@@ -545,6 +555,15 @@ export default function RecentSubmissionsTable() {
       </TableContainer>
       </div>
 
+      {invitationUser && (
+        <ResendInvitationModal
+          user={invitationUser}
+          isSending={resendingUserId !== null}
+          error={invitationError}
+          onClose={() => { if (!resendInProgress.current) setInvitationUser(null); }}
+          onConfirm={() => handleResendInvitation(invitationUser)}
+        />
+      )}
       <EditUserModal
         isOpen={editUser !== null}
         onClose={handleCloseEditModal}
