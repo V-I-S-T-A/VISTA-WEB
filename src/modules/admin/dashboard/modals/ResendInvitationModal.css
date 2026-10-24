@@ -1,0 +1,32 @@
+.resend-invitation-dialog {
+  width: min(460px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+  background: #fff;
+  color: #142d55;
+  box-shadow: 0 24px 80px #0f172a40;
+  font-family: Inter, sans-serif;
+  overflow-y: auto;
+}
+.resend-invitation-dialog::backdrop { background: #0f172a80; }
+.resend-invitation-content { padding: 26px; }
+.resend-invitation-heading { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 18px; }
+.resend-invitation-icon { display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px; border-radius: 14px; background: #eaf1ff; color: #1f5cae; }
+.resend-invitation-close { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 8px; background: #f1f5f9; color: #64748b; cursor: pointer; }
+.resend-invitation-content h2 { margin: 0 0 10px; font-size: 21px; font-weight: 700; line-height: 1.3; }
+.resend-invitation-content p { margin: 0 0 18px; font-size: 14px; line-height: 1.65; color: #526175; }
+.resend-invitation-recipient { display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; padding: 14px 16px; background: #f5f8fc; border: 1px solid #e2e8f0; border-radius: 10px; overflow-wrap: anywhere; }
+.resend-invitation-recipient span { color: #64748b; font-size: 12px; }
+.resend-invitation-recipient strong { font-size: 14px; font-weight: 600; }
+.resend-invitation-content .resend-invitation-note { font-size: 13px; }
+.resend-invitation-buttons { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+.resend-invitation-buttons button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 10px 8px; border-radius: 8px; font-size: 13px; font-weight: 600; line-height: 20px; cursor: pointer; }
+.resend-invitation-cancel { border: 1px solid #cbd5e1; background: #fff; color: #334155; }
+.resend-invitation-confirm { border: 1px solid #142d55; background: #142d55; color: #fff; }
+.resend-invitation-dialog button:disabled { cursor: wait; opacity: .6; }
+.resend-invitation-dialog button:focus-visible { outline: 3px solid #60a5fa; outline-offset: 3px; }
+.resend-invitation-cancel:hover:not(:disabled) { background: #f1f5f9; }
+.resend-invitation-confirm:hover:not(:disabled) { background: #1f467b; }
