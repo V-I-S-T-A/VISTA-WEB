@@ -63,7 +63,7 @@ export default function RegistrationConfig() {
       )}
 
       <Sidebar role="admin" isOpen={isOpen} onClose={close} />
-      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+      <div className="dashboard-content flex min-w-0 flex-1 flex-col overflow-hidden">
         <Header layout="registrationConfig" profilePath="/admin/profile" onMenuToggle={open} />
 
         <main
@@ -96,7 +96,7 @@ export default function RegistrationConfig() {
 
             {/* Tab Navigation */}
             <div
-              className="flex gap-2 border-b border-gray-200"
+              className="flex flex-wrap gap-2 border-b border-gray-200"
               style={{ marginBottom: "16px" }}
             >
               {tabs.map((tab) => {
@@ -125,6 +125,7 @@ export default function RegistrationConfig() {
             </div>
 
             <ConfigTable
+              key={activeTab}
               activeTab={activeTab}
               tabLabel={currentTabLabel}
               refreshTrigger={refreshTrigger}
