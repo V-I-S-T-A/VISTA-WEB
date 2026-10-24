@@ -1,0 +1,38 @@
+.organization-picker { min-width: 0; font-family: Inter, sans-serif; }
+.organization-picker button { cursor: pointer; }
+.organization-picker button:disabled { cursor: not-allowed; opacity: .6; }
+.organization-picker-trigger {
+  display: flex; align-items: center; gap: 12px; width: 100%; min-height: 54px;
+  padding: 12px 14px; border: 1.5px solid #d1d5db; border-radius: 10px;
+  background: #fff; text-align: left; color: #1f5cae;
+}
+.organization-picker-trigger[aria-expanded="true"], .organization-picker-trigger:focus-visible {
+  border-color: #1f5cae; outline: 3px solid #dbeafe;
+}
+.organization-picker-trigger[aria-invalid="true"] { border-color: #dc2626; }
+.organization-picker-trigger > svg { flex-shrink: 0; }
+.organization-picker-selected { display: grid; gap: 3px; min-width: 0; flex: 1; overflow-wrap: anywhere; }
+.organization-picker-selected strong { font-size: 13px; color: #142d55; }
+.organization-picker-selected > span { font-size: 12px; line-height: 1.5; color: #4b5563; }
+.organization-picker-selected .organization-picker-placeholder { font-size: 13px; color: #6b7280; }
+.organization-picker-help { margin: 7px 0 0; font-size: 11px; line-height: 1.5; color: #6b7280; }
+.organization-picker-error { margin-top: 6px; color: #b91c1c; font-size: 12px; }
+.organization-picker-error button { color: #1f5cae; font-weight: 600; text-decoration: underline; }
+/* The panel stays in the modal's scroll flow, so long names cannot escape its edges. */
+.organization-picker-panel { margin-top: 10px; border: 1px solid #dbe2ee; border-radius: 10px; background: #fff; overflow: hidden; }
+.organization-picker-search { display: flex; align-items: center; gap: 9px; padding: 12px; border-bottom: 1px solid #e5e7eb; color: #64748b; }
+.organization-picker-search input { width: 100%; min-width: 0; border: 0; background: transparent; outline: none; color: #111827; font-size: 13px; }
+.organization-picker-search:focus-within { box-shadow: inset 0 -2px #1f5cae; }
+.organization-picker-search button { display: flex; padding: 4px; border-radius: 4px; }
+.organization-picker-results { max-height: min(260px, 36vh); overflow-y: auto; overscroll-behavior: contain; }
+.organization-picker-option { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 14px; border-bottom: 1px solid #f0f2f6; text-align: left; background: white; }
+.organization-picker-option:hover, .organization-picker-option.is-highlighted { background: #eff6ff; }
+.organization-picker-option[aria-selected="true"] { background: #e8f0fc; color: #1f5cae; }
+.organization-picker-option > svg { flex-shrink: 0; }
+.organization-picker-option-text { display: grid; flex: 1; min-width: 0; gap: 4px; overflow-wrap: anywhere; }
+.organization-picker-option-text strong { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; color: #142d55; font-size: 13px; }
+.organization-picker-option-text small { padding: 2px 6px; border-radius: 5px; font-weight: 500; font-size: 10px; color: #6b7280; background: #f3f4f6; }
+.organization-picker-option-text > span { color: #4b5563; font-size: 12px; line-height: 1.5; }
+.organization-picker-message { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; padding: 20px 14px; font-size: 12px; color: #6b7280; line-height: 1.6; text-align: center; }
+.organization-picker-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-top: 1px solid #e5e7eb; background: #f8fafc; font-size: 11px; color: #6b7280; }
+.organization-picker-footer button { padding: 6px 10px; border: 1px solid #bfdbfe; border-radius: 6px; background: #eff6ff; color: #1f5cae; font-size: 12px; font-weight: 600; }

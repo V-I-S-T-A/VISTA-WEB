@@ -2,7 +2,7 @@ import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useEffect, useRef, useState } from "react";
 import { X, SquarePen } from "lucide-react";
-import { useOrganizations } from "../../../../hooks/useOrganizations";
+import OrganizationPicker from "../../../../components/OrganizationPicker";
 
 const ROLES = ["staff", "student"];
 
@@ -53,10 +53,10 @@ const FIELD_STYLES = {
   },
 };
 
-function Field({ label, error, children }) {
+function Field({ label, error, children, htmlFor }) {
   return (
     <div>
-      <label style={FIELD_STYLES.label}>{label}</label>
+      <label htmlFor={htmlFor} style={FIELD_STYLES.label}>{label}</label>
       {children}
       {error && <p style={FIELD_STYLES.error}>{error}</p>}
     </div>
@@ -132,7 +132,11 @@ function FocusSelect({ children, ...props }) {
  *   user     – the user object from API
  *   onSave   – async (updatedData) => void
  */
-export default function EditUserModal({
+export default function EditUserModal(props) {
+  return props.isOpen && props.user ? <EditUserForm key={props.user.user_id} {...props} /> : null;
+}
+
+function EditUserForm({
   isOpen,
   onClose,
   user,
@@ -140,10 +144,10 @@ export default function EditUserModal({
   isLoading = false,
 }) {
   const [form, setForm] = useState({
-    fullName: "",
-    role: "",
-    isActive: true,
-    orgId: "",
+    fullName: `${user.first_name || ""} ${user.last_name || ""}`.trim() || "Unknown User",
+    role: user.role ?? "",
+    isActive: user.is_active !== undefined ? user.is_active : true,
+    orgId: user.org_id ?? "",
   });
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
@@ -151,35 +155,19 @@ export default function EditUserModal({
   const overlayRef = useRef(null);
   const firstInputRef = useRef(null);
 
-  const { data: orgData } = useOrganizations();
-  const organizations = Array.isArray(orgData)
-    ? orgData
-    : orgData?.results || [];
-
   useEffect(() => {
-    if (isOpen && user) {
-      setForm({
-        fullName:
-          `${user.first_name || ""} ${user.last_name || ""}`.trim() ||
-          "Unknown User",
-        role: user.role ?? "",
-        isActive: user.is_active !== undefined ? user.is_active : true,
-        orgId: user.org_id ?? "",
-      });
-      setErrors({});
-      setSaveError("");
-      setTimeout(() => firstInputRef.current?.focus(), 50);
-    }
-  }, [isOpen, user]);
+    const timer = setTimeout(() => firstInputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (!isOpen) return;
     function onKey(e) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape" && !e.defaultPrevented && !saving && !isLoading) onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, saving, isLoading]);
 
   function set(field, value) {
     setForm((f) => ({ ...f, [field]: value }));
@@ -450,19 +438,15 @@ export default function EditUserModal({
 
           {/* Organization (only for students) */}
           {form.role === "student" && (
-            <Field label="Organization *" error={errors.orgId}>
-              <FocusSelect
+            <Field label="Organization *" htmlFor="edit-user-organization">
+              <OrganizationPicker
+                id="edit-user-organization"
                 value={form.orgId}
-                onChange={(e) => set("orgId", e.target.value)}
+                onChange={(orgId) => set("orgId", orgId)}
                 disabled={saving || isLoading}
-              >
-                <option value="">Select organization</option>
-                {organizations.map((org) => (
-                  <option key={org.org_id} value={org.org_id}>
-                    {org.acronym} - {org.name}
-                  </option>
-                ))}
-              </FocusSelect>
+                error={errors.orgId}
+                selectedLabel={form.orgId === user.org_id ? user.department : ""}
+              />
             </Field>
           )}
 
