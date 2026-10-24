@@ -156,9 +156,9 @@ export default function AuditLogTable({ onViewLog, includeAuthActions = false })
                       </div>
                     </div>
                   </td>
-                  <td data-label="Action"><span className="inline-flex rounded-full px-3 py-1 text-[12px] font-semibold" style={{ backgroundColor: color.bg, color: color.text }}>{String(log.action).toUpperCase()}</span></td>
+                  <td data-label="Action"><span className="audit-action-badge inline-flex rounded-full text-[12px] font-semibold" style={{ backgroundColor: color.bg, color: color.text }}>{String(log.action).replaceAll("_", " ").toUpperCase()}</span></td>
                   <td data-label="Details"><button type="button" onClick={() => viewDetails(log)} disabled={!!loadingDetail}
-                    className="inline-flex items-center gap-1.5 rounded border border-[#d4a000]/50 bg-[#ffe100] px-3 py-1.5 font-inter text-[12px] font-bold text-gray-900 hover:bg-[#e6c900] disabled:opacity-60">
+                    className="audit-details-button inline-flex items-center rounded border border-[#d4a000]/50 bg-[#ffe100] font-inter text-[12px] font-bold text-gray-900 hover:bg-[#e6c900] disabled:opacity-60">
                     {loadingDetail === log.audit_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
                     VIEW DETAILS
                   </button></td>

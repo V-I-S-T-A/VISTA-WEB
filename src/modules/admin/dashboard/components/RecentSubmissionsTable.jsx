@@ -447,7 +447,12 @@ export default function RecentSubmissionsTable() {
       >
         <table className="min-w-full border-collapse">
           <colgroup>
-            {[27, 10, 26, 11, 10, 16].map((width, i) => <col key={i} style={{ width: `${width}%` }} />)}
+            <col />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "26%" }} />
+            <col style={{ width: "12%" }} />
+            <col style={{ width: "10%" }} />
+            <col style={{ width: "210px" }} />
           </colgroup>
           <thead>
             <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
