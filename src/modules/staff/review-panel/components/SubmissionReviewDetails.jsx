@@ -1,3 +1,4 @@
+import VistaSelect from "../../../../components/VistaSelect";
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
@@ -6,7 +7,6 @@ import {
   Building2,
   Mail,
   FileText,
-  ChevronDown,
   CheckCircle2,
   Loader2,
   Download,
@@ -502,7 +502,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           className="relative"
           style={{ marginTop: "6px", marginBottom: "18px", marginRight: "4px" }}
         >
-          <select
+          <VistaSelect
+            aria-label="Status selection"
             value={statusAction}
             onChange={(e) => setStatusAction(e.target.value)}
             disabled={isSubmitting}
@@ -514,11 +515,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                 {action}
               </option>
             ))}
-          </select>
-          <ChevronDown
-            className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-500"
-            aria-hidden="true"
-          />
+          </VistaSelect>
         </div>
 
         <label
