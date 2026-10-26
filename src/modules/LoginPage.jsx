@@ -155,7 +155,7 @@ export default function LoginPage() {
             className="login-card"
             style={{ position: "relative", zIndex: 1 }}
           >
-            <img src={vistaLogo} alt="V.I.S.T.A." className="login-card-logo" />
+            <img src={vistaLogo} alt="VISTA" className="login-card-logo" />
             <p className="login-card-title">Sign in to your account</p>
 
             <form onSubmit={handleSubmit} style={{ width: "100%" }}>
