@@ -1,9 +1,9 @@
+import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import {
   SquarePen,
   Trash2,
-  Loader,
   Loader2,
   AlertCircle,
   X,
@@ -43,7 +43,7 @@ const OrgRow = memo(function OrgRow({
 
   return (
     <tr className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]">
-      <td className="px-5 py-2.5 min-w-[240px]" style={{ paddingLeft: CONTENT_PADDING }}>
+      <td data-label="Organization" className="px-5 py-2.5 min-w-[240px]" style={{ paddingLeft: CONTENT_PADDING }}>
         <div className="flex items-center gap-3">
           <img
             src={org.image_url || defaultUser}
@@ -68,14 +68,14 @@ const OrgRow = memo(function OrgRow({
           </div>
         </div>
       </td>
-      <td className="px-5 py-2.5 whitespace-nowrap">
+      <td data-label="Acronym" className="px-5 py-2.5 whitespace-nowrap">
         <span
           className="inline-flex items-center justify-center rounded-full px-4 py-1 font-inter font-semibold bg-[#dfe7fb] text-[#12345b] text-[12.5px] min-w-[70px]"
         >
           {org.acronym || "N/A"}
         </span>
       </td>
-      <td className="px-5 py-2.5">
+      <td data-label="Description" className="px-5 py-2.5">
         <p
           className="font-inter font-medium text-gray-500 text-[13px] truncate max-w-[240px]"
           title={org.description}
@@ -83,7 +83,7 @@ const OrgRow = memo(function OrgRow({
           {org.description || "No description provided"}
         </p>
       </td>
-      <td
+      <td data-label="Date added"
         className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
         style={{ fontSize: "13px" }}
       >
@@ -95,10 +95,10 @@ const OrgRow = memo(function OrgRow({
           })
           : "N/A"}
       </td>
-      <td className="px-5 py-2.5 whitespace-nowrap min-w-[120px]">
+      <td data-label="Status" className="px-5 py-2.5 whitespace-nowrap min-w-[120px]">
         <StatusBadge isActive={org.is_active} />
       </td>
-      <td className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
+      <td data-label="Actions" className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -302,6 +302,7 @@ export default function RegisteredOrgTable() {
   return (
     <>
       <TableContainer
+        className="responsive-records"
         title="Organization Management"
         headerRight={
           <>
@@ -388,17 +389,7 @@ export default function RegisteredOrgTable() {
           </thead>
           <tbody>
             {isLoading && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader className="h-4 w-4 animate-spin" />
-                    Loading organizations...
-                  </div>
-                </td>
-              </tr>
+              <TableRowsSkeleton columns={6} />
             )}
             {error && (
               <tr>

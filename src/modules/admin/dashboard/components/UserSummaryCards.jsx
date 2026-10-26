@@ -1,6 +1,7 @@
 import { Users, ShieldCheck, GraduationCap, FileClock } from 'lucide-react'
 import { useUserSummary } from '../../../../hooks/useUsers'
 import ErrorNotice from '../../../../components/ErrorNotice'
+import { Skeleton } from '../../../../components/loading/Skeleton'
 
 export default function UserSummaryCards() {
   const { data, isPending, error, refetch } = useUserSummary()
@@ -28,7 +29,7 @@ export default function UserSummaryCards() {
             </p>
             <p className="relative z-10 font-inter font-bold leading-none"
               style={{ fontSize: index === 0 ? '72px' : '62px' }}>
-              {value}
+              {isPending ? <Skeleton width={90} height={60} /> : value}
             </p>
             <Icon
               className="absolute text-white/20"
