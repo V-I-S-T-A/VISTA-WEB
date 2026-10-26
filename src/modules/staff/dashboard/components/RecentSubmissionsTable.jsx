@@ -424,8 +424,8 @@ export default function RecentSubmissionsTable({
                   marginTop: "8px",
                   width: "210px",
                   borderRadius: "10px",
-                  border: "1px solid #e2e6ee",
-                  backgroundColor: "#ffffff",
+                  border: "1px solid #b8cbe0",
+                  backgroundColor: "#f7faff",
                   boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
                   padding: "6px",
                 }}
