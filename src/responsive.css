@@ -232,7 +232,7 @@
 
   /* Filter button: navy blue, rounded, matches dashboard Filter */
   .table-header-controls .filter-btn,
-  .table-header-controls > .relative:not(.table-search-bar) > button {
+  .table-header-controls > .relative:not(.table-search-bar):not(.export-menu) > button {
     display: inline-flex !important;
     align-items: center !important;
     gap: 6px !important;
@@ -248,7 +248,7 @@
   }
 
   .table-header-controls .filter-btn svg,
-  .table-header-controls > .relative:not(.table-search-bar) > button svg {
+  .table-header-controls > .relative:not(.table-search-bar):not(.export-menu) > button svg {
     width: 16px !important;
     height: 16px !important;
     color: #ffffff !important;
@@ -378,3 +378,82 @@
    but the sidebar is now fixed, so the content div just
    needs to not try to share space with it. Nothing to do here
    since the content div already has flex-1. */
+
+/* Phone/tablet refinements. The existing layout at 1025px and wider is retained. */
+@media (max-width: 1024px) {
+  aside.vista-sidebar {
+    height: 100dvh;
+    max-width: calc(100vw - 24px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .dashboard-header { gap: 12px; }
+  .dashboard-header > div:first-child { min-width: 0; }
+  .dashboard-header h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dashboard-header .hamburger-btn { flex-shrink: 0; }
+  .dashboard-main { min-width: 0; overflow-wrap: normal; }
+  .dashboard-main :where(input, select, textarea) { min-width: 0; max-width: 100%; }
+  .dashboard-main :where(.grid, .flex) > :where(div, section, form) { min-width: 0; }
+  .profile-form-fields { min-width: 0; width: 100%; }
+  .institutional-pulse { height: auto !important; min-height: 130px; }
+  .responsive-actions { flex-wrap: wrap; }
+  .login-hero { height: auto; min-height: calc(100svh - var(--public-header-height)); max-height: none; }
+  .analytics-grid > div { min-width: 0; }
+  .submission-info-panel :where(h3, span),
+  .submission-detail-card :where(h2, span) { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 768px) {
+  .dashboard-main > .dashboard-page-body { padding: 0 !important; }
+  .profile-form-panel { padding: 20px !important; }
+  .profile-form-layout { flex-direction: column; gap: 24px !important; }
+  .profile-form-fields { max-width: none !important; }
+  .review-panel-tabs { flex-wrap: wrap; gap: 10px !important; }
+  .analytics-toolbar { width: 100%; flex-wrap: wrap; }
+  .analytics-toolbar > .relative { flex: 1 1 130px; min-width: 0; }
+  .analytics-toolbar > .relative > button { width: 100%; min-width: 0 !important; }
+  .analytics-chart-heading { flex-wrap: wrap; gap: 10px; }
+  .submission-detail-heading { flex-direction: column; }
+  .submission-detail-heading > .items-end { align-items: flex-start; }
+  .submission-info-date { margin-top: 10px !important; text-align: left; }
+  .drive-connection-panel { padding: 20px !important; }
+  .drive-integration-banner { padding: 18px !important; }
+  .drive-integration-banner h2 { font-size: 18px !important; }
+  .drive-efficiency-description { width: auto !important; margin-left: 0 !important; }
+  .drive-feature { margin-left: 0 !important; }
+  .registration-upload { min-width: 0; overflow-wrap: anywhere; }
+  .registration-upload button { max-width: 100%; white-space: normal; }
+}
+
+@media (max-width: 640px) {
+  .responsive-form-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .responsive-form-grid > div { min-width: 0; }
+  .registration-form-card { padding: 20px 16px !important; }
+  .ocr-results > div { max-width: 100%; }
+  .responsive-actions > button { flex: 1 1 130px; }
+  .table-header-controls .table-search-bar { min-width: 0 !important; }
+  .table-footer-row { padding-inline: 16px !important; }
+  .table-pagination-row { max-width: 100%; flex-wrap: wrap; }
+  .registration-form-card select { width: 100%; max-width: none !important; min-height: 44px; }
+  .profile-form-fields :where(input, select),
+  .registration-form-card :where(input, select, textarea) { font-size: 16px !important; }
+  .responsive-actions > button { min-height: 40px; }
+  .table-pagination-row > button { min-width: 36px; min-height: 36px; }
+  .table-header-controls:has(.vista-filter-popover) { position: relative; }
+  .table-header-controls > .relative:has(> .vista-filter-popover) { position: static; }
+  .table-header-controls .vista-filter-popover {
+    width: min(288px, 100%) !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 160px);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .analytics-legend { grid-template-columns: minmax(0, 1fr); }
+  .analytics-panel > .flex { padding-inline: 16px !important; }
+  .submission-detail-card { padding: 18px !important; }
+  .dashboard-header { padding-inline: 12px !important; }
+  .dashboard-header h1 { font-size: 12px; }
+}

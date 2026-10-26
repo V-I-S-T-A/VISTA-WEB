@@ -42,6 +42,7 @@ export default function TableContainer({
   onGoToPage,
   errorMessage,
   headerPadding = CONTENT_PADDING,
+  className = "",
 }) {
   return (
     <section
@@ -51,7 +52,7 @@ export default function TableContainer({
         boxShadow: "0 1px 3px rgba(15, 42, 74, 0.06)",
         marginBottom: "16px",
       }}
-      className="bg-white"
+      className={`bg-white ${className}`}
     >
       {/* ── Blue header bar ── */}
       <div

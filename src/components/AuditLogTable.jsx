@@ -1,3 +1,4 @@
+import { TableRowsSkeleton } from "./loading/Skeleton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, Loader2 } from "lucide-react";
@@ -140,7 +141,8 @@ export default function AuditLogTable({ onViewLog, includeAuthActions = false })
             {["Timestamp", "User/Entity", "Action", "Details"].map(label => <th key={label} className="text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500">{label}</th>)}
           </tr></thead>
           <tbody>
-            {isFetching ? <tr><td colSpan={4} className="p-10 text-center text-sm text-gray-500">Loading audit logs...</td></tr>
+            {isFetching ?
+              <TableRowsSkeleton columns={4} />
               : error ? <tr><td colSpan={4}><ErrorNotice message="Could not load audit logs. Please try again." onRetry={refetch} /></td></tr>
               : !logs.length ? <tr><td colSpan={4} className="p-10 text-center text-sm text-gray-500">No audit logs match your search.</td></tr>
               : logs.map(log => {

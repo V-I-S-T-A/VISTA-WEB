@@ -35,7 +35,7 @@ export default function FilterPopover({
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-full z-20"
+      className="vista-filter-popover absolute right-0 top-full z-20"
       style={{
         marginTop: "8px",
         width: "288px",
