@@ -1,6 +1,6 @@
+import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import defaultUser from "../../../../assets/shared/default_user.jpg";
 import {
@@ -145,6 +145,7 @@ export default function ReviewTrackerTable() {
 
   return (
     <TableContainer
+      className="responsive-records"
       title="Recent Submissions"
       headerRight={
         <>
@@ -253,15 +254,7 @@ export default function ReviewTrackerTable() {
         </thead>
         <tbody>
           {isLoading ? (
-            <tr>
-              <td
-                colSpan={6}
-                className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-              >
-                <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
-                Loading submissions...
-              </td>
-            </tr>
+              <TableRowsSkeleton columns={6} />
           ) : submissions.length === 0 ? (
             <tr>
               <td
@@ -278,7 +271,7 @@ export default function ReviewTrackerTable() {
                 className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
               >
                 {/* ID */}
-                <td
+                <td data-label="ID"
                   className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
                   style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
                 >
@@ -286,7 +279,7 @@ export default function ReviewTrackerTable() {
                 </td>
 
                 {/* DOCUMENT / APPLICANT */}
-                <td className="px-5 py-2.5">
+                <td data-label="Document" className="px-5 py-2.5">
                   <div className="flex items-center gap-3">
                     <img
                       src={submission.org_image_url || defaultUser}
@@ -317,7 +310,7 @@ export default function ReviewTrackerTable() {
                 </td>
 
                 {/* Category */}
-                <td className="px-5 py-2.5">
+                <td data-label="Category" className="px-5 py-2.5">
                   <span
                     className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
                     style={{ fontSize: "12px", padding: "4px 12px" }}
@@ -327,7 +320,7 @@ export default function ReviewTrackerTable() {
                 </td>
 
                 {/* Date */}
-                <td
+                <td data-label="Date"
                   className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
                   style={{ fontSize: "13px" }}
                 >
@@ -338,12 +331,12 @@ export default function ReviewTrackerTable() {
                 </td>
 
                 {/* Status */}
-                <td className="px-5 py-2.5 whitespace-nowrap min-w-[120px]">
+                <td data-label="Status" className="px-5 py-2.5 whitespace-nowrap min-w-[120px]">
                   <SubmissionStatusLabel status={submission.status} />
                 </td>
 
                 {/* Actions */}
-                <td className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
+                <td data-label="Actions" className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
                   <ActionButton
                     onClick={() => handleView(submission)}
                     label="VIEW"

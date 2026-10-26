@@ -1,5 +1,5 @@
+import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useReviewLogs } from "../../../../hooks/useReviewLogs";
-import { Loader2 } from "lucide-react";
 
 export default function DetailsStatusHistory({ submissionId }) {
   // Fetch real timeline logs using the specific submission ID
@@ -34,25 +34,10 @@ export default function DetailsStatusHistory({ submissionId }) {
       .replace(",", " ·");
   };
 
-  if (isLoading) {
-    return (
-      <div
-        className="flex justify-center items-center"
-        style={{
-          backgroundColor: "#ffffff",
-          borderRadius: "12px",
-          border: "1px solid #e2e6ee",
-          marginBottom: "20px",
-          padding: "40px",
-        }}
-      >
-        <Loader2 className="animate-spin h-8 w-8 text-[#1A59A5]" />
-      </div>
-    );
-  }
+  if (isLoading) return <PanelSkeleton kind="timeline" label="Loading status history" />;
 
   return (
-    <div
+    <div className="submission-history-panel"
       style={{
         backgroundColor: "#ffffff",
         borderRadius: "12px",
@@ -62,7 +47,7 @@ export default function DetailsStatusHistory({ submissionId }) {
       }}
     >
       {/* Yellow header bar */}
-      <div
+      <div className="detail-panel-heading"
         style={{
           backgroundColor: "#FFE452",
           padding: "12px 24px",
@@ -77,7 +62,7 @@ export default function DetailsStatusHistory({ submissionId }) {
       </div>
 
       {/* Timeline */}
-      <div style={{ padding: "24px 28px" }}>
+      <div className="detail-panel-body" style={{ padding: "24px 28px" }}>
         {logs.length === 0 ? (
           <p className="font-inter text-gray-500 text-sm">
             No status history found for this submission.

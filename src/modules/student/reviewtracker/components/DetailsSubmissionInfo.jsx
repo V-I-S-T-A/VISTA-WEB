@@ -13,7 +13,7 @@ export default function DetailsSubmissionInfo({ submission }) {
   };
 
   return (
-    <div
+    <div className="submission-info-panel"
       style={{
         backgroundColor: "#ffffff",
         borderRadius: "12px",
@@ -55,7 +55,7 @@ export default function DetailsSubmissionInfo({ submission }) {
       </h3>
 
       <p
-        className="font-inter text-gray-500 text-right"
+        className="submission-info-date font-inter text-gray-500 text-right"
         style={{ fontSize: "12px", marginTop: "-20px", marginBottom: "8px" }}
       >
         Submitted: {formatDate(submission.submitted_at)}
@@ -83,7 +83,7 @@ export default function DetailsSubmissionInfo({ submission }) {
 
       {/* ---- Submitter contact / mode ---- */}
       <div
-        className="flex flex-wrap gap-12"
+        className="submission-info-footer flex flex-wrap gap-12"
         style={{
           backgroundColor: "#f0f4fb",
           margin: "0 -28px -24px -28px",
