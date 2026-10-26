@@ -1,3 +1,4 @@
+import VistaSelect from "../../../components/VistaSelect";
 import { PanelSkeleton } from "../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../components/ErrorNotice";
@@ -366,7 +367,8 @@ export default function DocumentEntry() {
                         >
                           Organization
                         </p>
-                        <select
+                        <VistaSelect
+                          aria-label="Organization"
                           name="org_id"
                           value={formData.org_id}
                           onChange={handleChange}
@@ -384,7 +386,7 @@ export default function DocumentEntry() {
                               {org.name}
                             </option>
                           ))}
-                        </select>
+                        </VistaSelect>
                       </div>
                       <div>
                         <p
@@ -397,7 +399,8 @@ export default function DocumentEntry() {
                         >
                           Submitted By
                         </p>
-                        <select
+                        <VistaSelect
+                          aria-label="Submitted by"
                           name="submitted_by"
                           value={formData.submitted_by}
                           onChange={handleChange}
@@ -418,7 +421,7 @@ export default function DocumentEntry() {
                               {user.first_name} {user.last_name} ({user.email})
                             </option>
                           ))}
-                        </select>
+                        </VistaSelect>
                       </div>
                     </div>
 
@@ -441,7 +444,8 @@ export default function DocumentEntry() {
                         >
                           Academic Year
                         </p>
-                        <select
+                        <VistaSelect
+                          aria-label="Academic year"
                           name="academic_year_id"
                           value={formData.academic_year_id}
                           onChange={handleChange}
@@ -459,7 +463,7 @@ export default function DocumentEntry() {
                               {ay.year}
                             </option>
                           ))}
-                        </select>
+                        </VistaSelect>
                       </div>
                       <div>
                         <p
@@ -472,7 +476,8 @@ export default function DocumentEntry() {
                         >
                           Document Type
                         </p>
-                        <select
+                        <VistaSelect
+                          aria-label="Document type"
                           name="doc_type_id"
                           value={formData.doc_type_id}
                           onChange={handleChange}
@@ -490,7 +495,7 @@ export default function DocumentEntry() {
                               {dt.name}
                             </option>
                           ))}
-                        </select>
+                        </VistaSelect>
                       </div>
                     </div>
 
@@ -505,7 +510,9 @@ export default function DocumentEntry() {
                       >
                         Category
                       </p>
-                      <select
+                      <VistaSelect
+                        className="entry-category-select"
+                        aria-label="Category"
                         name="category_id"
                         value={formData.category_id}
                         onChange={handleChange}
@@ -526,7 +533,7 @@ export default function DocumentEntry() {
                             {cat.name}
                           </option>
                         ))}
-                      </select>
+                      </VistaSelect>
                     </div>
 
                     <div style={{ marginBottom: "24px" }}>
