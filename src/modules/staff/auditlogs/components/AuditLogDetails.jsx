@@ -1,3 +1,4 @@
+import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState, useEffect } from "react";
 import {
   Check,
@@ -6,7 +7,6 @@ import {
   FileText,
   Calendar,
   User,
-  Loader2,
   Download,
   Building2,
   Mail,
@@ -457,10 +457,7 @@ export default function AuditLogDetails({ log, onBack }) {
               {details.rawTableName === "tbl_Submissions" ? (
                 <div>
                   {isFetchingSub ? (
-                    <div className="flex items-center justify-center gap-2 font-inter text-[13px] text-gray-500 py-4">
-                      <Loader2 className="h-5 w-5 animate-spin text-[#1A59A5]" />{" "}
-                      Fetching submission payload...
-                    </div>
+                    <PanelSkeleton kind="form" framed={false} label="Loading submission snapshot" />
                   ) : fetchedSubmission ? (
                     <>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-y-6 gap-x-8 mb-6">
