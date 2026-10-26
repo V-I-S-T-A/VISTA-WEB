@@ -1,3 +1,4 @@
+import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Download, Loader2, ChevronLeft, ChevronRight, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
@@ -303,10 +304,10 @@ export default function RecentSubmissionsTable({
   }
 
   return (
-    <section className="w-full overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
+    <section className="responsive-records w-full overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Toolbar */}
       <div
-        className="flex items-center justify-between gap-3 flex-wrap rounded-t-xl bg-[#1f5cae]"
+        className="table-header-bar flex items-center justify-between gap-3 flex-wrap rounded-t-xl bg-[#1f5cae]"
         style={{
           paddingLeft: CONTENT_PADDING,
           paddingRight: CONTENT_PADDING,
@@ -318,8 +319,8 @@ export default function RecentSubmissionsTable({
           Recent Submissions
         </h3>
 
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="table-header-controls flex items-center gap-2">
+          <div className="relative table-search-bar">
             <Search
               className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
               aria-hidden="true"
@@ -389,12 +390,12 @@ export default function RecentSubmissionsTable({
           </div>
 
           {/* Export Dropdown */}
-          <div className="relative" ref={exportRef}>
+          <div className="relative export-menu" ref={exportRef}>
             <button
               type="button"
               onClick={() => setIsExportOpen((prev) => !prev)}
               disabled={isExportingPdf}
-              className="inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 cursor-pointer disabled:opacity-60"
+              className="export-btn inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 cursor-pointer disabled:opacity-60"
               style={{
                 borderRadius: "6px",
                 backgroundColor: "#ffc700",
@@ -503,12 +504,7 @@ export default function RecentSubmissionsTable({
           </thead>
           <tbody>
             {isLoading ? (
-              <tr>
-                <td colSpan={6} className="px-5 py-10 text-center font-inter text-sm text-gray-500">
-                  <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
-                  Loading submissions...
-                </td>
-              </tr>
+              <TableRowsSkeleton columns={6} />
             ) : filteredSubmissions.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-5 py-10 text-center font-inter text-sm text-gray-500">
@@ -521,14 +517,14 @@ export default function RecentSubmissionsTable({
                   key={submission.submission_id}
                   className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
                 >
-                  <td
+                  <td data-label="ID"
                     className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
                     style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
                   >
                     #{submission.submission_id.slice(0, 8)}
                   </td>
 
-                  <td className="px-5 py-2.5">
+                  <td data-label="Document" className="px-5 py-2.5">
                     <div className="flex items-center gap-3">
                       <img
                         src={submission.org_image_url || defaultUser}
@@ -558,7 +554,7 @@ export default function RecentSubmissionsTable({
                     </div>
                   </td>
 
-                  <td className="px-5 py-2.5">
+                  <td data-label="Category" className="px-5 py-2.5">
                     <span
                       className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
                       style={{ fontSize: "12px", padding: "4px 12px" }}
@@ -567,18 +563,18 @@ export default function RecentSubmissionsTable({
                     </span>
                   </td>
 
-                  <td
+                  <td data-label="Date"
                     className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
                     style={{ fontSize: "13px" }}
                   >
                     {formatDate(submission.submitted_at)}
                   </td>
 
-                  <td className="px-5 py-2.5">
+                  <td data-label="Status" className="px-5 py-2.5">
                     <StatusDot status={submission.status} />
                   </td>
 
-                  <td className="px-5 py-2.5">
+                  <td data-label="Actions" className="px-5 py-2.5">
                     <ActionButton
                       onClick={() => handleReview(submission)}
                       label="VIEW & REVIEW"
@@ -594,7 +590,7 @@ export default function RecentSubmissionsTable({
       {/* Footer / Pagination */}
       {totalCount > 0 && (
         <div
-          className="flex items-center justify-between border-t border-gray-100 bg-white"
+          className="table-footer-row flex items-center justify-between border-t border-gray-100 bg-white"
           style={{
             paddingLeft: CONTENT_PADDING,
             paddingRight: CONTENT_PADDING,
@@ -607,7 +603,7 @@ export default function RecentSubmissionsTable({
             {Math.min(safeCurrentPage * PAGE_SIZE, totalCount)} of {totalCount} submissions
           </p>
 
-          <div className="flex items-center gap-1.5">
+          <div className="table-pagination-row flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => goToPage(safeCurrentPage - 1)}

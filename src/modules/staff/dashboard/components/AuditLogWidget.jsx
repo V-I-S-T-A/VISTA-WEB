@@ -1,3 +1,4 @@
+import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import {
   CheckCircle2,
   RefreshCw,
@@ -88,7 +89,7 @@ export default function AuditLogWidget() {
 
   return (
     <div
-      className="rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col"
+      className="audit-log-widget rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col"
       style={{ padding: "1rem" }}
     >
       <div className="px-6 pt-5 pb-3">
@@ -99,9 +100,7 @@ export default function AuditLogWidget() {
 
       <div className="px-6 flex-1">
         {isLoading ? (
-          <p className="font-inter text-sm text-gray-500 py-6">
-            Loading audit logs...
-          </p>
+          <PanelSkeleton kind="list" framed={false} rows={5} label="Loading recent activity" />
         ) : isError ? (
           <div className="flex items-center gap-2 text-sm text-red-600 py-6 font-inter">
             <AlertCircle className="h-4 w-4 flex-shrink-0" />

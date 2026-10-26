@@ -1,3 +1,4 @@
+import { AnalyticsSkeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useMemo, useRef, useEffect } from "react";
 import {
@@ -308,8 +309,10 @@ export default function AnalyticsVisualGraphs({
 
   if (isError) return <ErrorNotice message="Could not load submission analytics." onRetry={() => refetch()} retrying={isFetching} />;
 
+  if (isLoading && !stats) return <AnalyticsSkeleton />;
+
   return (
-    <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mb-5">
+    <section className="analytics-panel w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mb-5">
       {/* ── Standard Blue Header Bar matching VISTA Toolbar ── */}
       <div
         className="flex items-center justify-between gap-3 flex-wrap bg-[#1f5cae]"
@@ -335,7 +338,7 @@ export default function AnalyticsVisualGraphs({
         </div>
 
         {/* Toolbar Controls */}
-        <div className="flex items-center gap-2">
+        <div className="analytics-toolbar flex items-center gap-2">
           {/* Time Range Custom Dropdown */}
           <div className="relative" ref={timeRangeRef}>
             <button
@@ -559,8 +562,8 @@ export default function AnalyticsVisualGraphs({
       </div>
 
       {/* ── Card Body matching the approved single container ── */}
-      <div style={{ padding: "24px 28px" }}>
-        <div className="grid grid-cols-1 lg:grid-cols-2" style={{ gap: "28px" }}>
+      <div className="analytics-body" style={{ padding: "24px 28px" }}>
+        <div className="analytics-grid grid grid-cols-1 lg:grid-cols-2" style={{ gap: "28px" }}>
           
           {/* 1. Submission Status Donut Chart (Top Left) - 3 Consolidated Statuses */}
           <div className="flex flex-col justify-between">
@@ -670,7 +673,7 @@ export default function AnalyticsVisualGraphs({
             </div>
 
             {/* Status Pills: 3 Statuses (Process, Approved, Returned) */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 mt-2">
+            <div className="analytics-legend grid grid-cols-3 gap-2 pt-3 border-t border-gray-100 mt-2">
               {STATUS_CONFIG_3.map(({ key, label, color }) => {
                 const count = statusSummary[key] || 0;
                 const isSelected = selectedStatus === label;
@@ -806,7 +809,7 @@ export default function AnalyticsVisualGraphs({
           {/* 3. Capsule Column Bar Chart (Bottom Left) - Weeks, Months, Years */}
           <div className="flex flex-col justify-between pt-5 border-t border-gray-100">
             <div style={{ marginBottom: "14px" }}>
-              <div className="flex items-center justify-between">
+              <div className="analytics-chart-heading flex items-center justify-between">
                 <h4 className="font-inter text-[15px] font-bold text-[#142d55]">
                   Submission Intake Timeline
                 </h4>
@@ -916,7 +919,7 @@ export default function AnalyticsVisualGraphs({
           {/* 4. Horizontal Capsule Progress Ranking (Bottom Right) */}
           <div className="flex flex-col justify-between pt-5 border-t border-gray-100">
             <div style={{ marginBottom: "14px" }}>
-              <div className="flex items-center justify-between">
+              <div className="analytics-chart-heading flex items-center justify-between">
                 <h4 className="font-inter text-[15px] font-bold text-[#142d55]">
                   Active Student Organizations
                 </h4>
