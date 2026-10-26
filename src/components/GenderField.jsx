@@ -1,5 +1,6 @@
+import VistaSelect from "./VistaSelect";
 import { useId, useState } from "react";
-import { ChevronDown, UserRound } from "lucide-react";
+import { UserRound } from "lucide-react";
 
 import "./ProfileFields.css";
 
@@ -25,7 +26,7 @@ export default function GenderField({ value, onChange, disabled = false }) {
       </label>
       <div className="profile-field-control">
         <UserRound size={17} className="profile-field-icon profile-gender-icon" aria-hidden="true" />
-        <select
+        <VistaSelect
           id={id}
           value={custom ? "self-describe" : value}
           disabled={disabled}
@@ -40,8 +41,7 @@ export default function GenderField({ value, onChange, disabled = false }) {
           <option value="">Select gender</option>
           {OPTIONS.map(([option, label]) => <option key={option} value={option}>{label}</option>)}
           <option value="self-describe">Let me describe</option>
-        </select>
-        <ChevronDown size={16} className="profile-gender-chevron" aria-hidden="true" />
+        </VistaSelect>
       </div>
       {custom && (
         <div className="profile-self-description">
