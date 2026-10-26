@@ -1,3 +1,4 @@
+import { useSidebar } from "../../../hooks/useSidebar";
 import { useLocation } from "react-router-dom";
 import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
@@ -5,19 +6,21 @@ import OCRResults from "./components/OCRResults";
 import registrationSider from "../../assets/registration_sider.png";
 
 export default function AnalysisResults() {
+  const { isOpen, open, close } = useSidebar();
   const location = useLocation();
   const submissionId = location.state?.submissionId;
   const ocrConfidence = location.state?.ocrConfidence || 100;
 
   return (
     <div className="flex min-h-screen bg-white">
-      <Sidebar role="staff" />
+      {isOpen && <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />}
+      <Sidebar role="staff" isOpen={isOpen} onClose={close} />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <Header layout="registration" profilePath="/staff/profile" />
+      <div className="dashboard-content flex flex-1 flex-col overflow-hidden">
+        <Header layout="registration" profilePath="/staff/profile" onMenuToggle={open} />
 
-        <main className="flex-1 overflow-y-auto">
-          <div style={{ padding: "20px 24px" }}>
+        <main className="dashboard-main flex-1 overflow-y-auto">
+          <div className="dashboard-page-body page-content-stack" style={{ padding: "20px 24px" }}>
             {/* Page Title */}
             <div style={{ marginBottom: "20px" }}>
               <h2

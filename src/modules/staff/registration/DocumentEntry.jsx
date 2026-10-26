@@ -1,3 +1,4 @@
+import { PanelSkeleton } from "../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../components/ErrorNotice";
 import { useState, useEffect, useMemo } from "react";
@@ -302,7 +303,7 @@ export default function DocumentEntry() {
         />
 
         <main className="dashboard-main flex-1 overflow-y-auto">
-          <div style={{ padding: "20px 24px" }}>
+          <div className="dashboard-page-body page-content-stack" style={{ padding: "20px 24px" }}>
             <DocumentEntryHeader />
             <ErrorNotice message={dropdownError} onRetry={() => setDropdownRetry(c => c + 1)} retrying={loadingDropdowns} />
 
@@ -310,8 +311,8 @@ export default function DocumentEntry() {
               style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}
             >
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
-                {activeView === "form" ? (
-                  <div
+                {loadingDropdowns ? <PanelSkeleton kind="form" label="Loading registration form options" /> : activeView === "form" ? (
+                  <div className="registration-form-card"
                     style={{
                       border: "1.5px solid #e5e7eb",
                       borderRadius: "12px",
@@ -346,7 +347,7 @@ export default function DocumentEntry() {
                       </div>
                     )}
 
-                    <div
+                    <div className="responsive-form-grid"
                       style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
@@ -421,7 +422,7 @@ export default function DocumentEntry() {
                       </div>
                     </div>
 
-                    <div
+                    <div className="responsive-form-grid"
                       style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",

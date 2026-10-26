@@ -7,7 +7,7 @@ export default function OCRResults({
   isSubmitting,
 }) {
   return (
-    <div>
+    <div className="ocr-results">
       <div style={{ marginBottom: "16px" }}>
         <span
           className="font-inter font-semibold text-[#142d55]"
@@ -52,7 +52,7 @@ export default function OCRResults({
           backgroundColor: "#f8f9fc",
         }}
       >
-        <div
+        <div className="responsive-form-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "1fr 1fr",
@@ -168,7 +168,7 @@ export default function OCRResults({
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
+      <div className="responsive-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
         <button
           type="button"
           onClick={onRedo}
