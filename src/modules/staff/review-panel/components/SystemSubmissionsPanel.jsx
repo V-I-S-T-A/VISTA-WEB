@@ -1,3 +1,4 @@
+import VistaSelect from "../../../../components/VistaSelect";
 import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState } from "react";
 import {
@@ -288,7 +289,8 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                     Status
                   </label>
-                  <select
+                  <VistaSelect
+                    aria-label="Status"
                     value={statusFilter}
                     onChange={(e) => {
                       setStatusFilter(e.target.value);
@@ -307,14 +309,15 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                         {o}
                       </option>
                     ))}
-                  </select>
+                  </VistaSelect>
                 </div>
 
                 <div style={{ marginBottom: "14px" }}>
                   <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                     Category
                   </label>
-                  <select
+                  <VistaSelect
+                    aria-label="Category"
                     value={categoryFilter}
                     onChange={(e) => {
                       setCategoryFilter(e.target.value);
@@ -333,7 +336,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                         {o}
                       </option>
                     ))}
-                  </select>
+                  </VistaSelect>
                 </div>
 
                 <button
