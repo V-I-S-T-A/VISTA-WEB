@@ -311,6 +311,7 @@
    ---------------------------------------------------------- */
 
 @media (max-width: 640px) {
+  .entry-category-select { max-width: none !important; }
   .page-header-row {
     flex-direction: column !important;
     align-items: flex-start !important;
