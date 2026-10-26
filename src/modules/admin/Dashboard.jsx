@@ -1,3 +1,4 @@
+import PageSkeleton from "../../components/loading/PageSkeleton";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import UserManagementHeader from "./dashboard/components/UserManagementHeader";
@@ -21,7 +22,7 @@ export default function Dashboard() {
     }
   }, [isLoading, currentUser, navigate]);
 
-  if (isLoading) return null;
+  if (isLoading) return <PageSkeleton />;
   return (
     <div className="flex min-h-screen bg-white">
       {isOpen && (
@@ -37,7 +38,7 @@ export default function Dashboard() {
           className="dashboard-main flex-1 overflow-y-auto"
           style={{ padding: "20px 24px" }}
         >
-          <div className="w-full">
+          <div className="page-content-stack w-full">
             <UserManagementHeader />
             <UserSummaryCards />
             <RecentSubmissionsTable />

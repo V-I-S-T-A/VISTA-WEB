@@ -70,7 +70,7 @@ export default function RegistrationConfig() {
           className="dashboard-main flex-1 overflow-y-auto"
           style={{ padding: "20px 24px" }}
         >
-          <div className="w-full">
+          <div className="page-content-stack w-full">
             <PageHeader
               title="Registration Configuration"
               subtitle="Manage dynamic dropdown options for document entry forms."
@@ -96,7 +96,7 @@ export default function RegistrationConfig() {
 
             {/* Tab Navigation */}
             <div
-              className="flex flex-wrap gap-2 border-b border-gray-200"
+              className="configuration-tabs flex flex-wrap gap-2 border-b border-gray-200"
               style={{ marginBottom: "16px" }}
             >
               {tabs.map((tab) => {
