@@ -1,3 +1,4 @@
+import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useEffect } from "react";
@@ -291,10 +292,10 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       </div>
 
       <div
-        className="w-full rounded-xl border border-gray-200 bg-white shadow-sm"
+        className="submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
         style={{ padding: "24px", marginBottom: "20px" }}
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="submission-detail-heading flex items-start justify-between gap-4">
           <div>
             <p
               className="font-inter font-bold uppercase tracking-wider text-gray-400"
@@ -408,10 +409,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           </p>
 
           {isLoadingDetails ? (
-            <div className="flex items-center gap-2 font-inter text-[13px] text-gray-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Fetching documents...
-            </div>
+            <PanelSkeleton kind="documents" framed={false} rows={3} label="Loading attached documents" />
           ) : detailsError ? (
             <ErrorNotice message={detailsError} onRetry={() => setDetailsRetry(c => c + 1)} />
           ) : submissionDetails?.documents?.length > 0 ? (
@@ -478,7 +476,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       </div>
 
       <div
-        className="w-full rounded-xl border border-gray-200 bg-white shadow-sm"
+        className="submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
         style={{ padding: "24px" }}
       >
         <h3
@@ -622,10 +620,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
         <div style={{ padding: "20px 24px" }}>
           {isLoadingLogs ? (
-            <div className="flex items-center gap-2 font-inter text-[13px] text-gray-500">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              Loading history…
-            </div>
+            <PanelSkeleton kind="timeline" framed={false} rows={3} label="Loading review history" />
           ) : logsError ? (
             <ErrorNotice message={logsError} onRetry={() => setLogsRetry(c => c + 1)} />
           ) : reviewLogs.length === 0 ? (
