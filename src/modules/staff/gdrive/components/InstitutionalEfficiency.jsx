@@ -2,7 +2,7 @@ import { Cloud, ShieldCheck } from "lucide-react";
 
 export default function InstitutionalEfficiency() {
   return (
-    <div style={{ marginTop: "28px" }}>
+    <div className="drive-efficiency" style={{ marginTop: "28px" }}>
       {/* Title */}
       <div style={{ marginBottom: "20px" }}>
         <h3
@@ -17,7 +17,7 @@ export default function InstitutionalEfficiency() {
           <span style={{ color: "#031c36" }}>Powering Institutional </span>
           <span style={{ color: "#f59e0b" }}>Efficiency</span>
         </h3>
-        <p
+        <p className="drive-efficiency-description"
           style={{
             fontFamily: "Inter, sans-serif",
             fontSize: "13px",
@@ -34,7 +34,7 @@ export default function InstitutionalEfficiency() {
       </div>
 
       {/* Feature: Automated Archiving */}
-      <div
+      <div className="drive-feature"
         style={{
           display: "flex",
           alignItems: "flex-start",
@@ -87,7 +87,7 @@ export default function InstitutionalEfficiency() {
       </div>
 
       {/* Feature: Enterprise Security */}
-      <div
+      <div className="drive-feature"
         style={{
           display: "flex",
           alignItems: "flex-start",

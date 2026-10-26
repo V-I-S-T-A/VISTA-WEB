@@ -18,7 +18,7 @@ export default function GoogleSignInCard() {
   }
 
   return (
-    <div
+    <div className="drive-connection-panel"
       style={{
         background: "#ffffff",
         borderRadius: "16px",

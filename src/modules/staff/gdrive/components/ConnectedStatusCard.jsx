@@ -27,7 +27,7 @@ export default function ConnectedStatusCard({ connection, onChangeFolder }) {
     : "Not synced yet";
 
   return (
-    <div
+    <div className="drive-connection-panel"
       style={{
         background: "#ffffff",
         borderRadius: "16px",

@@ -1,3 +1,4 @@
+import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState } from "react";
 import { Search, FolderPlus, Folder, Loader2 } from "lucide-react";
@@ -40,7 +41,7 @@ export default function FolderPicker({ onDone }) {
   }
 
   return (
-    <div
+    <div className="drive-connection-panel"
       style={{
         background: "#ffffff",
         borderRadius: "16px",
@@ -146,15 +147,7 @@ export default function FolderPicker({ onDone }) {
           {isError ? (
             <ErrorNotice message="Could not load Google Drive folders. Check your connection and try again." onRetry={() => refetch()} retrying={isFetching} />
           ) : isLoading ? (
-            <div
-              className="flex items-center justify-center"
-              style={{ padding: "24px 0" }}
-            >
-              <Loader2
-                className="animate-spin"
-                style={{ width: "20px", height: "20px", color: "#1f5cae" }}
-              />
-            </div>
+            <PanelSkeleton kind="folders" framed={false} label="Loading Drive folders" />
           ) : folders.length === 0 ? (
             <p
               style={{
