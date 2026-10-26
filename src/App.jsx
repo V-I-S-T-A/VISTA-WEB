@@ -1,25 +1,29 @@
+import { lazy, Suspense } from "react";
+import PageSkeleton from "./components/loading/PageSkeleton";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import LandingPage from "./modules/LandingPage";
-import LoginPage from "./modules/LoginPage";
-import { PrivacyPolicy, TermsOfService } from "./modules/LegalPages";
-import AdminDashboard from "./modules/admin/Dashboard";
-import AdminRegisteredOrg from "./modules/admin/dashboard/RegisteredOrg";
-import AdminAuditLogs from "./modules/admin/AuditLogs";
-import AdminProfile from "./modules/admin/Profile";
-import AdminRegistrationConfig from "./modules/admin/RegistrationConfig"; // Added Import
-import StaffDashboard from "./modules/staff/Dashboard";
-import StaffRegistration from "./modules/staff/Registration";
-import StaffAnalysisResults from "./modules/staff/registration/AnalysisResults";
-import StaffAuditLogs from "./modules/staff/AuditLogs";
-import StaffProfile from "./modules/staff/Profile";
-import StaffReviewPanel from "./modules/staff/ReviewPanel";
-import StaffGdrive from "./modules/staff/Gdrive";
-import StudentDashboard from "./modules/student/Dashboard";
-import StudentReviewTracker from "./modules/student/ReviewTracker";
-import StudentReviewTrackerDetails from "./modules/student/reviewtracker/ReviewTrackerDetails";
-import StudentProfile from "./modules/student/Profile";
-import StudentAuditLogs from "./modules/student/AuditLogs";
-import StaffGdriveCallback from "./modules/staff/gdrive/GdriveCallback";
+const LandingPage = lazy(() => import("./modules/LandingPage"));
+const GetApp = lazy(() => import("./modules/GetApp"));
+const LoginPage = lazy(() => import("./modules/LoginPage"));
+const PrivacyPolicy = lazy(() => import("./modules/LegalPages").then(module => ({ default: module.PrivacyPolicy })));
+const TermsOfService = lazy(() => import("./modules/LegalPages").then(module => ({ default: module.TermsOfService })));
+const AdminDashboard = lazy(() => import("./modules/admin/Dashboard"));
+const AdminRegisteredOrg = lazy(() => import("./modules/admin/dashboard/RegisteredOrg"));
+const AdminAuditLogs = lazy(() => import("./modules/admin/AuditLogs"));
+const AdminProfile = lazy(() => import("./modules/admin/Profile"));
+const AdminRegistrationConfig = lazy(() => import("./modules/admin/RegistrationConfig"));
+const StaffDashboard = lazy(() => import("./modules/staff/Dashboard"));
+const StaffRegistration = lazy(() => import("./modules/staff/Registration"));
+const StaffAnalysisResults = lazy(() => import("./modules/staff/registration/AnalysisResults"));
+const StaffAuditLogs = lazy(() => import("./modules/staff/AuditLogs"));
+const StaffProfile = lazy(() => import("./modules/staff/Profile"));
+const StaffReviewPanel = lazy(() => import("./modules/staff/ReviewPanel"));
+const StaffGdrive = lazy(() => import("./modules/staff/Gdrive"));
+const StudentDashboard = lazy(() => import("./modules/student/Dashboard"));
+const StudentReviewTracker = lazy(() => import("./modules/student/ReviewTracker"));
+const StudentReviewTrackerDetails = lazy(() => import("./modules/student/reviewtracker/ReviewTrackerDetails"));
+const StudentProfile = lazy(() => import("./modules/student/Profile"));
+const StudentAuditLogs = lazy(() => import("./modules/student/AuditLogs"));
+const StaffGdriveCallback = lazy(() => import("./modules/staff/gdrive/GdriveCallback"));
 import {useDriveUploadWatcher} from "./hooks/useBackgroundDriveUpload";
 
 function App() {
@@ -27,46 +31,47 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-        <Route path="/terms-of-service" element={<TermsOfService />} />
-        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+        <Route path="/" element={<Suspense fallback={<PageSkeleton />}><LandingPage /></Suspense>} />
+        <Route path="/get-app" element={<Suspense fallback={<PageSkeleton />}><GetApp /></Suspense>} />
+        <Route path="/login" element={<Suspense fallback={<PageSkeleton />}><LoginPage /></Suspense>} />
+        <Route path="/privacy-policy" element={<Suspense fallback={<PageSkeleton />}><PrivacyPolicy /></Suspense>} />
+        <Route path="/terms-of-service" element={<Suspense fallback={<PageSkeleton />}><TermsOfService /></Suspense>} />
+        <Route path="/admin/dashboard" element={<Suspense fallback={<PageSkeleton />}><AdminDashboard /></Suspense>} />
         <Route
           path="/admin/dashboard/registeredorg"
-          element={<AdminRegisteredOrg />}
+          element={<Suspense fallback={<PageSkeleton />}><AdminRegisteredOrg /></Suspense>}
         />
-        <Route path="/admin/audit-logs" element={<AdminAuditLogs />} />
-        <Route path="/admin/profile" element={<AdminProfile />} />
+        <Route path="/admin/audit-logs" element={<Suspense fallback={<PageSkeleton />}><AdminAuditLogs /></Suspense>} />
+        <Route path="/admin/profile" element={<Suspense fallback={<PageSkeleton />}><AdminProfile /></Suspense>} />
         <Route
           path="/admin/registration-config"
-          element={<AdminRegistrationConfig />}
+          element={<Suspense fallback={<PageSkeleton />}><AdminRegistrationConfig /></Suspense>}
         />{" "}
-        <Route path="/staff/dashboard" element={<StaffDashboard />} />
-        <Route path="/staff/registration" element={<StaffRegistration />} />
+        <Route path="/staff/dashboard" element={<Suspense fallback={<PageSkeleton />}><StaffDashboard /></Suspense>} />
+        <Route path="/staff/registration" element={<Suspense fallback={<PageSkeleton />}><StaffRegistration /></Suspense>} />
         <Route
           path="/staff/registration/analysis-results"
-          element={<StaffAnalysisResults />}
+          element={<Suspense fallback={<PageSkeleton />}><StaffAnalysisResults /></Suspense>}
         />
-        <Route path="/staff/audit-logs" element={<StaffAuditLogs />} />
-        <Route path="/staff/profile" element={<StaffProfile />} />
-        <Route path="/staff/review-panel" element={<StaffReviewPanel />} />
-        <Route path="/staff/gdrive-sync" element={<StaffGdrive />} />
+        <Route path="/staff/audit-logs" element={<Suspense fallback={<PageSkeleton />}><StaffAuditLogs /></Suspense>} />
+        <Route path="/staff/profile" element={<Suspense fallback={<PageSkeleton />}><StaffProfile /></Suspense>} />
+        <Route path="/staff/review-panel" element={<Suspense fallback={<PageSkeleton />}><StaffReviewPanel /></Suspense>} />
+        <Route path="/staff/gdrive-sync" element={<Suspense fallback={<PageSkeleton />}><StaffGdrive /></Suspense>} />
         <Route
           path="/staff/gdrive-sync/callback"
-          element={<StaffGdriveCallback />}
+          element={<Suspense fallback={<PageSkeleton />}><StaffGdriveCallback /></Suspense>}
         />
-        <Route path="/student/dashboard" element={<StudentDashboard />} />
+        <Route path="/student/dashboard" element={<Suspense fallback={<PageSkeleton />}><StudentDashboard /></Suspense>} />
         <Route
           path="/student/review-tracker"
-          element={<StudentReviewTracker />}
+          element={<Suspense fallback={<PageSkeleton />}><StudentReviewTracker /></Suspense>}
         />
         <Route
           path="/student/review-tracker/:submissionId"
-          element={<StudentReviewTrackerDetails />}
+          element={<Suspense fallback={<PageSkeleton />}><StudentReviewTrackerDetails /></Suspense>}
         />
-        <Route path="/student/audit-logs" element={<StudentAuditLogs />} />
-        <Route path="/student/profile" element={<StudentProfile />} />
+        <Route path="/student/audit-logs" element={<Suspense fallback={<PageSkeleton />}><StudentAuditLogs /></Suspense>} />
+        <Route path="/student/profile" element={<Suspense fallback={<PageSkeleton />}><StudentProfile /></Suspense>} />
       </Routes>
     </BrowserRouter>
   );
