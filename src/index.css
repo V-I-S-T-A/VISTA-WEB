@@ -18,6 +18,11 @@
   --bg-color: #ffffff;
   --border-color: #1a56a3;
   --input-border: #d1d5db;
+  --public-gutter: clamp(20px, 5vw, 96px);
+  --public-header-height: 80px;
+  --public-surface: #e2eaf2;
+  --public-surface-muted: #d3dfec;
+  --public-border: #b9cadc;
 }
 
 * {
@@ -364,8 +369,7 @@ body {
 }
 
 .footer-shell {
-  width: 100%;
-  padding: 3rem 5% 1.75rem;
+  padding: 3rem 0 1.75rem;
 }
 
 .footer-top {
@@ -388,15 +392,15 @@ body {
 }
 
 .footer-logo {
-  height: 44px;
-  width: 44px;
+  height: 56px;
+  width: 56px;
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
 }
 
 .footer-title {
-  font-size: 1.75rem;
+  font-size: 2rem;
   font-weight: 800;
   letter-spacing: 0.5px;
 }
@@ -689,3 +693,111 @@ body {
     gap: 2rem;
   }
 }
+
+/* Shared public-page alignment: header, footer and policy content. */
+.public-shell {
+  width: calc(100% - var(--public-gutter) * 2);
+  max-width: 1600px;
+  margin-inline: auto;
+}
+.public-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  flex-shrink: 0;
+  min-height: var(--public-header-height);
+  background: var(--public-surface);
+  border-bottom: 1px solid var(--public-border);
+}
+.public-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: var(--public-header-height);
+  gap: 28px;
+  padding-block: 16px;
+}
+.public-brand-name {
+  font-family: var(--font-inter);
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  line-height: 1;
+  color: #1f5cae;
+  white-space: nowrap;
+}
+.public-header .header-left { flex: 0 0 auto; }
+.public-header .header-right { display: flex; align-items: center; gap: 20px; }
+.public-header .btn {
+  min-height: 44px;
+  padding: 12px 22px;
+  gap: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  border-radius: 10px;
+}
+.public-header .get-app-qr-button { width: 44px; height: 44px; border-radius: 10px; }
+.public-header .header-right > img { margin-left: 4px; }
+.app-label-short { display: none; }
+.public-header button:focus-visible,
+.public-header a:focus-visible {
+  outline: 3px solid #f7941d;
+  outline-offset: 4px;
+}
+.footer-legal-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+.footer-title { line-height: 1; white-space: nowrap; }
+.hero-section,.login-hero { height: calc(100vh - var(--public-header-height)); }
+@media (max-width: 768px) {
+  :root { --public-header-height: 72px; }
+  .public-header-inner { gap: 16px; padding-block: 14px; }
+  .public-brand-name { font-size: 23px; }
+  .public-header .header-right { gap: 12px; }
+  .public-header .btn { padding-inline: 16px; font-size: 13px; }
+  .public-header .header-right > img { display: none; }
+  .footer-bottom { align-items: flex-start; text-align: left; }
+  .footer-bottom-right { text-align: left; }
+}
+@media (max-width: 480px) {
+  .public-brand-name { font-size: 20px; letter-spacing: .01em; }
+  .public-header .header-right { gap: 8px; }
+  .public-header .btn { min-height: 40px; padding: 10px 12px; font-size: 12px; }
+  .public-header .btn-primary .btn-icon { display: none; }
+  .public-header .get-app-qr-button { width: 40px; height: 40px; }
+  .public-header .get-app-link .btn-icon { display: none; }
+  .app-label-full { display: none; }
+  .app-label-short { display: inline; }
+}
+@media (max-width: 359px) {
+  :root { --public-header-height: 124px; }
+  .public-header-inner { flex-wrap: wrap; gap: 14px; }
+  .public-header .header-left { width: 100%; }
+  .public-header .header-right { width: 100%; justify-content: space-between; }
+}
+
+.hero-content {
+  width: calc(100% - var(--public-gutter) * 2);
+  max-width: 1600px;
+  margin-inline: auto;
+  padding-inline: 0;
+}
+.login-hero { padding-inline: max(var(--public-gutter), calc((100% - 1600px) / 2)); }
+
+/* Muted public surfaces reduce the large areas of bright white. */
+.public-header .btn-outline,
+.public-header .get-app-qr-button {
+  background: var(--public-surface);
+  border-color: var(--public-border);
+}
+.public-header .btn-outline:hover,
+.public-header .get-app-qr-button:hover {
+  background: var(--public-surface-muted);
+}
+.login-card { background: var(--public-surface); }
+.login-input { background: #edf2f7; border-color: var(--public-border); }
