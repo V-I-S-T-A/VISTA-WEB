@@ -87,18 +87,18 @@ export default function Footer() {
 
   return (
     <footer className="footer">
-      <div className="footer-shell">
+      <div className="public-shell footer-shell">
         <div className="footer-top">
           <div className="footer-left">
             <div className="footer-brand">
               <img
                 src={vistaLogo}
                 alt=""
-                className="footer-logo!w-[66px] !h-[66px]"
+                className="footer-logo"
                 aria-hidden="true"
               />
-              <span className="text-[34px] font-dm-sans font-black text-lg leading-none whitespace-nowrap">
-                V.I.S.T.A.
+              <span className="footer-title">
+                VISTA
               </span>
             </div>
             <p className="footer-description">
@@ -140,14 +140,14 @@ export default function Footer() {
 
         <div className="footer-divider" />
 
-        <nav aria-label="Legal information" className="mb-5 flex flex-wrap gap-x-6 gap-y-3 text-sm">
+        <nav aria-label="Legal information" className="footer-legal-links">
           <Link to="/privacy-policy" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-offset-4">Privacy Policy</Link>
           <Link to="/terms-of-service" className="underline underline-offset-4 focus-visible:outline focus-visible:outline-offset-4">Terms of Service</Link>
         </nav>
 
         <div className="footer-bottom">
           <p className="footer-bottom-left">
-            @ {new Date().getFullYear()} V.I.S.T.A. All rights reserved.
+            © {new Date().getFullYear()} VISTA All rights reserved.
           </p>
           <p className="footer-bottom-right">
             University of Science and Technology of Southern Philippines - CDO

@@ -1,3 +1,5 @@
+import VistaSelect from "../../../components/VistaSelect";
+import { PanelSkeleton } from "../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../components/ErrorNotice";
 import { useState, useEffect, useMemo } from "react";
@@ -302,7 +304,7 @@ export default function DocumentEntry() {
         />
 
         <main className="dashboard-main flex-1 overflow-y-auto">
-          <div style={{ padding: "20px 24px" }}>
+          <div className="dashboard-page-body page-content-stack" style={{ padding: "20px 24px" }}>
             <DocumentEntryHeader />
             <ErrorNotice message={dropdownError} onRetry={() => setDropdownRetry(c => c + 1)} retrying={loadingDropdowns} />
 
@@ -310,8 +312,8 @@ export default function DocumentEntry() {
               style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}
             >
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
-                {activeView === "form" ? (
-                  <div
+                {loadingDropdowns ? <PanelSkeleton kind="form" label="Loading registration form options" /> : activeView === "form" ? (
+                  <div className="registration-form-card"
                     style={{
                       border: "1.5px solid #e5e7eb",
                       borderRadius: "12px",
@@ -346,7 +348,7 @@ export default function DocumentEntry() {
                       </div>
                     )}
 
-                    <div
+                    <div className="responsive-form-grid"
                       style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
@@ -365,7 +367,8 @@ export default function DocumentEntry() {
                         >
                           Organization
                         </p>
-                        <select
+                        <VistaSelect
+                          aria-label="Organization"
                           name="org_id"
                           value={formData.org_id}
                           onChange={handleChange}
@@ -383,7 +386,7 @@ export default function DocumentEntry() {
                               {org.name}
                             </option>
                           ))}
-                        </select>
+                        </VistaSelect>
                       </div>
                       <div>
                         <p
@@ -396,7 +399,8 @@ export default function DocumentEntry() {
                         >
                           Submitted By
                         </p>
-                        <select
+                        <VistaSelect
+                          aria-label="Submitted by"
                           name="submitted_by"
                           value={formData.submitted_by}
                           onChange={handleChange}
@@ -417,11 +421,11 @@ export default function DocumentEntry() {
                               {user.first_name} {user.last_name} ({user.email})
                             </option>
                           ))}
-                        </select>
+                        </VistaSelect>
                       </div>
                     </div>
 
-                    <div
+                    <div className="responsive-form-grid"
                       style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",
@@ -440,7 +444,8 @@ export default function DocumentEntry() {
                         >
                           Academic Year
                         </p>
-                        <select
+                        <VistaSelect
+                          aria-label="Academic year"
                           name="academic_year_id"
                           value={formData.academic_year_id}
                           onChange={handleChange}
@@ -458,7 +463,7 @@ export default function DocumentEntry() {
                               {ay.year}
                             </option>
                           ))}
-                        </select>
+                        </VistaSelect>
                       </div>
                       <div>
                         <p
@@ -471,7 +476,8 @@ export default function DocumentEntry() {
                         >
                           Document Type
                         </p>
-                        <select
+                        <VistaSelect
+                          aria-label="Document type"
                           name="doc_type_id"
                           value={formData.doc_type_id}
                           onChange={handleChange}
@@ -489,7 +495,7 @@ export default function DocumentEntry() {
                               {dt.name}
                             </option>
                           ))}
-                        </select>
+                        </VistaSelect>
                       </div>
                     </div>
 
@@ -504,7 +510,9 @@ export default function DocumentEntry() {
                       >
                         Category
                       </p>
-                      <select
+                      <VistaSelect
+                        className="entry-category-select"
+                        aria-label="Category"
                         name="category_id"
                         value={formData.category_id}
                         onChange={handleChange}
@@ -525,7 +533,7 @@ export default function DocumentEntry() {
                             {cat.name}
                           </option>
                         ))}
-                      </select>
+                      </VistaSelect>
                     </div>
 
                     <div style={{ marginBottom: "24px" }}>

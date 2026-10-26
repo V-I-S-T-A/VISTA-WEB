@@ -1,3 +1,4 @@
+import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
@@ -21,7 +22,7 @@ export default function StudentAuditLogs() {
     }
   }, [isLoading, currentUser, navigate]);
 
-  if (isLoading) return null;
+  if (isLoading) return <PageSkeleton />;
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -38,7 +39,7 @@ export default function StudentAuditLogs() {
           className="dashboard-main flex-1 overflow-y-auto"
           style={{ padding: "20px 24px" }}
         >
-          <div className="w-full">
+          <div className="page-content-stack w-full">
             {selectedLog ? (
               <AuditLogDetails
                 log={selectedLog}

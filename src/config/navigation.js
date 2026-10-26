@@ -50,7 +50,7 @@ export const headerConfig = {
 export const sidebarConfig = {
   admin: {
     logo: vistaLogo,
-    brand: "V.I.S.T.A.",
+    brand: "VISTA",
     accessLabel: "ADMIN ACCESS",
     user: {
       name: "Admin",
@@ -84,7 +84,7 @@ export const sidebarConfig = {
   },
   staff: {
     logo: vistaLogo,
-    brand: "V.I.S.T.A.",
+    brand: "VISTA",
     accessLabel: "STAFF ACCESS",
     user: {
       name: "Staff User",
@@ -130,7 +130,7 @@ export const sidebarConfig = {
   },
   student: {
     logo: vistaLogo,
-    brand: "V.I.S.T.A.",
+    brand: "VISTA",
     accessLabel: "STUDENT ORG. ACCESS",
     user: {
       name: "Student User",

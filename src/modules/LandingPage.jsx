@@ -2,6 +2,8 @@ import { ShieldCheck, RefreshCw } from 'lucide-react'
 import Header from '../components/Header'
 import Footer from '../components/footer'
 import backgroundImage from '../assets/shared/vista_background.png'
+import { useImageReady } from '../hooks/useImageReady'
+import { LandingHeroSkeleton } from '../components/loading/PageSkeleton'
 
 const FEATURES = [
   {
@@ -17,6 +19,7 @@ const FEATURES = [
 ]
 
 export default function LandingPage() {
+  const imageReady = useImageReady(backgroundImage)
   return (
     <div className="landing-page">
       <Header />
@@ -25,12 +28,14 @@ export default function LandingPage() {
         <section
           className="hero-section"
           style={{ backgroundImage: `url(${backgroundImage})` }}
+          aria-busy={!imageReady}
         >
+          {!imageReady && <div className="skeleton-image-overlay"><LandingHeroSkeleton /></div>}
           {/* Gradient Overlay */}
           <div className="hero-gradient"></div>
 
           {/* Content */}
-          <div className="hero-content">
+          <div className="hero-content" style={{ visibility: imageReady ? 'visible' : 'hidden' }}>
             <div className="hero-text">
               <h1 className="font-hahmlet text-white font-semibold">
                 Turn <span className="text-[#A3C3EE]">Transparency</span> into <span className="text-[#A3C3EE]">Efficiency.</span>

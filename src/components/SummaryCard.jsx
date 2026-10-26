@@ -1,3 +1,4 @@
+import { Skeleton } from "./loading/Skeleton";
 /**
  * SummaryCard
  *
@@ -51,7 +52,7 @@ export default function SummaryCard({
             className="relative z-10 font-inter font-bold leading-none"
             style={{ fontSize: "72px" }}
           >
-            {isLoading ? "—" : String(value)}
+            {isLoading ? <Skeleton width={72} height={40} /> : String(value)}
           </p>
           <Icon
             className="absolute text-white/20"
@@ -73,7 +74,7 @@ export default function SummaryCard({
             className="font-inter font-bold leading-none"
             style={{ fontSize: "44px" }}
           >
-            {isLoading ? "—" : String(value)}
+            {isLoading ? <Skeleton width={72} height={40} /> : String(value)}
           </p>
           <span
             className="flex items-center justify-center rounded-xl bg-white/15"

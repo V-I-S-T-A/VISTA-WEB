@@ -1,3 +1,4 @@
+import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { SquarePen, Trash2, Loader, Mail } from "lucide-react";
@@ -520,17 +521,7 @@ export default function RecentSubmissionsTable() {
           </thead>
           <tbody>
             {isLoading && (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-                >
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader className="h-4 w-4 animate-spin" />
-                    Loading users...
-                  </div>
-                </td>
-              </tr>
+              <TableRowsSkeleton columns={6} />
             )}
             {!isLoading && error && (
               <tr>

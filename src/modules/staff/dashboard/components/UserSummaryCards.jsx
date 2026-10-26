@@ -1,3 +1,4 @@
+import { Skeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { FolderOpen, Clock, ClipboardCheck, RotateCcw } from "lucide-react";
 import { useSubmissionStatistics } from "../../../../hooks/useSubmissions";
@@ -95,7 +96,7 @@ export default function SubmissionSummaryCards({
                   className="font-inter font-bold leading-none"
                   style={{ fontSize: "44px" }}
                 >
-                  {isLoading ? "—" : value.toString()}
+                  {isLoading ? <Skeleton width={72} height={40} /> : value.toString()}
                 </p>
                 <span
                   className={`flex items-center justify-center rounded-xl ${badgeBg}`}

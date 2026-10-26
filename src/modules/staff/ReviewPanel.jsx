@@ -1,3 +1,4 @@
+import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import Header from "../../components/Header";
@@ -27,7 +28,7 @@ export default function ReviewPanel() {
   }, [isLoading, currentUser, navigate]);
 
 
-  if (isLoading) return null;
+  if (isLoading) return <PageSkeleton />;
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -49,7 +50,7 @@ export default function ReviewPanel() {
           className="dashboard-main flex-1 overflow-y-auto"
           style={{ padding: "20px 24px" }}
         >
-          <div className="w-full">
+          <div className="page-content-stack w-full">
             <div style={{ marginBottom: '20px' }}>
               <h2
                 className="font-inter font-bold text-[#142d55]"

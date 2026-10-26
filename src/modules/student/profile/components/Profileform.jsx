@@ -1,3 +1,4 @@
+import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useState } from "react";
 import ProfileAvatarUpload from "./Profileavatarupload";
 import osaLogo from "../../../../assets/shared/osa_logo.png";
@@ -68,14 +69,16 @@ export default function ProfileForm() {
     setFormVersion((version) => version + 1);
   }
 
+  if (isLoading) return <PanelSkeleton kind="profile" label="Loading your profile" />;
+
   return (
     <div
-      className="w-full rounded-2xl bg-[#1f5cae]"
+      className="profile-form-panel w-full rounded-2xl bg-[#1f5cae]"
       style={{ padding: "32px", marginTop: "20px" }}
     >
       <form
         onSubmit={handleSubmit}
-        className="flex flex-col md:flex-row"
+        className="profile-form-layout flex flex-col md:flex-row"
         style={{ gap: "36px" }}
       >
         <ProfileAvatarUpload
@@ -84,7 +87,7 @@ export default function ProfileForm() {
         />
 
         <div
-          className="flex-1 flex flex-col"
+          className="profile-form-fields flex-1 flex flex-col"
           style={{ gap: "12px", maxWidth: "520px" }}
         >
           <input

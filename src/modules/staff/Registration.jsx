@@ -1,3 +1,4 @@
+import PageSkeleton from "../../components/loading/PageSkeleton";
 import DocumentEntry from './registration/DocumentEntry'
 import { useNavigate } from 'react-router-dom'
 import { useEffect } from 'react'
@@ -14,5 +15,7 @@ export default function Registration() {
       }
     }
   }, [isLoading, currentUser, navigate]);
+  if (isLoading) return <PageSkeleton />;
+
   return <DocumentEntry />
 }

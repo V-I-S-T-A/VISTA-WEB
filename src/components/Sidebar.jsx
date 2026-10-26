@@ -1,3 +1,4 @@
+import { Skeleton } from "./loading/Skeleton";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Users,
@@ -112,7 +113,7 @@ export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
                 style={{ fontSize: "15px" }}
               >
                 {userLoading
-                  ? "Loading..."
+                  ? <Skeleton width={110} height={15} />
                   : (currentUser?.full_name ?? config.user.name)}
               </p>
             </div>

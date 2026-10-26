@@ -1,3 +1,4 @@
+import PageSkeleton from "../../../components/loading/PageSkeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
@@ -9,7 +10,6 @@ import DetailsNotice from "./components/DetailsNotice";
 import DetailsSubmissionInfo from "./components/DetailsSubmissionInfo";
 import DetailsStatusHistory from "./components/DetailsStatusHistory";
 import DetailsStaffRemarks from "./components/DetailsStaffRemarks";
-import { Loader2 } from "lucide-react";
 import { useSidebar } from "../../../hooks/useSidebar";
 
 export default function ReviewTrackerDetails() {
@@ -35,13 +35,7 @@ export default function ReviewTrackerDetails() {
     enabled: !!id,
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-screen bg-white items-center justify-center">
-        <Loader2 className="animate-spin h-10 w-10 text-[#1f5cae]" />
-      </div>
-    );
-  }
+  if (isLoading) return <PageSkeleton />;
 
   if (isError || !submission) {
     return (
@@ -80,7 +74,7 @@ export default function ReviewTrackerDetails() {
           className="dashboard-main flex-1 overflow-y-auto bg-[#f7f9fc]"
           style={{ padding: "20px 24px" }}
         >
-          <div className="w-full">
+          <div className="page-content-stack w-full">
             <DetailsHeader submission={submission} />
             <DetailsNotice status={submission.status} />
             <DetailsSubmissionInfo submission={submission} />

@@ -1,3 +1,5 @@
+import VistaSelect from "../../../../components/VistaSelect";
+import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState } from "react";
 import {
   Search,
@@ -6,7 +8,6 @@ import {
   ImageIcon,
   ChevronLeft,
   ChevronRight,
-  Loader2,
   CheckCircle2,
 } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
@@ -148,7 +149,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
   }
 
   return (
-    <section className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <section className="responsive-records w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Toolbar */}
       <div
         className="review-panel-toolbar flex flex-wrap items-center justify-between gap-3 bg-[#1f5cae]"
@@ -159,7 +160,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
           paddingBottom: "14px",
         }}
       >
-        <div className="flex items-center gap-3">
+        <div className="review-panel-tabs flex items-center gap-3">
           <h3 className="font-inter text-[16px] font-bold text-white">
             System Submissions
           </h3>
@@ -288,7 +289,8 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                     Status
                   </label>
-                  <select
+                  <VistaSelect
+                    aria-label="Status"
                     value={statusFilter}
                     onChange={(e) => {
                       setStatusFilter(e.target.value);
@@ -307,14 +309,15 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                         {o}
                       </option>
                     ))}
-                  </select>
+                  </VistaSelect>
                 </div>
 
                 <div style={{ marginBottom: "14px" }}>
                   <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
                     Category
                   </label>
-                  <select
+                  <VistaSelect
+                    aria-label="Category"
                     value={categoryFilter}
                     onChange={(e) => {
                       setCategoryFilter(e.target.value);
@@ -333,7 +336,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                         {o}
                       </option>
                     ))}
-                  </select>
+                  </VistaSelect>
                 </div>
 
                 <button
@@ -413,15 +416,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr>
-                <td
-                  colSpan={6}
-                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-                >
-                  <Loader2 className="animate-spin h-6 w-6 mx-auto mb-2 text-gray-400" />
-                  Loading submissions...
-                </td>
-              </tr>
+              <TableRowsSkeleton columns={6} />
             ) : filteredSubmissions.length === 0 ? (
               <tr>
                 <td
@@ -438,7 +433,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
                 >
                   {/* ID */}
-                  <td
+                  <td data-label="ID"
                     className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
                     style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
                   >
@@ -446,7 +441,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   </td>
 
                   {/* Applicant / Document Title */}
-                  <td className="px-5 py-2.5">
+                  <td data-label="Document" className="px-5 py-2.5">
                     <div className="flex items-center gap-3">
                       <img
                         src={submission.org_image_url || defaultUser}
@@ -477,7 +472,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   </td>
 
                   {/* Category */}
-                  <td className="px-5 py-2.5">
+                  <td data-label="Category" className="px-5 py-2.5">
                     <span
                       className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
                       style={{ fontSize: "12px", padding: "4px 12px" }}
@@ -487,7 +482,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   </td>
 
                   {/* Date */}
-                  <td
+                  <td data-label="Date"
                     className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
                     style={{ fontSize: "13px" }}
                   >
@@ -502,12 +497,12 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   </td>
 
                   {/* Status */}
-                  <td className="px-5 py-2.5">
+                  <td data-label="Status" className="px-5 py-2.5">
                     <StatusDot status={submission.status} />
                   </td>
 
                   {/* Actions */}
-                  <td className="px-5 py-2.5">
+                  <td data-label="Actions" className="px-5 py-2.5">
                     <ActionButton
                       onClick={() =>
                         onViewReview?.({
@@ -540,7 +535,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
       {/* Footer / Pagination */}
       {totalCount > 0 && (
         <div
-          className="flex items-center justify-between border-t border-gray-100 bg-white"
+          className="table-footer-row flex items-center justify-between border-t border-gray-100 bg-white"
           style={{
             paddingLeft: CONTENT_PADDING,
             paddingRight: CONTENT_PADDING,
@@ -554,7 +549,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
             submissions
           </p>
 
-          <div className="flex items-center gap-1.5">
+          <div className="table-pagination-row flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => goToPage(safeCurrentPage - 1)}

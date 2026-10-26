@@ -1,3 +1,4 @@
+import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 
 function ProgressRow({ label, value, color }) {
@@ -31,17 +32,19 @@ function ProgressRow({ label, value, color }) {
 export default function InstitutionalPulse() {
   // Reuses the same query keys/params as the summary cards, so React Query
   // serves these from cache instead of firing duplicate network requests.
-  const { data: allData } = useSubmissions({ page: 1, pageSize: 1 });
-  const { data: approvedData } = useSubmissions({
+  const { data: allData, isLoading: loadingAll } = useSubmissions({ page: 1, pageSize: 1 });
+  const { data: approvedData, isLoading: loadingApproved } = useSubmissions({
     page: 1,
     pageSize: 1,
     status: "Approved",
   });
-  const { data: rejectedData } = useSubmissions({
+  const { data: rejectedData, isLoading: loadingRejected } = useSubmissions({
     page: 1,
     pageSize: 1,
     status: "Rejected",
   });
+
+  if (loadingAll || loadingApproved || loadingRejected) return <PanelSkeleton rows={2} label="Loading institutional pulse" />;
 
   const total = allData?.count ?? 0;
   const resolved = (approvedData?.count ?? 0) + (rejectedData?.count ?? 0);
@@ -50,7 +53,7 @@ export default function InstitutionalPulse() {
 
   return (
     <div 
-        className="rounded-xl border border-gray-200 bg-white"
+        className="institutional-pulse rounded-xl border border-gray-200 bg-white"
         style={{ padding: "1rem", height: "130px" }}
     >
       <h3

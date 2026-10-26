@@ -1,6 +1,6 @@
+import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import defaultAvatar from "../../../../assets/shared/default_user.jpg";
 import { useReviewLogs } from "../../../../hooks/useReviewLogs";
-import { Loader2 } from "lucide-react";
 
 export default function DetailsStaffRemarks({ submissionId }) {
   // 1. Fetch real logs for this specific submission
@@ -30,25 +30,10 @@ export default function DetailsStaffRemarks({ submissionId }) {
     return `${datePart}, ${timePart}`;
   };
 
-  if (isLoading) {
-    return (
-      <div
-        className="flex justify-center items-center"
-        style={{
-          backgroundColor: "#ffffff",
-          borderRadius: "12px",
-          border: "1px solid #e2e6ee",
-          marginBottom: "20px",
-          padding: "40px",
-        }}
-      >
-        <Loader2 className="animate-spin h-8 w-8 text-[#1A59A5]" />
-      </div>
-    );
-  }
+  if (isLoading) return <PanelSkeleton kind="remarks" label="Loading staff remarks" />;
 
   return (
-    <div
+    <div className="submission-remarks-panel"
       style={{
         backgroundColor: "#ffffff",
         borderRadius: "12px",
@@ -59,7 +44,7 @@ export default function DetailsStaffRemarks({ submissionId }) {
     >
       {/* Yellow header bar */}
       <div
-        className="flex items-center justify-between"
+        className="detail-panel-heading flex items-center justify-between"
         style={{
           backgroundColor: "#1A59A5",
           padding: "12px 24px",
@@ -85,7 +70,7 @@ export default function DetailsStaffRemarks({ submissionId }) {
       </div>
 
       {/* Remarks list */}
-      <div style={{ padding: "20px 28px" }}>
+      <div className="detail-panel-body" style={{ padding: "20px 28px" }}>
         {remarks.length === 0 ? (
           <p className="font-inter text-gray-500 text-sm">
             No remarks or feedback provided yet.

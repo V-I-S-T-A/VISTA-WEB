@@ -1,0 +1,176 @@
+/* A shared mobile reading layout. Desktop tables keep their existing styles. */
+@media (max-width: 1024px) {
+  html:has(.dashboard-content), body:has(.dashboard-content) { overflow: clip; height: 100dvh; }
+  body:has(.dashboard-content) { position: fixed; inset: 0; width: 100%; }
+  .dashboard-content { height: 100dvh; min-height: 0; }
+  .dashboard-main {
+    --page-gutter: 24px;
+    --section-gap: 16px;
+    min-height: 0;
+    padding: var(--page-gutter) !important;
+  }
+  .dashboard-header { padding-inline: 24px !important; }
+  .dashboard-main > .dashboard-page-body { padding: 0 !important; }
+  .dashboard-section { margin-top: var(--section-gap) !important; }
+  .dashboard-bottom-grid { gap: var(--section-gap) !important; }
+  .dashboard-system-scope { padding-top: var(--section-gap) !important; }
+  .system-scope-banner { display: block; width: 100%; }
+  .page-header-row { margin-bottom: var(--section-gap) !important; }
+  .page-header-row > div:last-child { flex-wrap: wrap; }
+  .drive-ambient-glow { inset: 0 !important; width: 100% !important; height: 100% !important; transform: none !important; }
+  .page-content-stack { display: flex; flex-direction: column; gap: var(--section-gap); }
+  .page-content-stack > * { margin-top: 0 !important; margin-bottom: 0 !important; }
+  .page-content-stack > .dashboard-system-scope { padding-top: 0 !important; }
+  .dashboard-main .skeleton-stack { gap: var(--section-gap); }
+
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .table-header-bar {
+    padding: 16px !important;
+    gap: 12px;
+    border-radius: 12px 12px 0 0;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .table-header-bar h3 {
+    padding-left: 0 !important;
+    font-size: 17px !important;
+    line-height: 1.4;
+  }
+  .dashboard-main .responsive-records { min-width: 0; max-width: 100%; overflow: visible; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) table {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    table-layout: auto;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) colgroup { display: none; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) tbody { display: block; width: 100%; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) tbody tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+    height: auto;
+    margin: 0;
+    padding: 16px;
+    border-bottom: 1px solid #e7edf5;
+    text-align: left;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) tbody tr:last-child { border-bottom: 0; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) table tbody tr td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 6px;
+    width: auto;
+    min-width: 0 !important;
+    max-width: 100%;
+    padding: 0 !important;
+    border: 0;
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+  }
+  /* Legacy table styles pad the first and last labeled cells separately.
+     Reset those in the mobile layout so labels, values and actions align. */
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) table tbody tr td[data-label] {
+    padding: 0 !important;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) table tbody tr td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    color: #64748b;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td > * { min-width: 0; max-width: 100%; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td:is(
+    [data-label="Document"], [data-label="Organization"], [data-label="User"],
+    [data-label="User/Entity"], [data-label="Description"], [data-label="Details"],
+    [data-label="Actions"], [data-label="Category"], [data-label="Academic year"]
+  ) { grid-column: 1 / -1; }
+  /* Submission category and date are short fields; keep them side by side. */
+  .dashboard-main .responsive-records td[data-label="Category"]:has(> span) { grid-column: auto; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) table tbody tr td[data-label$="ID"] {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    font-size: 11px !important;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td:is([data-label="Document"], [data-label="Organization"], [data-label="User"]) > div {
+    width: 100%;
+    align-items: flex-start;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td:is([data-label="Document"], [data-label="Organization"], [data-label="User"]) p {
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: break-word;
+    line-height: 1.5;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td:is([data-label="Status"], [data-label="Action"], [data-label="Category"]) > span {
+    white-space: normal;
+    word-break: normal;
+    overflow-wrap: normal;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td[data-label="Actions"] > div {
+    display: flex;
+    flex-wrap: wrap !important;
+    width: 100%;
+    gap: 8px;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td:is([data-label="Actions"], [data-label="Details"]) button {
+    min-height: 40px;
+    justify-content: center;
+    white-space: nowrap;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td:is([data-label="Actions"], [data-label="Details"]) > button { width: 100%; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) td[data-label="Actions"] > div > button { flex: 1 1 auto; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) table tbody tr td[colspan] {
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: center;
+    min-height: 104px;
+    padding: 16px !important;
+    text-align: center;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .table-footer-row {
+    padding: 16px !important;
+    gap: 12px;
+    flex-wrap: wrap;
+    border-radius: 0 0 12px 12px;
+  }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .skeleton-table-row td:first-child,
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .skeleton-table-row td:nth-child(2),
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .skeleton-table-row td:last-child { grid-column: 1 / -1; }
+  .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .skeleton-table-row td::before { display: none; }
+}
+
+@media (max-width: 640px) {
+  .dashboard-main { --page-gutter: 16px; }
+  .dashboard-header { padding-inline: 16px !important; }
+  .dashboard-main .table-header-controls .export-menu { flex: 1 1 100%; }
+  .dashboard-main .table-header-controls .export-menu > .export-btn { width: 100%; justify-content: center; }
+  .dashboard-main .table-header-controls > .relative:not(.table-search-bar) > button { white-space: nowrap; word-break: normal; overflow-wrap: normal; }
+  .dashboard-main .table-header-controls .table-search-bar { flex: 1 1 140px !important; max-width: none !important; }
+  .profile-form-panel { padding: 16px !important; }
+  .profile-form-layout > div:first-child { margin-inline: auto; }
+  .dashboard-main .skeleton-panel:not(.skeleton-panel--profile) { padding: 16px; }
+  .dashboard-main :is(.registration-form-card, .drive-connection-panel, .submission-detail-card, .submission-info-panel, .submission-notice-panel, .analytics-body) { padding: 16px !important; }
+  .dashboard-main .submission-info-footer { margin: 0 -16px -16px !important; padding: 16px !important; gap: 16px; }
+  .dashboard-main :is(.detail-panel-heading, .detail-panel-body) { padding: 16px !important; }
+  .dashboard-main .detail-panel-heading { gap: 12px; flex-wrap: wrap; }
+  .dashboard-main .analytics-grid { gap: 16px !important; }
+  .dashboard-main .audit-log-widget > div { padding-inline: 0 !important; }
+  .dashboard-main .audit-log-widget > div:first-child { padding-top: 0 !important; }
+  .configuration-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 !important; }
+  .configuration-tabs > button { min-width: 0; min-height: 44px; padding: 12px 8px !important; text-align: left; }
+}

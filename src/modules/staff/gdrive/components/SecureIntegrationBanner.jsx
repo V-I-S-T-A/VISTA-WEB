@@ -1,6 +1,6 @@
 export default function SecureIntegrationBanner() {
   return (
-    <div
+    <div className="drive-integration-banner"
       style={{
         background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
         borderRadius: "14px",

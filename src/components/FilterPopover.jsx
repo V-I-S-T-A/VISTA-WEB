@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { cloneElement, isValidElement, useEffect, useRef } from "react";
+import VistaSelect from "./VistaSelect";
 
 /**
  * FilterPopover
@@ -24,7 +25,7 @@ export default function FilterPopover({
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (ref.current && !ref.current.contains(event.target)) {
+      if (ref.current && !ref.current.contains(event.target) && !event.target.closest(".vista-select-panel")) {
         onClose();
       }
     }
@@ -35,13 +36,13 @@ export default function FilterPopover({
   return (
     <div
       ref={ref}
-      className="absolute right-0 top-full z-20"
+      className="vista-filter-popover absolute right-0 top-full z-20"
       style={{
         marginTop: "8px",
         width: "288px",
         borderRadius: "10px",
-        border: "1px solid #e2e6ee",
-        backgroundColor: "#ffffff",
+        border: "1px solid #b8cbe0",
+        backgroundColor: "#f7faff",
         boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
         padding: "16px",
       }}
@@ -105,7 +106,7 @@ export function FilterPopoverRow({ label, children }) {
       <label className="block font-inter text-[11px] font-bold uppercase tracking-wide text-gray-500 mb-1.5">
         {label}
       </label>
-      {children}
+      {isValidElement(children) ? cloneElement(children, { "aria-label": label }) : children}
     </div>
   );
 }
@@ -113,16 +114,17 @@ export function FilterPopoverRow({ label, children }) {
 /**
  * FilterSelect
  *
- * Styled <select> element for use inside FilterPopoverRow.
+ * Shared VISTA dropdown for use inside FilterPopoverRow.
  *
  * Props:
  *  - value    {string}   — controlled value
  *  - onChange {function} — (e) => void
  *  - children {ReactNode} — <option> elements
  */
-export function FilterSelect({ value, onChange, children }) {
+export function FilterSelect({ value, onChange, children, ...props }) {
   return (
-    <select
+    <VistaSelect
+      {...props}
       value={value}
       onChange={onChange}
       className="w-full font-inter outline-none"
@@ -134,7 +136,7 @@ export function FilterSelect({ value, onChange, children }) {
       }}
     >
       {children}
-    </select>
+    </VistaSelect>
   );
 }
 
@@ -147,9 +149,10 @@ export function FilterSelect({ value, onChange, children }) {
  *  - value    {string}   — controlled value (YYYY-MM-DD)
  *  - onChange {function} — (e) => void
  */
-export function FilterDateInput({ value, onChange }) {
+export function FilterDateInput({ value, onChange, ...props }) {
   return (
     <input
+      {...props}
       type="date"
       value={value}
       onChange={onChange}

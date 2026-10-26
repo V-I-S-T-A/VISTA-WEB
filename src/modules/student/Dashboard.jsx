@@ -1,3 +1,4 @@
+import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
@@ -22,7 +23,7 @@ export default function Dashboard() {
     }
   }, [isLoading, currentUser, navigate]);
 
-  if (isLoading) return null;
+  if (isLoading) return <PageSkeleton />;
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -39,22 +40,22 @@ export default function Dashboard() {
           className="dashboard-main flex-1 overflow-y-auto bg-[#f7f9fc]"
           style={{ padding: "20px 24px" }}
         >
-          <div className="w-full">
+          <div className="page-content-stack w-full">
             <DashboardBanner />
 
-            <div style={{ marginTop: "20px" }}>
+            <div className="dashboard-section" style={{ marginTop: "20px" }}>
               <SubmissionSummaryCards />
             </div>
 
-            <div style={{ marginTop: "20px" }}>
+            <div className="dashboard-section" style={{ marginTop: "20px" }}>
               <RecentSubmissionsTable />
             </div>
 
-            <div style={{ paddingTop: "32px" }}>
+            <div className="dashboard-system-scope" style={{ paddingTop: "32px" }}>
               <img
                 src={systemScopeBanner}
                 alt="System Scope"
-                className="w-3/4 h-auto"
+                className="system-scope-banner w-3/4 h-auto"
               />
             </div>
           </div>

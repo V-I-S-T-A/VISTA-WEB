@@ -1,3 +1,4 @@
+import VistaSelect from "../../../../components/VistaSelect";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useEffect, useRef, useState } from "react";
@@ -83,44 +84,7 @@ function FocusInput({ style, onBlur, ...props }) {
 }
 
 function FocusSelect({ children, ...props }) {
-  const [focused, setFocused] = useState(false);
-  return (
-    <div style={{ position: "relative" }}>
-      <select
-        {...props}
-        style={{
-          ...FIELD_STYLES.select,
-          ...(focused ? FIELD_STYLES.inputFocus : {}),
-        }}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-      >
-        {children}
-      </select>
-      <svg
-        style={{
-          position: "absolute",
-          right: "12px",
-          top: "50%",
-          transform: "translateY(-50%)",
-          pointerEvents: "none",
-          width: "14px",
-          height: "14px",
-          color: "#6b7280",
-        }}
-        fill="none"
-        stroke="currentColor"
-        viewBox="0 0 24 24"
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M19 9l-7 7-7-7"
-        />
-      </svg>
-    </div>
-  );
+  return <VistaSelect {...props} aria-label="Role" style={FIELD_STYLES.select}>{children}</VistaSelect>;
 }
 
 /**

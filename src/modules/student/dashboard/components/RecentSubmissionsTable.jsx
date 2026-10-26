@@ -1,3 +1,4 @@
+import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
@@ -45,6 +46,7 @@ export default function RecentSubmissionsTable() {
 
   return (
     <TableContainer
+      className="responsive-records"
       title="Recent Submissions"
       totalCount={totalCount}
       shownCount={submissions.length}
@@ -84,14 +86,7 @@ export default function RecentSubmissionsTable() {
         </thead>
         <tbody>
           {isLoading ? (
-            <tr>
-              <td
-                colSpan={6}
-                className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-              >
-                Loading submissions...
-              </td>
-            </tr>
+              <TableRowsSkeleton columns={6} />
           ) : submissions.length === 0 ? (
             <tr>
               <td
@@ -107,13 +102,13 @@ export default function RecentSubmissionsTable() {
                 key={submission.submission_id}
                 className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
               >
-                <td
+                <td data-label="ID"
                   className="px-5 py-2.5 font-inter font-bold text-gray-900 whitespace-nowrap"
                   style={{ paddingLeft: CONTENT_PADDING, fontSize: "13px" }}
                 >
                   #{submission.submission_id.slice(0, 8)}
                 </td>
-                <td className="px-5 py-2.5">
+                <td data-label="Document" className="px-5 py-2.5">
                   <div className="flex items-center gap-3">
                     <img
                       src={submission.org_image_url || defaultUser}
@@ -142,7 +137,7 @@ export default function RecentSubmissionsTable() {
                     </div>
                   </div>
                 </td>
-                <td className="px-5 py-2.5">
+                <td data-label="Category" className="px-5 py-2.5">
                   <span
                     className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
                     style={{ fontSize: "12px", padding: "4px 12px" }}
@@ -150,7 +145,7 @@ export default function RecentSubmissionsTable() {
                     {submission.category_name || "N/A"}
                   </span>
                 </td>
-                <td
+                <td data-label="Date"
                   className="px-5 py-2.5 font-inter font-medium text-gray-500 whitespace-nowrap"
                   style={{ fontSize: "13px" }}
                 >
@@ -159,10 +154,10 @@ export default function RecentSubmissionsTable() {
                     { month: "short", day: "numeric", year: "numeric" },
                   )}
                 </td>
-                <td className="px-5 py-2.5 whitespace-nowrap min-w-[120px]">
+                <td data-label="Status" className="px-5 py-2.5 whitespace-nowrap min-w-[120px]">
                   <SubmissionStatusLabel status={submission.status} />
                 </td>
-                <td className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
+                <td data-label="Actions" className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
                   <ActionButton
                     onClick={() => handleView(submission)}
                     label="VIEW"

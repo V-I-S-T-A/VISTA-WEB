@@ -1,7 +1,8 @@
+import { PanelSkeleton } from "../../components/loading/Skeleton";
+import PageSkeleton from "../../components/loading/PageSkeleton";
 import ErrorNotice from "../../components/ErrorNotice";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import GdriveHeader from "./gdrive/components/GdriveHeader";
@@ -32,7 +33,7 @@ export default function Gdrive() {
     }
   }, [isLoading, currentUser, navigate]);
 
-  if (isLoading) return null;
+  if (isLoading) return <PageSkeleton />;
 
   const isConnected = !!connection?.connected;
   const hasFolder = isConnected && !!connection?.folder_id;
@@ -49,7 +50,7 @@ export default function Gdrive() {
         <Header layout="gdrive" profilePath="/staff/profile" onMenuToggle={open} />
 
         <main className="dashboard-main flex-1 overflow-y-auto overflow-x-hidden">
-          <div style={{ padding: "20px 24px" }}>
+          <div className="dashboard-page-body page-content-stack" style={{ padding: "20px 24px" }}>
             <GdriveHeader />
 
             <div
@@ -60,7 +61,7 @@ export default function Gdrive() {
                 <InstitutionalEfficiency />
                 <div style={{ position: "relative" }}>
                   <div
-                    className="hidden md:block"
+                    className="drive-ambient-glow hidden md:block"
                     style={{
                       position: "absolute",
                       top: "50%",
@@ -77,19 +78,7 @@ export default function Gdrive() {
                   />
 
                   {isLoadingConnection ? (
-                    <div
-                      className="flex items-center justify-center"
-                      style={{ padding: "60px 0" }}
-                    >
-                      <Loader2
-                        className="animate-spin"
-                        style={{
-                          width: "28px",
-                          height: "28px",
-                          color: "#1f5cae",
-                        }}
-                      />
-                    </div>
+                    <PanelSkeleton kind="connection" label="Loading Google Drive connection" />
                   ) : isError ? (
                     <ErrorNotice message="Could not check your Google Drive connection." onRetry={() => refetch()} retrying={isFetching} />
                   ) : !isConnected ? (

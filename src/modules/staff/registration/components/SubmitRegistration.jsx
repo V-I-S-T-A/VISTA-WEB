@@ -25,7 +25,7 @@ export default function SubmitRegistration({
   };
 
   return (
-    <div>
+    <div className="registration-upload">
       <p
         className="font-inter font-bold text-[#142d55] uppercase"
         style={{

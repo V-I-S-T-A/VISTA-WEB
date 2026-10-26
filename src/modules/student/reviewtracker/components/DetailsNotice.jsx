@@ -20,7 +20,7 @@ export default function DetailsNotice({ status }) {
     "This record tracks paper files submitted at the OSA office. Digital copies are not stored on this system to protect original physical signatures and institutional security. Tracking here ensures you know the exact location and status of your physical documents.";
 
   return (
-    <div
+    <div className="submission-notice-panel"
       style={{
         backgroundColor: "#edf2fb",
         borderRadius: "12px",

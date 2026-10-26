@@ -1,7 +1,8 @@
+import PageSkeleton from "../../../components/loading/PageSkeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Loader2, CheckCircle2, AlertCircle } from "lucide-react";
+import { CheckCircle2, AlertCircle } from "lucide-react";
 import { driveService } from "../../../services/driveService";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -87,25 +88,11 @@ export default function GdriveCallback() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  if (status === "processing") return <PageSkeleton />;
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-white">
       <div style={{ textAlign: "center", maxWidth: "360px", padding: "24px" }}>
-        {status === "processing" && (
-          <>
-            <Loader2
-              className="animate-spin"
-              style={{
-                width: "36px",
-                height: "36px",
-                margin: "0 auto 16px",
-                color: "#1f5cae",
-              }}
-            />
-            <p className="font-inter font-semibold text-gray-700">
-              Connecting your Google account…
-            </p>
-          </>
-        )}
         {status === "success" && (
           <>
             <CheckCircle2

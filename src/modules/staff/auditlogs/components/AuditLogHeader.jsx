@@ -1,3 +1,4 @@
+import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useState, useEffect, useMemo } from "react";
 import { Eye } from "lucide-react";
 import api from "../../../../lib/axios";
@@ -286,14 +287,7 @@ export default function AuditLogHeader({ onViewLog }) {
           </thead>
           <tbody>
             {isLoading ? (
-              <tr>
-                <td
-                  colSpan={4}
-                  className="px-5 py-10 text-center font-inter text-sm text-gray-500"
-                >
-                  Loading audit logs...
-                </td>
-              </tr>
+              <TableRowsSkeleton columns={4} />
             ) : paginatedLogs.length === 0 ? (
               <tr>
                 <td

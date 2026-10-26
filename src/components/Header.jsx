@@ -1,17 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Download, Menu, QrCode, X } from "lucide-react";
 import vistaLogo from "../assets/shared/vista_logo.png";
 import { getHeaderConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
+import { Skeleton } from "./loading/Skeleton";
 
-const ANDROID_APK_URL =
-  "https://github.com/V-I-S-T-A/VISTA-MOBILE/releases/latest/download/vista-mobile.apk";
+import { ANDROID_APK_URL, APP_ONBOARDING_PATH } from "../config/appDownload";
 
 export default function Header({ layout = "public", profilePath, onMenuToggle }) {
   const navigate = useNavigate();
   const config = getHeaderConfig(layout);
-  const { data: currentUser } = useCurrentUser();
+  const { data: currentUser, isLoading } = useCurrentUser();
   const logoutMutation = useLogout();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAppQrOpen, setIsAppQrOpen] = useState(false);
@@ -42,7 +42,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
   if (config.type === "dashboard") {
     return (
       <header
-        className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white"
+        className="dashboard-header sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white"
         style={{
           paddingLeft: "24px",
           paddingRight: "24px",
@@ -72,11 +72,11 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
               className="flex-shrink-0 rounded-full transition hover:opacity-80 focus:outline-none"
               aria-label="Toggle profile menu"
             >
-              <img
+              {isLoading ? <Skeleton circle width={40} height={40} /> : <img
                 src={currentUser?.image_url ?? config.avatar}
                 alt="Profile"
                 className="h-10 w-10 rounded-full object-cover"
-              />
+              />}
             </button>
 
             {isDropdownOpen && (
@@ -86,8 +86,8 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
                   marginTop: "8px",
                   width: "180px",
                   borderRadius: "10px",
-                  border: "1px solid #e2e6ee",
-                  backgroundColor: "#ffffff",
+                  border: "1px solid #b8cbe0",
+                  backgroundColor: "#f7faff",
                   boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
                   padding: "8px",
                 }}
@@ -135,26 +135,19 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
   }
 
   return (
-    <header
-      className="sticky top-0 z-30 flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white"
-      style={{
-        paddingLeft: "24px",
-        paddingRight: "24px",
-      }}
-    >
+    <header className="public-header">
+      <div className="public-shell public-header-inner">
       <div className="header-left">
         <button
           type="button"
           onClick={() => navigate("/")}
           className="header-brand-link cursor-pointer border-none bg-transparent p-0"
         >
-          <h1 className="font-inter text-2xl font-black text-[#1A51A5]">
-            V.I.S.T.A.
-          </h1>
+          <span className="public-brand-name">VISTA</span>
         </button>
       </div>
 
-      <div className="header-right flex items-center gap-3">
+      <nav className="header-right" aria-label="Public navigation">
         <button
           type="button"
           onClick={() => navigate("/login")}
@@ -164,15 +157,14 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
           <ArrowRight className="btn-icon" aria-hidden="true" />
         </button>
 
-        <a
+        <Link
           className="btn btn-outline get-app-link"
-          href={ANDROID_APK_URL}
-          download="vista-mobile.apk"
-          aria-label="Download the VISTA Android app APK"
+          to={APP_ONBOARDING_PATH}
+          aria-label="Get the VISTA app"
         >
-          Get the app
+          <span className="app-label-full">Get the app</span><span className="app-label-short">Get app</span>
           <Download className="btn-icon" aria-hidden="true" />
-        </a>
+        </Link>
         <button
           type="button"
           className="get-app-qr-button"
@@ -192,6 +184,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
           className="h-10 w-10 rounded-full object-cover"
           aria-hidden="true"
         />
+      </nav>
       </div>
       {isAppQrOpen && (
         <div

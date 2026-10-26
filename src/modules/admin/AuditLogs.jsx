@@ -1,3 +1,4 @@
+import PageSkeleton from "../../components/loading/PageSkeleton";
 import Header from '../../components/Header'
 import Sidebar from '../../components/Sidebar'
 import AuditLogHeader from './auditlogs/components/AuditLogHeader'
@@ -20,6 +21,8 @@ export default function AuditLogs() {
         }
       }
     }, [isLoading, currentUser, navigate]);
+    if (isLoading) return <PageSkeleton />;
+
     return (
         <div className="flex min-h-screen bg-white">
             {isOpen && (
@@ -32,7 +35,7 @@ export default function AuditLogs() {
                 <Header layout="auditlog" profilePath="/admin/profile" onMenuToggle={open} />
 
                 <main className="dashboard-main flex-1 overflow-y-auto" style={{ padding: '20px 24px' }}>
-                    <div className="w-full">
+                    <div className="page-content-stack w-full">
                         {selectedLog ? (
                           <AuditLogDetails log={selectedLog} onBack={() => setSelectedLog(null)} />
                         ) : (

@@ -1,13 +1,14 @@
 import { Children, useEffect } from "react";
-import { ArrowLeft, ArrowUpRight, CalendarDays, Mail, ShieldCheck, FileText } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, ChevronDown, Mail, ShieldCheck, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/footer";
-import backgroundImage from "../assets/shared/vista_background.png";
+import privacyArt from "../assets/legal/privacy-students.webp";
+import termsArt from "../assets/legal/terms-students.webp";
 import "./LegalPages.css";
+import { APP_UPDATED_AT, APP_UPDATED_LABEL } from "../config/buildInfo";
 
 const CONTACT = "moyarojo@gmail.com";
-const UPDATED = "October 17, 2026";
 
 function Section({ id, title, children }) {
   return (
@@ -20,6 +21,15 @@ function Section({ id, title, children }) {
 
 function Contact() {
   return <a className="underline underline-offset-4" href={`mailto:${CONTACT}`}>{CONTACT}</a>;
+}
+
+function SectionLinks({ sections }) {
+  return sections.map((section, index) => (
+    <a key={section.props.id} href={`#${section.props.id}`}>
+      <span>{String(index + 1).padStart(2, "0")}</span>
+      {section.props.title.replace(/^\d+\.\s*/, "")}
+    </a>
+  ));
 }
 
 function LegalLayout({ title, summary, children }) {
@@ -36,28 +46,44 @@ function LegalLayout({ title, summary, children }) {
   return (
     <div className="legal-page">
       <Header />
-      <main id="main-content">
-        <section className="legal-hero" style={{ backgroundImage: `url(${backgroundImage})` }}>
+      <main id="main-content" className="public-shell legal-main">
+        <div className="legal-breadcrumb">
+          <Link to="/" className="legal-back"><ArrowLeft size={16} aria-hidden="true" />Back to VISTA</Link>
+          <span aria-hidden="true">/</span><span>{title}</span>
+        </div>
+        <section className="legal-hero" aria-labelledby="legal-title">
           <div className="legal-hero-inner">
-            <Link to="/" className="legal-back"><ArrowLeft size={16} aria-hidden="true" />Back to VISTA</Link>
-            <div className="legal-eyebrow"><span /> Transparency &amp; trust</div>
-            <h1>{title}</h1>
-            <p>{isPrivacy ? "Your information. Handled with care." : "Clear guidelines. Shared responsibilities."}</p>
-            <div className="legal-updated"><CalendarDays size={15} aria-hidden="true" />Effective &amp; last updated {UPDATED}</div>
+            <p className="legal-eyebrow">VISTA / Information &amp; policies</p>
+            <h1 id="legal-title">{title}</h1>
+            <p className="legal-hero-description">{isPrivacy ? "Your information. Handled with care." : "Clear guidelines. Shared responsibilities."}</p>
+            <div className="legal-updated"><CalendarDays size={15} aria-hidden="true" /><span>Last updated <time dateTime={APP_UPDATED_AT}>{APP_UPDATED_LABEL}</time></span></div>
           </div>
+          <div className="legal-hero-art" aria-hidden="true"><img src={isPrivacy ? privacyArt : termsArt} alt="" width="768" height="512" fetchPriority="high" /></div>
         </section>
         <div className="legal-workspace">
           <aside className="legal-sidebar">
             <nav aria-label="On this page" className="legal-toc">
-              <p className="legal-nav-label">On this page</p>
-              {sections.map((section, index) => <a key={section.props.id} href={`#${section.props.id}`}><span>{String(index + 1).padStart(2, "0")}</span>{section.props.title.replace(/^\d+\.\s*/, "")}</a>)}
+              <h2>On this page</h2>
+              <div className="legal-toc-links"><SectionLinks sections={sections} /></div>
             </nav>
-            <div className="legal-help"><Mail size={20} aria-hidden="true" /><h2>Have a question?</h2><p>Contact the VISTA project administrator for assistance.</p><Contact /></div>
+            <details className="legal-mobile-contents" key={title}>
+              <summary>On this page<ChevronDown size={18} aria-hidden="true" /></summary>
+              <nav aria-label="Jump to a policy section" className="legal-toc-links"><SectionLinks sections={sections} /></nav>
+            </details>
+            <div className="legal-help">
+              <span className="legal-help-icon"><Mail size={22} aria-hidden="true" /></span>
+              <h2>Need assistance?</h2>
+              <p>Contact the VISTA project administrator for questions about this {isPrivacy ? "policy" : "document"}.</p>
+              <Contact />
+            </div>
           </aside>
           <article className="legal-document" aria-label={title}>
-            <div className="legal-intro"><div className="legal-document-icon"><DocumentIcon size={23} aria-hidden="true" /></div><div><p className="legal-nav-label">VISTA / {isPrivacy ? "Privacy" : "Terms"}</p><p className="legal-summary">{summary}</p></div></div>
+            <div className="legal-intro">
+              <div className="legal-intro-header"><DocumentIcon size={20} aria-hidden="true" /><h2>{isPrivacy ? "Privacy at VISTA" : "Using VISTA responsibly"}</h2></div>
+              <p className="legal-summary">{summary}</p>
+            </div>
             {children}
-            <div className="legal-related"><div><span className="legal-nav-label">Related document</span><Link to={isPrivacy ? "/terms-of-service" : "/privacy-policy"}>{isPrivacy ? "Terms of Service" : "Privacy Policy"}<ArrowUpRight size={20} aria-hidden="true" /></Link></div><Link to="/" className="legal-home-link">Return to homepage <ArrowUpRight size={16} aria-hidden="true" /></Link></div>
+            <div className="legal-related"><div><span className="legal-nav-label">Related document</span><Link to={isPrivacy ? "/terms-of-service" : "/privacy-policy"}>{isPrivacy ? "Terms of Service" : "Privacy Policy"}<ArrowUpRight size={20} aria-hidden="true" /></Link></div><Link to="/" className="legal-home-link">Back to VISTA<ArrowUpRight size={16} aria-hidden="true" /></Link></div>
           </article>
         </div>
       </main>

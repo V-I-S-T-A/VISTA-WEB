@@ -1,3 +1,4 @@
+import VistaSelect from "./VistaSelect";
 import { useMemo, useRef, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -162,22 +163,22 @@ export default function DateOfBirthField({ value, onChange, disabled = false }) 
             >
               <ChevronLeft className="h-4 w-4" />
             </button>
-            <select
+            <VistaSelect
               value={viewDate.getMonth()}
               onChange={(event) => setViewDate((date) => new Date(date.getFullYear(), Number(event.target.value), 1))}
               aria-label="Month"
               className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm font-semibold text-gray-800 outline-none focus:border-[#1f5cae]"
             >
               {MONTHS.map((month, index) => <option key={month} value={index}>{month}</option>)}
-            </select>
-            <select
+            </VistaSelect>
+            <VistaSelect
               value={viewDate.getFullYear()}
               onChange={(event) => setViewDate((date) => new Date(Number(event.target.value), date.getMonth(), 1))}
               aria-label="Year"
               className="w-[76px] rounded-lg border border-gray-200 bg-white px-2 py-1.5 text-sm font-semibold text-gray-800 outline-none focus:border-[#1f5cae]"
             >
               {years.map((year) => <option key={year} value={year}>{year}</option>)}
-            </select>
+            </VistaSelect>
             <button
               type="button"
               onClick={() => setViewDate((date) => new Date(date.getFullYear(), date.getMonth() + 1, 1))}

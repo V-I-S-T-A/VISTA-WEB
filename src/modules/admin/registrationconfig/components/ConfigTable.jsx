@@ -1,10 +1,10 @@
+import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   SquarePen,
   Trash2,
-  Loader2,
   Building2,
   Calendar,
   FileText,
@@ -339,7 +339,7 @@ export default function ConfigTable({
           ],
           renderRow: (item) => (
             <>
-              <td className="px-5 py-2.5 min-w-[240px]">
+              <td data-label="Category" className="px-5 py-2.5 min-w-[240px]">
                 <p className="font-inter font-bold text-gray-900 text-[15px] leading-tight">
                   {item.name || "N/A"}
                 </p>
@@ -360,17 +360,17 @@ export default function ConfigTable({
           ],
           renderRow: (item) => (
             <>
-              <td className="px-5 py-2.5 min-w-[200px]">
+              <td data-label="Document" className="px-5 py-2.5 min-w-[200px]">
                 <p className="font-inter font-bold text-gray-900 text-[15px] leading-tight">
                   {item.name || "N/A"}
                 </p>
               </td>
-              <td className="px-5 py-2.5 w-[110px] min-w-[110px] whitespace-nowrap">
+              <td data-label="Code" className="px-5 py-2.5 w-[110px] min-w-[110px] whitespace-nowrap">
                 <span className="font-mono font-bold text-[#1f5cae] bg-blue-50 px-2.5 py-1 rounded text-[12px] border border-blue-100">
                   {item.code || "N/A"}
                 </span>
               </td>
-              <td className="px-5 py-2.5 min-w-[180px] max-w-[220px]">
+              <td data-label="Description" className="px-5 py-2.5 min-w-[180px] max-w-[220px]">
                 <p
                   className="font-inter font-medium text-gray-500 text-[13px] truncate"
                   title={item.description}
@@ -378,7 +378,7 @@ export default function ConfigTable({
                   {item.description || "N/A"}
                 </p>
               </td>
-              <td className="px-5 py-2.5 w-[100px] min-w-[100px] whitespace-nowrap">
+              <td data-label="Status" className="px-5 py-2.5 w-[100px] min-w-[100px] whitespace-nowrap">
                 <StatusBadge isActive={item.is_active} />
               </td>
             </>
@@ -397,15 +397,15 @@ export default function ConfigTable({
           ],
           renderRow: (item) => (
             <>
-              <td className="px-5 py-2.5 min-w-[200px]">
+              <td data-label="Academic year" className="px-5 py-2.5 min-w-[200px]">
                 <p className="font-inter font-bold text-gray-900 text-[15px] leading-tight">
                   {item.year || item.name || "N/A"}
                 </p>
               </td>
-              <td className="px-5 py-2.5 w-[100px] min-w-[100px] whitespace-nowrap">
+              <td data-label="Status" className="px-5 py-2.5 w-[100px] min-w-[100px] whitespace-nowrap">
                 <StatusBadge isActive={item.is_active} />
               </td>
-              <td className="px-5 py-2.5 w-[130px] min-w-[130px] font-inter font-medium text-gray-500 whitespace-nowrap text-[13px]">
+              <td data-label="Date added" className="px-5 py-2.5 w-[130px] min-w-[130px] font-inter font-medium text-gray-500 whitespace-nowrap text-[13px]">
                 {item.created_at
                   ? new Date(item.created_at).toLocaleDateString("en-US", {
                     year: "numeric",
@@ -426,6 +426,7 @@ export default function ConfigTable({
   return (
     <div className={activeTab === "organizations" ? "registration-orgs" : undefined}>
     <TableContainer
+      className="responsive-records"
       title={`${tabLabel} Database`}
       headerRight={
         <>
@@ -519,16 +520,7 @@ export default function ConfigTable({
         </thead>
         <tbody>
           {isLoading ? (
-            <tr>
-              <td colSpan={headers.length} className="px-5 py-12 text-center">
-                <div className="inline-flex items-center justify-center gap-2 text-[#1f5cae]">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span className="font-inter text-[14px] font-medium text-gray-600">
-                    Loading {tabLabel.toLowerCase()}...
-                  </span>
-                </div>
-              </td>
-            </tr>
+              <TableRowsSkeleton columns={headers.length} />
           ) : loadError ? (
             <tr><td colSpan={headers.length}><ErrorNotice message={loadError} onRetry={() => setRetryCount(c => c + 1)} /></td></tr>
           ) : paginatedData.length === 0 ? (
