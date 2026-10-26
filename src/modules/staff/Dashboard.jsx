@@ -1,3 +1,4 @@
+import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
@@ -33,7 +34,7 @@ export default function Dashboard() {
     }
   }, [isLoading, currentUser, navigate]);
 
-  if (isLoading) return null;
+  if (isLoading) return <PageSkeleton />;
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -55,20 +56,20 @@ export default function Dashboard() {
           className="dashboard-main flex-1 overflow-y-auto bg-[#f7f9fc]"
           style={{ padding: "24px 28px" }}
         >
-          <div className="w-full">
+          <div className="page-content-stack w-full">
             <SubmissionSummaryCards
               selectedStatus={selectedStatus}
               onSelectStatus={handleStatusSelect}
             />
 
-            <div style={{ marginTop: "20px" }}>
+            <div className="dashboard-section" style={{ marginTop: "20px" }}>
               <AnalyticsVisualGraphs
                 selectedStatus={selectedStatus}
                 onStatusSelect={handleStatusSelect}
               />
             </div>
 
-            <div ref={tableRef} style={{ marginTop: "20px" }}>
+            <div ref={tableRef} className="dashboard-section" style={{ marginTop: "20px" }}>
               <RecentSubmissionsTable
                 activeStatusFilter={selectedStatus}
                 onStatusChange={setSelectedStatus}
@@ -76,18 +77,18 @@ export default function Dashboard() {
             </div>
 
             <div
-              className="dashboard-bottom-grid grid grid-cols-2"
+              className="dashboard-section dashboard-bottom-grid grid grid-cols-2"
               style={{ gap: "16px", marginTop: "20px" }}
             >
               <InstitutionalPulse />
               <AuditLogWidget />
             </div>
 
-            <div style={{ paddingTop: "32px" }}>
+            <div className="dashboard-system-scope" style={{ paddingTop: "32px" }}>
               <img
                 src={systemScopeBanner}
                 alt="System Scope"
-                className="w-full h-auto rounded-xl"
+                className="system-scope-banner w-full h-auto rounded-xl"
               />
             </div>
           </div>
