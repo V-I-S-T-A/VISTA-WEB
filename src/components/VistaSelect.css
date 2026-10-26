@@ -1,0 +1,16 @@
+.vista-select-trigger { display:flex; align-items:center; justify-content:space-between; gap:10px; width:100%; min-height:42px; padding:9px 12px; border:1px solid #c7d5e5; border-radius:9px; background:#f5f8fc; color:#153657; font:500 13px var(--font-inter,Inter,sans-serif); text-align:left; cursor:pointer; transition:border-color .15s,box-shadow .15s,background .15s; }
+.vista-select-trigger:hover:not(:disabled) { border-color:#92afd0; background:#eef4fa; }
+.vista-select-trigger:focus-visible,.vista-select-trigger[aria-expanded="true"] { outline:none; border-color:#205ca9; box-shadow:0 0 0 3px #205ca925; }
+.vista-select-trigger:disabled { opacity:.58; cursor:not-allowed; }
+.vista-select-value { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.vista-select-value.is-placeholder { color:#71839a; }
+.vista-select-chevron { flex-shrink:0; color:#205ca9; transition:transform .15s; }
+.vista-select-chevron.is-open { transform:rotate(180deg); }
+.vista-select-panel { position:fixed; z-index:100; overflow:auto; overscroll-behavior:contain; padding:5px; border:1px solid #b8cbe0; border-radius:12px; background:#f7faff; box-shadow:0 16px 36px #102e512b; }
+.vista-select-option { display:flex; justify-content:space-between; align-items:center; gap:10px; width:100%; min-height:38px; padding:9px 11px; border:0; border-radius:7px; background:transparent; color:#183d65; font:500 13px var(--font-inter,Inter,sans-serif); text-align:left; cursor:pointer; }
+.vista-select-option>span { overflow:hidden; text-overflow:ellipsis; white-space:normal; overflow-wrap:anywhere; }
+.vista-select-option[data-active="true"],.vista-select-option:hover:not(:disabled) { background:#dfeaf7; }
+.vista-select-option[aria-selected="true"] { color:#154e94; font-weight:700; }
+.vista-select-option[aria-selected="true"] svg { flex-shrink:0; color:#205ca9; }
+.vista-select-option:disabled { color:#9aacbd; cursor:not-allowed; }
+@media(prefers-reduced-motion:reduce) { .vista-select-trigger,.vista-select-chevron { transition:none; } }
