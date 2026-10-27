@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -6,7 +7,6 @@ import Sidebar from "../../components/Sidebar";
 import DashboardBanner from "./dashboard/components/DashboardBanner";
 import SubmissionSummaryCards from "./dashboard/components/SubmissionSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
-import systemScopeBanner from "../../assets/shared/systemscope.webp";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useSidebar } from "../../hooks/useSidebar";
 
@@ -51,13 +51,7 @@ export default function Dashboard() {
               <RecentSubmissionsTable />
             </div>
 
-            <div className="dashboard-system-scope" style={{ paddingTop: "32px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="system-scope-banner w-3/4 h-auto"
-              />
-            </div>
+            <SystemScopeBanner />
           </div>
         </main>
       </div>
