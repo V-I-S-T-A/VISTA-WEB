@@ -33,7 +33,7 @@
 .ga-orbit-one { width:77%; aspect-ratio:1; top:18%; left:7%; border:44px solid var(--ga-gold); transform:rotate(-25deg); border-left-color:var(--ga-green); }
 .ga-orbit-two { width:94%; height:40%; left:-2%; top:27%; border:1px solid #14395e80; transform:rotate(-38deg); }
 .ga-orbit-three { width:22%; aspect-ratio:1; top:20%; right:0; background:var(--ga-blue); }
-.ga-hand { position:absolute; width:108%; top:-2%; left:-2%; aspect-ratio:2/3; transform-origin:60% 80%; transform:rotate(-9deg); animation:ga-hand-sway 7s ease-in-out infinite; }
+.ga-hand { position:absolute; width:108%; top:-2%; left:4%; aspect-ratio:2/3; transform-origin:60% 80%; transform:rotate(-9deg); animation:ga-hand-sway 7s ease-in-out infinite; }
 .ga-hand-photo { width:100%; height:auto; display:block; opacity:0; }
 .ga-hand.is-ready .ga-hand-photo { opacity:1; transition:opacity .4s; }
 .ga-hand-screen { position:absolute; left:24.9%; top:6.97%; width:40.55%; height:56.72%; overflow:hidden; border-radius:14% / 7%; opacity:0; }
