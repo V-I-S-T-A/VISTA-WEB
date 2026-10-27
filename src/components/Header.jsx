@@ -12,6 +12,13 @@ import { ANDROID_APK_URL, APP_ONBOARDING_PATH } from "../config/appDownload";
 export default function Header({ layout = "public", profilePath, onMenuToggle }) {
   const navigate = useNavigate();
   const config = getHeaderConfig(layout);
+  const profileRole = profilePath?.split("/")[1];
+  const profileTitle = {
+    admin: "Admin Profile",
+    staff: "Staff Profile",
+    student: "Student Profile",
+  }[profileRole];
+  const headerTitle = layout === "profile" ? profileTitle || config.title : config.title;
   const { data: currentUser, isLoading } = useCurrentUser();
   const logoutMutation = useLogout();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -61,7 +68,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
           </button>
 
           <h1 className="font-inter text-sm font-medium text-[#1a51a5]">
-            {config.title}
+            {headerTitle}
           </h1>
         </div>
 

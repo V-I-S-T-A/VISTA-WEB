@@ -21,5 +21,5 @@ export function VerticalBanner() {
 }
 
 export function ProfileBannerLayout({ children }) {
-  return <div className="profile-banner-layout">{children}<VerticalBanner /></div>;
+  return <div className="profile-banner-layout">{children}</div>;
 }
