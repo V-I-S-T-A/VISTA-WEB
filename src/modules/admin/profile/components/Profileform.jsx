@@ -1,7 +1,7 @@
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useState } from "react";
 import ProfileAvatarUpload from "./Profileavatarupload";
-import osaLogo from "../../../../assets/shared/osa_logo.png";
+import osaLogo from "../../../../assets/shared/osa_logo.webp";
 import ChangePasswordSection from "../../../../components/ChangePasswordSection";
 import DateOfBirthField from "../../../../components/DateOfBirthField";
 import { useProfile, useUpdateProfile } from "../../../../hooks/useProfile";

@@ -7,7 +7,7 @@ import ErrorNotice from "../../../../components/ErrorNotice";
 import "../../../../components/AdminDataTable.css";
 import "./UsersManagementTable.css";
 import { TABLE_PAGE_SIZE, pageNumbers as getPageNumbers } from "../../../../utils/tablePagination";
-import defaultUser from "../../../../assets/shared/default_user.jpg";
+import defaultUser from "../../../../assets/shared/default_user.webp";
 import EditUserModal from "../modals/EditUserModal";
 import ResendInvitationModal from "../modals/ResendInvitationModal";
 import { useUsers } from "../../../../hooks/useUsers";

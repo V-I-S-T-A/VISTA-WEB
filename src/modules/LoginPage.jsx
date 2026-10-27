@@ -3,8 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
 import Header from "../components/Header";
 import Footer from "../components/footer";
-import backgroundImage from "../assets/shared/vista_background.png";
-import vistaLogo from "../assets/shared/vista_logo.png";
+import backgroundImage from "../assets/shared/vista_background.webp";
+import vistaLogo from "../assets/shared/vista_logo.webp";
 import { useLogin } from "../hooks/useAuth";
 
 const STORAGE_KEY = "vista_remembered_accounts";

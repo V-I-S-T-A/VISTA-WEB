@@ -8,7 +8,7 @@ import {
   AlertCircle,
   X,
 } from "lucide-react";
-import defaultUser from "../../../../assets/shared/default_user.jpg";
+import defaultUser from "../../../../assets/shared/default_user.webp";
 import EditOrgModal from "../modals/EditOrgModal";
 import {
   useOrganizations,

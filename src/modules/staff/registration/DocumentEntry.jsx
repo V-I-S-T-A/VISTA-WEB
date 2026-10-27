@@ -12,7 +12,7 @@ import Sidebar from "../../../components/Sidebar";
 import DocumentEntryHeader from "./components/DocumentEntryHeader";
 import SubmitRegistration from "./components/SubmitRegistration";
 import OCRResults from "./components/OCRResults";
-import registrationSider from "../../assets/registration_sider.png";
+import registrationSider from "../../assets/registration_sider.webp";
 import { useSidebar } from "../../../hooks/useSidebar";
 import { convertImageToWebP } from "../../../utils/fileOptimizer";
 import { StatusModal } from "../../../components";

@@ -3,7 +3,7 @@ import { useLocation } from "react-router-dom";
 import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
 import OCRResults from "./components/OCRResults";
-import registrationSider from "../../assets/registration_sider.png";
+import registrationSider from "../../assets/registration_sider.webp";
 
 export default function AnalysisResults() {
   const { isOpen, open, close } = useSidebar();

@@ -2,7 +2,7 @@ import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
-import defaultUser from "../../../../assets/shared/default_user.jpg";
+import defaultUser from "../../../../assets/shared/default_user.webp";
 import {
   TableContainer,
   TableSearchBar,

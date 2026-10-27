@@ -11,7 +11,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
-import defaultUser from "../../../../assets/shared/default_user.jpg";
+import defaultUser from "../../../../assets/shared/default_user.webp";
 import { ActionButton } from "../../../../components";
 
 const PAGE_SIZE = 5;

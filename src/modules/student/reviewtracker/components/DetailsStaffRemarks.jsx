@@ -1,5 +1,5 @@
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
-import defaultAvatar from "../../../../assets/shared/default_user.jpg";
+import defaultAvatar from "../../../../assets/shared/default_user.webp";
 import { useReviewLogs } from "../../../../hooks/useReviewLogs";
 
 export default function DetailsStaffRemarks({ submissionId }) {

@@ -6,7 +6,7 @@ import Sidebar from "../../components/Sidebar";
 import DashboardBanner from "./dashboard/components/DashboardBanner";
 import SubmissionSummaryCards from "./dashboard/components/SubmissionSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
-import systemScopeBanner from "../../assets/shared/systemscope.png";
+import systemScopeBanner from "../../assets/shared/systemscope.webp";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useSidebar } from "../../hooks/useSidebar";
 

@@ -2,7 +2,7 @@ import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useState, useEffect, useMemo } from "react";
 import { Eye } from "lucide-react";
 import api from "../../../../lib/axios";
-import defaultUser from "../../../../assets/shared/default_user.jpg";
+import defaultUser from "../../../../assets/shared/default_user.webp";
 import {
   PageHeader,
   TableContainer,

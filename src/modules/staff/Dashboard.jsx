@@ -10,7 +10,7 @@ import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
 import AuditLogWidget from "./dashboard/components/AuditLogWidget";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useSidebar } from "../../hooks/useSidebar";
-import systemScopeBanner from "../../assets/shared/systemscope.png";
+import systemScopeBanner from "../../assets/shared/systemscope.webp";
 
 export default function Dashboard() {
   const navigate = useNavigate();

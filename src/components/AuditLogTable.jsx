@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Eye, Loader2 } from "lucide-react";
 import api from "../lib/axios";
-import defaultUser from "../assets/shared/default_user.jpg";
+import defaultUser from "../assets/shared/default_user.webp";
 import { useAuditLogPage } from "../hooks/useAuditLogs";
 import { auditLogService } from "../services/auditLogService";
 import { fetchAllPages } from "../utils/fetchAllPages";

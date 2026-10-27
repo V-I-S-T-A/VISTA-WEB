@@ -1,4 +1,4 @@
-import banner from "../../../../assets/shared/vista_staff_landscape.png";
+import banner from "../../../../assets/shared/vista_staff_landscape.webp";
 
 export default function ReviewTrackerBanner() {
   return (

@@ -14,7 +14,7 @@ import api from "../../../../lib/axios";
 import { fetchAllPages } from "../../../../utils/fetchAllPages";
 import { fetchOrganizationPage, organizationFilters } from "../../../../utils/organizationPagination";
 import "./ConfigTable.css";
-import defaultUser from "../../../../assets/shared/default_user.jpg";
+import defaultUser from "../../../../assets/shared/default_user.webp";
 import {
   TableContainer,
   TableSearchBar,

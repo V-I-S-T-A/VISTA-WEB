@@ -15,7 +15,7 @@ import { useCurrentUser } from "../../hooks/useAuth";
 import { useDriveConnection } from "../../hooks/useDrive";
 import { useSidebar } from "../../hooks/useSidebar";
 
-import registrationSider from "../assets/registration_sider.png";
+import registrationSider from "../assets/registration_sider.webp";
 
 export default function Gdrive() {
   const navigate = useNavigate();
