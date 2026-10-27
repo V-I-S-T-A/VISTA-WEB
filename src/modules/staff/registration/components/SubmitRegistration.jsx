@@ -163,7 +163,7 @@ export default function SubmitRegistration({
         ref={fileInputRef}
         onChange={handleFileChange}
         style={{ display: "none" }}
-        accept=".pdf,.docx,.xlsx"
+        accept=".pdf,.docx,.xlsx,image/*"
       />
 
       <div style={{ display: "flex", justifyContent: "center" }}>

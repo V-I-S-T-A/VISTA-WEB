@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -48,6 +49,7 @@ export default function StudentAuditLogs() {
             ) : (
               <AuditLogTable onViewLog={(log) => setSelectedLog(log)} />
             )}
+            <SystemScopeBanner />
           </div>
         </main>
       </div>

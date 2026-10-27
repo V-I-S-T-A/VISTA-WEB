@@ -57,7 +57,7 @@ export const userService = {
    * automatically switches to multipart/form-data when a file is present.
    */
   async createUser(userData) {
-    const { data, config } = toRequestConfig(userData);
+    const { data, config } = await toRequestConfig(userData);
     const response = await apiClient.post(
       API_ENDPOINTS.USERS.CREATE,
       data,
@@ -80,7 +80,7 @@ export const userService = {
    * Update a user, optionally uploading an avatar through multipart/form-data.
    */
   async updateUser(userId, userData) {
-    const { data, config } = toRequestConfig(userData);
+    const { data, config } = await toRequestConfig(userData);
     const response = await apiClient.patch(
       API_ENDPOINTS.USERS.UPDATE(userId),
       data,

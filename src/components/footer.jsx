@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import vistaLogo from "../assets/shared/vista_logo.png";
-import osaLogo from "../assets/shared/osa_logo.png";
-import ustpLogo from "../assets/shared/ustp_logo.png";
+import vistaLogo from "../assets/shared/vista_logo.webp";
+import osaLogo from "../assets/shared/osa_logo.webp";
+import ustpLogo from "../assets/shared/ustp_logo.webp";
 
 const SOCIALS = [
   {

@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Download, Menu, QrCode, X } from "lucide-react";
-import vistaLogo from "../assets/shared/vista_logo.png";
+import vistaLogo from "../assets/shared/vista_logo.webp";
+import downloadQr from "../assets/public/android-download-qr.webp";
 import { getHeaderConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
 import { Skeleton } from "./loading/Skeleton";
@@ -11,6 +12,13 @@ import { ANDROID_APK_URL, APP_ONBOARDING_PATH } from "../config/appDownload";
 export default function Header({ layout = "public", profilePath, onMenuToggle }) {
   const navigate = useNavigate();
   const config = getHeaderConfig(layout);
+  const profileRole = profilePath?.split("/")[1];
+  const profileTitle = {
+    admin: "Admin Profile",
+    staff: "Staff Profile",
+    student: "Student Profile",
+  }[profileRole];
+  const headerTitle = layout === "profile" ? profileTitle || config.title : config.title;
   const { data: currentUser, isLoading } = useCurrentUser();
   const logoutMutation = useLogout();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -60,7 +68,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
           </button>
 
           <h1 className="font-inter text-sm font-medium text-[#1a51a5]">
-            {config.title}
+            {headerTitle}
           </h1>
         </div>
 
@@ -211,7 +219,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
             {!isQrUnavailable ? (
               <img
                 className="app-download-qr"
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(ANDROID_APK_URL)}`}
+                src={downloadQr}
                 alt="QR code linking directly to the VISTA Android APK download"
                 onError={() => setIsQrUnavailable(true)}
               />

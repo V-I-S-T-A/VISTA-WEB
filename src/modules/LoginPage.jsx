@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff } from "lucide-react";
-import Header from "../components/Header";
-import Footer from "../components/footer";
-import backgroundImage from "../assets/shared/vista_background.png";
-import vistaLogo from "../assets/shared/vista_logo.png";
+import { CircleAlert, Eye, EyeOff } from "lucide-react";
+import backgroundImage from "../assets/shared/vista_background.webp";
+import vistaLogo from "../assets/shared/vista_logo.webp";
 import { useLogin } from "../hooks/useAuth";
 
 const STORAGE_KEY = "vista_remembered_accounts";
@@ -66,6 +64,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
   const loginMutation = useLogin();
 
@@ -85,6 +84,7 @@ export default function LoginPage() {
   // Dynamically check if entered/selected email has remembered password on this device
   function handleEmailChange(newEmail) {
     setEmail(newEmail);
+    setLoginError("");
     const savedPass = getStoredPassword(newEmail);
     if (savedPass !== null) {
       setPassword(savedPass);
@@ -104,6 +104,7 @@ export default function LoginPage() {
 
   async function handleSubmit(e) {
     e.preventDefault();
+    setLoginError("");
     try {
       const res = await loginMutation.mutateAsync({ email, password });
 
@@ -127,14 +128,13 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error("Login failed", err);
-      alert("Login failed. Check credentials.");
+      setLoginError(err?.response?.status === 401
+        ? "The email or password is incorrect. Please try again."
+        : "We couldn't sign you in right now. Please try again.");
     }
   }
 
   return (
-    <div className="login-page">
-      <Header />
-
       <main className="login-main">
         <div
           className="login-hero"
@@ -157,6 +157,12 @@ export default function LoginPage() {
           >
             <img src={vistaLogo} alt="VISTA" className="login-card-logo" />
             <p className="login-card-title">Sign in to your account</p>
+            {loginError && (
+              <div className="login-error" role="alert" aria-live="polite">
+                <CircleAlert size={18} aria-hidden="true" />
+                <span>{loginError}</span>
+              </div>
+            )}
 
             <form onSubmit={handleSubmit} style={{ width: "100%" }}>
               <div className="login-field">
@@ -224,7 +230,5 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <Footer />
-    </div>
   );
 }

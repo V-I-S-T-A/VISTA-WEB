@@ -2,9 +2,9 @@
  * fileOptimizer.js
  *
  * Utilities for optimizing file uploads and viewing across VISTA:
- * 1. `getOptimizedViewUrl`: Converts Cloudinary document/image URLs on-the-fly to
- *    modern, ultra-compressed WebP format delivered via Cloudinary's global CDN edge cache.
- *    Reduces payload by ~80-90% so multiple concurrent users experience zero server lag.
+ * 1. `getOptimizedViewUrl`: Requests a WebP viewing rendition from Cloudinary.
+ *    It does not change the stored original. A PDF rendition is a page preview;
+ *    the source PDF remains available at its original URL.
  * 2. `isPdfUrl`: Detects whether a document is a PDF based on URL or file name.
  * 3. `convertImageToWebP`: Compresses and converts browser image uploads (JPEG/PNG) to WebP
  *    before uploading, preventing huge 10MB+ camera/scanner photos from congesting the network.
@@ -111,12 +111,12 @@ export async function convertImageToWebP(file, quality = 0.85, maxDimension = 24
       // Export as WebP blob
       canvas.toBlob(
         (blob) => {
-          if (!blob) {
+          if (!blob || blob.type !== "image/webp") {
             resolve(file);
             return;
           }
 
-          const baseName = file.name.replace(/\.[^/.]+$/, "");
+          const baseName = (file.name || "image").replace(/\.[^/.]+$/, "");
           const webpFile = new File([blob], `${baseName}.webp`, {
             type: "image/webp",
             lastModified: Date.now(),

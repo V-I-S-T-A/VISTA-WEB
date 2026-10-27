@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../../components/loading/PageSkeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
@@ -80,6 +81,7 @@ export default function ReviewTrackerDetails() {
             <DetailsSubmissionInfo submission={submission} />
             <DetailsStatusHistory submissionId={submission.submission_id} />
             <DetailsStaffRemarks submissionId={submission.submission_id} />
+            <SystemScopeBanner />
           </div>
         </main>
       </div>

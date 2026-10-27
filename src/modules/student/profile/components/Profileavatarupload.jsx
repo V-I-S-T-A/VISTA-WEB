@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Camera } from "lucide-react";
-import defaultAvatar from "../../../../assets/shared/default_user.jpg";
+import defaultAvatar from "../../../../assets/shared/default_user.webp";
 
 /**
  * `avatarUrl` — the existing avatar to show (e.g. profile.image_url from the

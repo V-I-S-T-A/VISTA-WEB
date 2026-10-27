@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
@@ -10,7 +11,6 @@ import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
 import AuditLogWidget from "./dashboard/components/AuditLogWidget";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useSidebar } from "../../hooks/useSidebar";
-import systemScopeBanner from "../../assets/shared/systemscope.png";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -84,13 +84,7 @@ export default function Dashboard() {
               <AuditLogWidget />
             </div>
 
-            <div className="dashboard-system-scope" style={{ paddingTop: "32px" }}>
-              <img
-                src={systemScopeBanner}
-                alt="System Scope"
-                className="system-scope-banner w-full h-auto rounded-xl"
-              />
-            </div>
+            <SystemScopeBanner />
           </div>
         </main>
       </div>

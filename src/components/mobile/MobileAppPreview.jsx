@@ -1,6 +1,6 @@
 import { BatteryFull, Camera, ChevronDown, ChevronLeft, Cloud, Home, MessageSquareText, ScanLine, Search, ShieldCheck, Signal, SlidersHorizontal, UserRound, UserRoundCheck, Wifi } from "lucide-react";
-import vistaLogo from "../../assets/shared/vista_logo.png";
-import campus from "../../assets/shared/vista_background.png";
+import vistaLogo from "../../assets/shared/vista_logo.webp";
+import campus from "../../assets/shared/vista_background.webp";
 
 const TITLES = {
   entry: ["Document Entry", "Registration Portal."],

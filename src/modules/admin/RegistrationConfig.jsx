@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import { useState } from "react";
 import {
   Building2,
@@ -132,6 +133,7 @@ export default function RegistrationConfig() {
               onEdit={handleEdit}
               onDelete={handleDeleteClick}
             />
+            <SystemScopeBanner />
           </div>
         </main>
       </div>

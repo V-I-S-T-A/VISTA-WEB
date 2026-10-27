@@ -5,7 +5,7 @@ import { Search, Download, Loader2, ChevronLeft, ChevronRight, FileSpreadsheet, 
 import * as XLSX from "xlsx";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import { submissionService } from "../../../../services/submissionService";
-import defaultUser from "../../../../assets/shared/default_user.jpg";
+import defaultUser from "../../../../assets/shared/default_user.webp";
 import {
   ActionButton,
   FilterButton,

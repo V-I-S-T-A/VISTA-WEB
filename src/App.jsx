@@ -1,5 +1,7 @@
 import { lazy, Suspense } from "react";
 import PageSkeleton from "./components/loading/PageSkeleton";
+import PublicLayout from "./components/PublicLayout";
+import RouteFrame from "./components/RouteFrame";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 const LandingPage = lazy(() => import("./modules/LandingPage"));
 const GetApp = lazy(() => import("./modules/GetApp"));
@@ -30,12 +32,15 @@ function App() {
   useDriveUploadWatcher(); // Start the background drive upload watcher
   return (
     <BrowserRouter>
+      <RouteFrame>
       <Routes>
-        <Route path="/" element={<Suspense fallback={<PageSkeleton />}><LandingPage /></Suspense>} />
-        <Route path="/get-app" element={<Suspense fallback={<PageSkeleton />}><GetApp /></Suspense>} />
-        <Route path="/login" element={<Suspense fallback={<PageSkeleton />}><LoginPage /></Suspense>} />
-        <Route path="/privacy-policy" element={<Suspense fallback={<PageSkeleton />}><PrivacyPolicy /></Suspense>} />
-        <Route path="/terms-of-service" element={<Suspense fallback={<PageSkeleton />}><TermsOfService /></Suspense>} />
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/get-app" element={<GetApp />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/terms-of-service" element={<TermsOfService />} />
+        </Route>
         <Route path="/admin/dashboard" element={<Suspense fallback={<PageSkeleton />}><AdminDashboard /></Suspense>} />
         <Route
           path="/admin/dashboard/registeredorg"
@@ -73,6 +78,7 @@ function App() {
         <Route path="/student/audit-logs" element={<Suspense fallback={<PageSkeleton />}><StudentAuditLogs /></Suspense>} />
         <Route path="/student/profile" element={<Suspense fallback={<PageSkeleton />}><StudentProfile /></Suspense>} />
       </Routes>
+      </RouteFrame>
     </BrowserRouter>
   );
 }

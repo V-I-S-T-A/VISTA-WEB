@@ -1,5 +1,5 @@
-import defaultUser from "../assets/shared/default_user.jpg";
-import vistaLogo from "../assets/shared/vista_logo.png";
+import defaultUser from "../assets/shared/default_user.webp";
+import vistaLogo from "../assets/shared/vista_logo.webp";
 
 export const headerConfig = {
   public: {

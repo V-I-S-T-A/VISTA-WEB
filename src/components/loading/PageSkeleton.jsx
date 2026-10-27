@@ -1,7 +1,9 @@
 import { useLocation } from 'react-router-dom';
 import Header from '../Header';
 import Sidebar from '../Sidebar';
-import Footer from '../footer';
+import GetAppSkeleton from './GetAppSkeleton';
+import { ProfileBannerLayout, SystemScopeBanner, VerticalBanner } from '../banners/WorkspaceBanners';
+import CampusScene from '../banners/CampusScene';
 import { useSidebar } from '../../hooks/useSidebar';
 import { LoadingRegion, Skeleton, SkeletonLines, StatsSkeleton, TableSkeleton, PanelSkeleton, AnalyticsSkeleton } from './Skeleton';
 
@@ -17,21 +19,22 @@ export function LandingHeroSkeleton() {
 }
 
 export function PageSkeletonContent({ kind, role }) {
-  return <div className="skeleton-stack" data-skeleton-page={kind}>
-    {kind === 'profile' ? <><div className="skeleton-banner skeleton-profile-banner" /><PanelSkeleton kind="profile" label="Loading your profile" /></>
-      : kind === 'student-dashboard' ? <><div className="skeleton-banner skeleton-profile-banner" /><StatsSkeleton count={3} variant="student" /><TableSkeleton columns={6} /><Skeleton width="75%" height={120} /></>
+  return <div className={`skeleton-stack${kind === 'profile' ? ' profile-page-body' : ''}`} data-skeleton-page={kind}>
+    {kind === 'profile' ? <><CampusScene /><ProfileBannerLayout><PanelSkeleton kind="profile" label="Loading your profile" /></ProfileBannerLayout></>
+      : kind === 'student-dashboard' ? <><CampusScene /><StatsSkeleton count={3} variant="student" /><TableSkeleton columns={6} /></>
       : kind === 'staff-dashboard' ? <><StatsSkeleton count={4} /><AnalyticsSkeleton /><TableSkeleton columns={7} /><div className="skeleton-two-columns"><PanelSkeleton label="Loading institutional pulse" rows={2} /><PanelSkeleton label="Loading recent activity" rows={3} /></div></>
       : kind === 'admin-dashboard' ? <><HeadingSkeleton /><StatsSkeleton count={4} variant="admin" /><TableSkeleton columns={6} /></>
       : kind === 'review-details' ? <><HeadingSkeleton /><Skeleton height={70} /><PanelSkeleton kind="form" label="Loading submission information" /><PanelSkeleton kind="timeline" label="Loading status history" rows={3} /><PanelSkeleton kind="remarks" label="Loading staff remarks" rows={2} /></>
-      : kind === 'registration' || kind === 'analysis' || kind === 'drive' ? <><HeadingSkeleton /><div className="skeleton-detail-grid"><div className="skeleton-stack">
+      : kind === 'registration' || kind === 'analysis' || kind === 'drive' ? <><HeadingSkeleton /><div className="workspace-illustrated-layout"><div className="skeleton-stack">
         {kind === 'drive' && <div className="skeleton-banner"><Skeleton width="55%" height={24} /><SkeletonLines count={2} /></div>}
         <PanelSkeleton kind={kind === 'registration' ? 'form' : kind === 'drive' ? 'connection' : 'analysis'} label={`Loading ${kind === 'drive' ? 'Google Drive connection' : kind}`} />
         {kind === 'registration' && <PanelSkeleton kind="documents" label="Loading document upload panel" rows={2} />}
-      </div><Skeleton height={420} /></div></>
+      </div><VerticalBanner /></div></>
       : kind === 'callback' ? <PanelSkeleton kind="connection" label="Connecting your Google account" />
       : <><HeadingSkeleton />{kind === 'configuration' && <div className="skeleton-toolbar">{[0, 1, 2, 3].map(i => <Skeleton key={i} width="22%" height={38} />)}</div>}
         {kind === 'tracker' && <Skeleton height={105} />}
         <TableSkeleton columns={kind === 'audit' ? 4 : kind === 'configuration' ? 5 : role === 'staff' ? 7 : 6} /></>}
+    {kind !== 'profile' && kind !== 'callback' && <SystemScopeBanner />}
   </div>;
 }
 
@@ -56,12 +59,12 @@ export default function PageSkeleton() {
   const role = pathname.split('/')[1];
   const { isOpen, open, close } = useSidebar();
   if (!['admin', 'staff', 'student'].includes(role)) {
-    return <div className="landing-page"><Header /><main className="skeleton-public-content">
+    return <main className="skeleton-public-content">
       {pathname === '/login' ? <LoadingRegion label="Loading sign in" className="skeleton-login"><div className="skeleton-login-card"><Skeleton width={70} height={70} circle /><Skeleton width="70%" height={26} /><Skeleton height={46} /><Skeleton height={46} /><Skeleton width="50%" /><Skeleton height={44} /></div></LoadingRegion>
         : pathname === '/' ? <LandingHeroSkeleton />
-        : pathname === '/get-app' ? <LoadingRegion label="Loading the VISTA mobile guide" className="skeleton-app-page"><div className="public-shell"><div className="skeleton-app-hero"><div><Skeleton width={160} height={12} /><Skeleton width="88%" height={52} style={{ marginTop: 24 }} /><Skeleton width="92%" height={52} style={{ marginTop: 14 }} /><Skeleton width="78%" height={52} style={{ marginTop: 14 }} /><SkeletonLines count={2} /><Skeleton width={230} height={50} style={{ marginTop: 26 }} /></div><div className="skeleton-app-phones"><Skeleton width={230} height={490} style={{ borderRadius: 32, transform: 'rotate(-8deg)' }} /><Skeleton width={240} height={520} style={{ borderRadius: 32, transform: 'rotate(8deg)', marginLeft: -90, marginTop: -24 }} /></div></div><Skeleton height={88} style={{ borderRadius: 18 }} /><div className="skeleton-app-features">{[0, 1, 2, 3].map(i => <Skeleton key={i} height={240} style={{ borderRadius: 110 }} />)}</div></div></LoadingRegion>
+        : pathname === '/get-app' ? <GetAppSkeleton />
         : <div className="public-shell skeleton-legal-page"><Skeleton width={220} height={16} /><div className="skeleton-banner skeleton-legal-hero"><Skeleton width="50%" height={40} /><Skeleton width="40%" height={16} style={{ marginTop: 20 }} /><Skeleton width={180} height={32} style={{ marginTop: 24 }} /></div><div className="skeleton-legal"><aside><PanelSkeleton rows={7} label="Loading document contents" /></aside><div className="skeleton-stack">{[0, 1, 2].map(i => <PanelSkeleton key={i} rows={3} label="Loading document section" />)}</div></div></div>}
-    </main><Footer /></div>;
+    </main>;
   }
   const [kind, layout] = resolvePage(pathname);
   return <div className="flex min-h-screen bg-white">

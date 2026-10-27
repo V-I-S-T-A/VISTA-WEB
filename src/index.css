@@ -1,10 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Hahmlet:wght@600&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=Hahmlet:wght@600&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-hahmlet: "Hahmlet", serif;
   --font-jakarta: "Plus Jakarta Sans", sans-serif;
   --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Public Sans", ui-sans-serif, system-ui, sans-serif;
   --color-vista-blue: #1a56a3;
   --color-vista-orange: #f7941d;
 }
@@ -15,7 +17,7 @@
   --text-dark: #1a56a3;
   --text-muted: #6b7280;
   --text-light: #ffffff;
-  --bg-color: #ffffff;
+  --bg-color: #e2eaf2;
   --border-color: #1a56a3;
   --input-border: #d1d5db;
   --public-gutter: clamp(20px, 5vw, 96px);
@@ -38,6 +40,37 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+html,body,#root { min-height:100%; }
+#root,.route-frame { min-height:100vh; background:#e2eaf2; }
+.route-frame[data-surface="app"] { background:#f0f2ef; }
+.route-frame[data-surface="legal"] { background:#cddde8; }
+.route-frame[data-surface="dashboard"] { background:#f7f9fc; }
+.public-layout { display:flex; min-height:100vh; flex-direction:column; }
+.public-layout>main { flex:1; }
+.page-error { position:relative; display:grid; place-items:center; flex:1; min-height:100vh; overflow:hidden; padding:clamp(32px,7vw,88px) 24px; color:#142d55; background:radial-gradient(circle at 12% 14%,#fff3bd66 0,transparent 25%),radial-gradient(circle at 88% 80%,#c0e5ef80 0,transparent 28%),linear-gradient(135deg,#eef5fb 0%,#e2eaf2 60%,#d8e5f1 100%); }
+.page-error::before,.page-error::after { content:""; position:absolute; border:1px solid #fff8; border-radius:50%; pointer-events:none; }
+.page-error::before { width:min(68vw,720px); aspect-ratio:1; top:-45%; right:-18%; }
+.page-error::after { width:min(46vw,520px); aspect-ratio:1; bottom:-38%; left:-16%; border-color:#9dc9df66; }
+.page-error-card { position:relative; width:min(100%,620px); padding:clamp(28px,5vw,48px); border:1px solid #b9ccdf; border-radius:24px; background:#f7fbfeeb; box-shadow:0 22px 60px #1739671c,0 4px 16px #17396712; }
+.page-error-card::before { content:""; position:absolute; inset:0 0 auto; height:5px; border-radius:24px 24px 0 0; background:linear-gradient(90deg,#1f5cae,#2d83c5,#f4b72c); }
+.page-error-heading { display:flex; align-items:center; gap:12px; }
+.page-error-mark { display:grid; place-items:center; width:42px; height:42px; border-radius:13px; color:#1f5cae; background:#dcebf6; }
+.page-error-logo { display:block; width:auto; height:34px; object-fit:contain; }
+.page-error h1 { margin:18px 0 12px; font-size:clamp(25px,4vw,34px); line-height:1.18; letter-spacing:-.02em; }
+.page-error p { line-height:1.7; }
+.page-error-actions { display:flex; flex-wrap:wrap; align-items:center; gap:14px 20px; margin-top:28px; }
+.page-error-actions button,.page-error-actions a { display:inline-flex; align-items:center; justify-content:center; gap:9px; min-height:46px; border-radius:10px; font-weight:700; transition:transform .18s ease,box-shadow .18s ease,background .18s ease; }
+.page-error-actions button { padding:12px 20px; border:1px solid #1f5cae; background:#1f5cae; color:white; cursor:pointer; box-shadow:0 8px 18px #1f5cae2b; }
+.page-error-actions button:hover { transform:translateY(-1px); box-shadow:0 10px 22px #1f5cae38; }
+.page-error-actions a { padding:12px 4px; color:#1f5cae; text-decoration:none; }
+.page-error-actions a:hover { color:#17477f; }
+@media (max-width:520px) { .page-error { min-height:100svh; padding:24px 16px; } .page-error-card { border-radius:18px; } .page-error-card::before { border-radius:18px 18px 0 0; } .page-error-actions { align-items:stretch; } .page-error-actions button,.page-error-actions a { width:100%; } }
+/* Available before lazy page CSS arrives, including during first navigation. */
+.public-layout.get-app-page { background:#f0f2ef; }
+.public-layout.legal-page { background:#cddde8; }
+.public-layout.get-app-page .public-shell { max-width:1240px; }
+.public-layout.legal-page .public-shell { max-width:1320px; }
 
 .landing-page,
 .login-page {
@@ -260,6 +293,23 @@ body {
   margin-bottom: 1.75rem;
   text-align: center;
 }
+
+.login-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  margin: -0.65rem 0 1.25rem;
+  padding: 12px 14px;
+  border: 1px solid #f4c3b9;
+  border-radius: 12px;
+  background: #fff3ef;
+  color: #9b382a;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.login-error svg { flex: 0 0 auto; margin-top: 1px; color: #d45a47; }
 
 .login-field {
   width: 100%;

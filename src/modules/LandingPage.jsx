@@ -1,7 +1,5 @@
 import { ShieldCheck, RefreshCw } from 'lucide-react'
-import Header from '../components/Header'
-import Footer from '../components/footer'
-import backgroundImage from '../assets/shared/vista_background.png'
+import backgroundImage from '../assets/public/vista-campus.webp'
 import { useImageReady } from '../hooks/useImageReady'
 import { LandingHeroSkeleton } from '../components/loading/PageSkeleton'
 
@@ -21,9 +19,6 @@ const FEATURES = [
 export default function LandingPage() {
   const imageReady = useImageReady(backgroundImage)
   return (
-    <div className="landing-page">
-      <Header />
-
       <main className="main-content">
         <section
           className="hero-section"
@@ -37,10 +32,10 @@ export default function LandingPage() {
           {/* Content */}
           <div className="hero-content" style={{ visibility: imageReady ? 'visible' : 'hidden' }}>
             <div className="hero-text">
-              <h1 className="font-hahmlet text-white font-semibold">
+              <h1 className="font-display text-white font-bold">
                 Turn <span className="text-[#A3C3EE]">Transparency</span> into <span className="text-[#A3C3EE]">Efficiency.</span>
               </h1>
-              <p className="font-jakarta text-white">
+              <p className="font-body text-white">
                 Keeps your event documents moving — submit, track, and get feedback in one place,
                 so nothing gets lost in the process.
               </p>
@@ -61,8 +56,6 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <Footer />
-    </div>
   )
 }
 

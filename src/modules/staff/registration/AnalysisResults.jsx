@@ -1,9 +1,9 @@
+import { SystemScopeBanner, VerticalBanner } from "../../../components/banners/WorkspaceBanners";
 import { useSidebar } from "../../../hooks/useSidebar";
 import { useLocation } from "react-router-dom";
 import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
 import OCRResults from "./components/OCRResults";
-import registrationSider from "../../assets/registration_sider.png";
 
 export default function AnalysisResults() {
   const { isOpen, open, close } = useSidebar();
@@ -39,9 +39,7 @@ export default function AnalysisResults() {
             </div>
 
             {/* Content area — results + side image */}
-            <div
-              style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}
-            >
+            <div className="workspace-illustrated-layout">
               {/* Left: OCR Results */}
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
                 {/* Pass the submissionId down to the OCRResults component */}
@@ -52,25 +50,9 @@ export default function AnalysisResults() {
               </div>
 
               {/* Right: Side Image */}
-              <div
-                style={{
-                  width: "180px",
-                  flexShrink: 0,
-                }}
-                className="hidden lg:block"
-              >
-                <img
-                  src={registrationSider}
-                  alt="Registration illustration"
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    borderRadius: "12px",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
+              <VerticalBanner />
             </div>
+            <SystemScopeBanner />
           </div>
         </main>
       </div>

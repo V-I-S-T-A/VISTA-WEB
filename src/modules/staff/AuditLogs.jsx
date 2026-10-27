@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useState } from "react";
 import { useEffect } from "react";
@@ -50,6 +51,7 @@ export default function AuditLogs() {
               <AuditLogTable onViewLog={(log) => setSelectedLog(log)} />
             )}
 
+            <SystemScopeBanner />
           </div>
         </main>
       </div>
