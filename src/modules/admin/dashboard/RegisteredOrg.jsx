@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../../components/banners/WorkspaceBanners";
 import { useSidebar } from "../../../hooks/useSidebar";
 import PageSkeleton from "../../../components/loading/PageSkeleton";
 import Header from "../../../components/Header";
@@ -38,6 +39,7 @@ export default function RegisteredOrg() {
           <div className="page-content-stack w-full">
             <RegisteredOrgHeader />
             <RegisteredOrgTable />
+            <SystemScopeBanner />
           </div>
         </main>
       </div>
