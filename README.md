@@ -49,20 +49,20 @@ scoped to the onboarding page. Preview screens are recreated in HTML/CSS using
 fictional sample identities, so the original Figma screenshots and personal
 photos are not published.
 
-The download buttons link to the latest VISTA Mobile GitHub Release asset at
-`https://github.com/V-I-S-T-A/VISTA-MOBILE/releases/latest/download/vista-mobile.apk`.
-To publish a new app download, make sure the
-`V-I-S-T-A/VISTA-MOBILE` repository is publicly readable, then create a release
-and attach the standalone APK with the exact filename `vista-mobile.apk`. Mark
-the intended stable release as the latest release. The website QR code encodes
-this same HTTPS URL. If the source repository must remain private, host the APK
-as a release asset in a public downloads repository and update the URL in
-`src/config/appDownload.js`.
+The download buttons link directly to the VISTA Mobile 1.0.2 APK release asset
+at
+`https://github.com/V-I-S-T-A/VISTA-MOBILE/releases/download/1.0.2/vista-mobile.apk`.
+To publish a new app download, make sure the `V-I-S-T-A/VISTA-MOBILE` repository
+is publicly readable, then create a release and attach the standalone APK with
+the exact filename `vista-mobile.apk`. Update the URL in
+`src/config/appDownload.js` and the website QR code will encode the same URL.
+If the source repository must remain private, host the APK as a release asset
+in a public downloads repository and update the URL.
 
 Keep the APK as a release asset instead of committing it to this Vite site:
 the current artifact is about 107.5 MB, above GitHub's 100 MB per-file limit
-for ordinary Git files. The GitHub Releases URL stays stable as the APK is
-updated, while the binary is downloaded directly without extracting an archive.
+for ordinary Git files. The APK is downloaded directly without extracting an
+archive.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
