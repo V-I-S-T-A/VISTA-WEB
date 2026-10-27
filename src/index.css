@@ -1,10 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Hahmlet:wght@600&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=Hahmlet:wght@600&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-hahmlet: "Hahmlet", serif;
   --font-jakarta: "Plus Jakarta Sans", sans-serif;
   --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Public Sans", ui-sans-serif, system-ui, sans-serif;
   --color-vista-blue: #1a56a3;
   --color-vista-orange: #f7941d;
 }
