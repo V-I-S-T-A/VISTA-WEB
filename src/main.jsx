@@ -6,6 +6,11 @@ import './responsive.css'
 import './components/ResponsiveTables.css'
 import App from './App.jsx'
 import { ToastProvider } from './components/ToastProvider.jsx'
+import { recoverBrowserPageLoad } from './utils/pageLoadRecovery'
+
+window.addEventListener('vite:preloadError', event => {
+  if (recoverBrowserPageLoad(event.payload)) event.preventDefault()
+})
 
 const queryClient = new QueryClient()
 

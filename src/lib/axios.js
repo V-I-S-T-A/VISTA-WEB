@@ -54,7 +54,7 @@ apiClient.interceptors.response.use(
         refreshError.message = "Your session has expired. Please sign in again.";
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
-        const publicPaths = ["/", "/login", "/privacy-policy", "/terms-of-service"];
+        const publicPaths = ["/", "/login", "/get-app", "/privacy-policy", "/terms-of-service"];
         const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
         if (!publicPaths.includes(currentPath)) {
           window.location.href = "/login";

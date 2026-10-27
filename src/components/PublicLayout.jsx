@@ -3,6 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import Header from "./Header";
 import Footer from "./footer";
 import PageSkeleton from "./loading/PageSkeleton";
+import PageErrorBoundary from "./PageErrorBoundary";
 
 export default function PublicLayout() {
   const { pathname } = useLocation();
@@ -12,7 +13,7 @@ export default function PublicLayout() {
 
   return <div className={`public-layout ${theme}`}>
     <Header />
-    <Suspense fallback={<PageSkeleton />}><Outlet /></Suspense>
+    <PageErrorBoundary key={pathname}><Suspense fallback={<PageSkeleton />}><Outlet /></Suspense></PageErrorBoundary>
     <Footer />
   </div>;
 }

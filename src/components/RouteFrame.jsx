@@ -1,5 +1,6 @@
 import { useLayoutEffect } from "react";
 import { useLocation } from "react-router-dom";
+import PageErrorBoundary from "./PageErrorBoundary";
 
 export default function RouteFrame({ children }) {
   const { pathname } = useLocation();
@@ -13,5 +14,5 @@ export default function RouteFrame({ children }) {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
   }, [pathname]);
 
-  return <div className="route-frame" data-surface={surface}>{children}</div>;
+  return <div className="route-frame" data-surface={surface}><PageErrorBoundary resetKey={pathname}>{children}</PageErrorBoundary></div>;
 }
