@@ -1,3 +1,4 @@
+import { SystemScopeBanner, VerticalBanner } from "../../components/banners/WorkspaceBanners";
 import { PanelSkeleton } from "../../components/loading/Skeleton";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import ErrorNotice from "../../components/ErrorNotice";
@@ -15,7 +16,6 @@ import { useCurrentUser } from "../../hooks/useAuth";
 import { useDriveConnection } from "../../hooks/useDrive";
 import { useSidebar } from "../../hooks/useSidebar";
 
-import registrationSider from "../assets/registration_sider.webp";
 
 export default function Gdrive() {
   const navigate = useNavigate();
@@ -53,9 +53,7 @@ export default function Gdrive() {
           <div className="dashboard-page-body page-content-stack" style={{ padding: "20px 24px" }}>
             <GdriveHeader />
 
-            <div
-              style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}
-            >
+            <div className="workspace-illustrated-layout">
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
                 <SecureIntegrationBanner />
                 <InstitutionalEfficiency />
@@ -94,22 +92,9 @@ export default function Gdrive() {
                 </div>
               </div>
 
-              <div
-                style={{ width: "180px", flexShrink: 0 }}
-                className="hidden lg:block"
-              >
-                <img
-                  src={registrationSider}
-                  alt="Registration illustration"
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    borderRadius: "12px",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
+              <VerticalBanner />
             </div>
+            <SystemScopeBanner />
           </div>
         </main>
       </div>
