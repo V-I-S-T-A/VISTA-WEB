@@ -1,6 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import CampusArtwork from "./CampusArtwork";
-import verticalArtwork from "../../modules/assets/registration_sider.webp";
+import CampusScene from "./CampusScene";
 import "./WorkspaceBanners.css";
 
 export function SystemScopeBanner() {
@@ -16,7 +16,7 @@ export function SystemScopeBanner() {
 
 export function VerticalBanner() {
   return <aside className="workspace-vertical-banner" aria-hidden="true">
-    <img src={verticalArtwork} alt="" loading="lazy" decoding="async" />
+    <CampusScene portrait />
   </aside>;
 }
 
