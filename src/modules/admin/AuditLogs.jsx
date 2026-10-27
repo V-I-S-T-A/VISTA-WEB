@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import Header from '../../components/Header'
 import Sidebar from '../../components/Sidebar'
@@ -41,6 +42,7 @@ export default function AuditLogs() {
                         ) : (
                           <AuditLogHeader onViewLog={(log) => setSelectedLog(log)} />
                         )}
+                        <SystemScopeBanner />
                     </div>
                 </main>
             </div>
