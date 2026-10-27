@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowDown, ArrowDownToLine, ArrowRight, ArrowUpRight, Check, Cloud, FileCheck2, FileScan, History, ScanLine, Smartphone, UserRound } from "lucide-react";
-import Header from "../components/Header";
-import Footer from "../components/footer";
 import MobileAppPreview from "../components/mobile/MobileAppPreview";
 import PhoneInHand from "../components/mobile/PhoneInHand";
 import { ANDROID_APK_URL, ANDROID_RELEASES_URL } from "../config/appDownload";
@@ -48,7 +46,6 @@ export default function GetApp() {
   useEffect(() => {
     const previousTitle = document.title;
     document.title = "Get the VISTA app | VISTA";
-    window.scrollTo(0, 0);
     return () => { document.title = previousTitle; };
   }, []);
 
@@ -64,9 +61,7 @@ export default function GetApp() {
     tabRefs.current[next]?.focus();
   }
 
-  return <div className="get-app-page">
-    <Header />
-    <main ref={mainRef} id="main-content" className="ga-main">
+  return <main ref={mainRef} id="main-content" className="ga-main">
       <section className="public-shell ga-hero" aria-labelledby="ga-title">
         <div className="ga-hero-copy">
           <p className="ga-eyebrow"><span />MEET VISTA MOBILE</p>
@@ -115,7 +110,5 @@ export default function GetApp() {
         <details data-reveal><summary>Will everyone see the same features?<span aria-hidden="true">+</span></summary><p>Your role determines your workspace. Students can follow their organization’s submissions, while authorized staff have document entry, review, and Google Drive tools.</p></details>
         <details data-reveal><summary>What if the download doesn’t start?<span aria-hidden="true">+</span></summary><p>Open the <a href={ANDROID_RELEASES_URL} target="_blank" rel="noopener noreferrer">VISTA releases page</a> and look for <strong>vista-mobile.apk</strong> under the latest release’s assets. If the file is unavailable, contact the VISTA administrator.</p></details>
       </div></section>
-    </main>
-    <Footer />
-  </div>;
+    </main>;
 }

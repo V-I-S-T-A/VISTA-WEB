@@ -1,6 +1,4 @@
 import { ShieldCheck, RefreshCw } from 'lucide-react'
-import Header from '../components/Header'
-import Footer from '../components/footer'
 import backgroundImage from '../assets/public/vista-campus.webp'
 import { useImageReady } from '../hooks/useImageReady'
 import { LandingHeroSkeleton } from '../components/loading/PageSkeleton'
@@ -21,9 +19,6 @@ const FEATURES = [
 export default function LandingPage() {
   const imageReady = useImageReady(backgroundImage)
   return (
-    <div className="landing-page">
-      <Header />
-
       <main className="main-content">
         <section
           className="hero-section"
@@ -61,8 +56,6 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <Footer />
-    </div>
   )
 }
 

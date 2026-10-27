@@ -17,7 +17,7 @@
   --text-dark: #1a56a3;
   --text-muted: #6b7280;
   --text-light: #ffffff;
-  --bg-color: #ffffff;
+  --bg-color: #e2eaf2;
   --border-color: #1a56a3;
   --input-border: #d1d5db;
   --public-gutter: clamp(20px, 5vw, 96px);
@@ -40,6 +40,19 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+html,body,#root { min-height:100%; }
+#root,.route-frame { min-height:100vh; background:#e2eaf2; }
+.route-frame[data-surface="app"] { background:#f0f2ef; }
+.route-frame[data-surface="legal"] { background:#cddde8; }
+.route-frame[data-surface="dashboard"] { background:#f7f9fc; }
+.public-layout { display:flex; min-height:100vh; flex-direction:column; }
+.public-layout>main { flex:1; }
+/* Available before lazy page CSS arrives, including during first navigation. */
+.public-layout.get-app-page { background:#f0f2ef; }
+.public-layout.legal-page { background:#cddde8; }
+.public-layout.get-app-page .public-shell { max-width:1240px; }
+.public-layout.legal-page .public-shell { max-width:1320px; }
 
 .landing-page,
 .login-page {

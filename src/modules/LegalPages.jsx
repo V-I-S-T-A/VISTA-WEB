@@ -1,8 +1,6 @@
 import { Children, useEffect, useState } from "react";
 import { ArrowLeft, ArrowUpRight, CalendarDays, ChevronDown, Mail, ShieldCheck, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
-import Header from "../components/Header";
-import Footer from "../components/footer";
 import LegalMascots from "../components/LegalMascots";
 import "./LegalPages.css";
 import { APP_UPDATED_AT, APP_UPDATED_LABEL } from "../config/buildInfo";
@@ -41,7 +39,6 @@ function LegalLayout({ title, summary, children }) {
   useEffect(() => {
     const previousTitle = document.title;
     document.title = `${title} | VISTA`;
-    window.scrollTo(0, 0);
     return () => { document.title = previousTitle; };
   }, [title]);
 
@@ -60,8 +57,6 @@ function LegalLayout({ title, summary, children }) {
   }, [title]);
 
   return (
-    <div className="legal-page">
-      <Header />
       <main id="main-content" className="public-shell legal-main">
         <div className="legal-breadcrumb">
           <Link to="/" className="legal-back"><ArrowLeft size={16} aria-hidden="true" />Back to VISTA</Link>
@@ -112,8 +107,6 @@ function LegalLayout({ title, summary, children }) {
           </article>
         </div>
       </main>
-      <Footer />
-    </div>
   );
 }
 

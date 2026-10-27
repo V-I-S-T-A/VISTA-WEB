@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff } from "lucide-react";
-import Header from "../components/Header";
-import Footer from "../components/footer";
 import backgroundImage from "../assets/shared/vista_background.webp";
 import vistaLogo from "../assets/shared/vista_logo.webp";
 import { useLogin } from "../hooks/useAuth";
@@ -132,9 +130,6 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="login-page">
-      <Header />
-
       <main className="login-main">
         <div
           className="login-hero"
@@ -224,7 +219,5 @@ export default function LoginPage() {
         </div>
       </main>
 
-      <Footer />
-    </div>
   );
 }
