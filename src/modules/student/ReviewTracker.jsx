@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -46,6 +47,7 @@ export default function ReviewTracker() {
             <div style={{ marginTop: "20px" }}>
               <ReviewTrackerTable />
             </div>
+            <SystemScopeBanner />
           </div>
         </main>
       </div>
