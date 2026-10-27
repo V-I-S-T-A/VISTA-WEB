@@ -1,0 +1,19 @@
+.campus-scene { position:relative; isolation:isolate; overflow:hidden; width:100%; border-radius:16px; background:linear-gradient(180deg,#8fcdf6 0%,#cbe9fb 48%,#f8e7d4 85%,#dae9df 100%); }
+.campus-scene--panorama { height:clamp(160px,17vw,220px); }
+.campus-scene--compact { height:clamp(150px,15vw,200px); margin-bottom:20px; }
+.campus-scene-sun { position:absolute; width:70px; height:70px; right:17%; top:18%; border-radius:50%; background:#fff1c9; box-shadow:0 0 36px 17px #fff0c64d; }
+.campus-scene-clouds { position:absolute; inset:0; display:block; width:100%; height:100%; }
+.campus-scene-city { position:absolute; inset:auto 0 0; display:block; width:100%; height:100%; }
+.campus-scene--portrait { height:100%; border-radius:inherit; background:linear-gradient(180deg,#fffaf0 0%,#e0f2fa 40%,#b5dcf1 76%,#b5d995 100%); }
+.campus-scene--portrait .campus-scene-sun { width:54px; height:54px; right:9%; top:7%; background:#ffe8a8; }
+.campus-scene--portrait .campus-scene-clouds { height:43%; width:240%; max-width:none; left:-70%; }
+.campus-scene--portrait .campus-scene-city { inset:10% 0 auto; height:72%; }
+.campus-scene-meadow { position:absolute; bottom:0; width:100%; height:35%; }
+.campus-scene-students { position:absolute; bottom:3%; left:3%; width:94%; height:auto; max-height:45%; object-fit:contain; object-position:center bottom; }
+@media (max-width:767px) {
+ .campus-scene--panorama { height:160px; border-radius:12px; }
+ .campus-scene--compact { height:150px; margin-bottom:0; }
+ .campus-scene--panorama .campus-scene-city { width:170%; max-width:none; left:-35%; }
+ .campus-scene--panorama .campus-scene-clouds { width:160%; max-width:none; left:-30%; }
+ .campus-scene-sun { width:48px; height:48px; top:12%; right:14%; }
+}
