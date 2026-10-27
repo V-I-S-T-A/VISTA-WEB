@@ -3,6 +3,7 @@ import Header from '../Header';
 import Sidebar from '../Sidebar';
 import GetAppSkeleton from './GetAppSkeleton';
 import { ProfileBannerLayout, SystemScopeBanner, VerticalBanner } from '../banners/WorkspaceBanners';
+import CampusScene from '../banners/CampusScene';
 import { useSidebar } from '../../hooks/useSidebar';
 import { LoadingRegion, Skeleton, SkeletonLines, StatsSkeleton, TableSkeleton, PanelSkeleton, AnalyticsSkeleton } from './Skeleton';
 
@@ -18,9 +19,9 @@ export function LandingHeroSkeleton() {
 }
 
 export function PageSkeletonContent({ kind, role }) {
-  return <div className="skeleton-stack" data-skeleton-page={kind}>
-    {kind === 'profile' ? <><div className="skeleton-banner skeleton-profile-banner" /><ProfileBannerLayout><PanelSkeleton kind="profile" label="Loading your profile" /></ProfileBannerLayout></>
-      : kind === 'student-dashboard' ? <><div className="skeleton-banner skeleton-profile-banner" /><StatsSkeleton count={3} variant="student" /><TableSkeleton columns={6} /></>
+  return <div className={`skeleton-stack${kind === 'profile' ? ' profile-page-body' : ''}`} data-skeleton-page={kind}>
+    {kind === 'profile' ? <><CampusScene /><ProfileBannerLayout><PanelSkeleton kind="profile" label="Loading your profile" /></ProfileBannerLayout></>
+      : kind === 'student-dashboard' ? <><CampusScene /><StatsSkeleton count={3} variant="student" /><TableSkeleton columns={6} /></>
       : kind === 'staff-dashboard' ? <><StatsSkeleton count={4} /><AnalyticsSkeleton /><TableSkeleton columns={7} /><div className="skeleton-two-columns"><PanelSkeleton label="Loading institutional pulse" rows={2} /><PanelSkeleton label="Loading recent activity" rows={3} /></div></>
       : kind === 'admin-dashboard' ? <><HeadingSkeleton /><StatsSkeleton count={4} variant="admin" /><TableSkeleton columns={6} /></>
       : kind === 'review-details' ? <><HeadingSkeleton /><Skeleton height={70} /><PanelSkeleton kind="form" label="Loading submission information" /><PanelSkeleton kind="timeline" label="Loading status history" rows={3} /><PanelSkeleton kind="remarks" label="Loading staff remarks" rows={2} /></>
