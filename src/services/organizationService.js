@@ -9,13 +9,13 @@ export const organizationService = {
   },
 
   async create(data) {
-    const { data: payload, config } = toRequestConfig(data);
+    const { data: payload, config } = await toRequestConfig(data);
     const resp = await apiClient.post(API_ENDPOINTS.ORGANIZATIONS.CREATE, payload, config);
     return resp.data;
   },
 
   async update(orgId, data) {
-    const { data: payload, config } = toRequestConfig(data);
+    const { data: payload, config } = await toRequestConfig(data);
     const resp = await apiClient.patch(API_ENDPOINTS.ORGANIZATIONS.UPDATE(orgId), payload, config);
     return resp.data;
   },

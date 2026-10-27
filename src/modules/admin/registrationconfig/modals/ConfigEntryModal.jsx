@@ -1,4 +1,5 @@
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
+import { convertImageToWebP } from "../../../../utils/fileOptimizer";
 import { useState, useEffect, useRef } from "react";
 import {
   X,
@@ -245,7 +246,7 @@ export default function ConfigEntryModal({
           }
         });
         if (selectedFile) {
-          data.append("image", selectedFile);
+          data.append("image", await convertImageToWebP(selectedFile));
         }
         payload = data;
         headers = { "Content-Type": "multipart/form-data" };

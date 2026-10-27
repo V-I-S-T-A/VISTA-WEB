@@ -28,7 +28,7 @@ export const authService = {
   },
 
   async updateMe(profileData) {
-    const { data, config } = toRequestConfig(profileData);
+    const { data, config } = await toRequestConfig(profileData);
     // Keep intentional clears when an avatar makes this a multipart request.
     if (data instanceof FormData) {
       for (const field of ["birth_date", "gender", "phone_number"]) {

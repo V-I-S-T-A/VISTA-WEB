@@ -1,3 +1,5 @@
+import { convertImageToWebP } from "./fileOptimizer";
+
 /**
  * Shared helpers for services that need to switch between a plain JSON
  * payload and multipart/form-data when a file (e.g. a profile image) is
@@ -28,10 +30,14 @@ export function toFormData(data) {
   return formData;
 }
 
-export function toRequestConfig(data) {
+export async function toRequestConfig(data) {
   if (hasFileField(data)) {
+    const entries = await Promise.all(Object.entries(data).map(async ([key, value]) => [
+      key,
+      value instanceof Blob && value.type.startsWith("image/") ? await convertImageToWebP(value) : value,
+    ]));
     return {
-      data: toFormData(data),
+      data: toFormData(Object.fromEntries(entries)),
       config: {
         headers: {
           "Content-Type": undefined,

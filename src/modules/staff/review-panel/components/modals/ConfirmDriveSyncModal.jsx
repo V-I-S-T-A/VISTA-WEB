@@ -336,19 +336,19 @@ export default function ConfirmDriveSyncModal({
     canvas.getContext("2d").drawImage(video, 0, 0);
     canvas.toBlob(
       (blob) => {
-        if (!blob) {
+        if (!blob || blob.type !== "image/webp") {
           setCameraError("Could not capture the image. Please try again.");
           return;
         }
-        const file = new File([blob], `camera-capture-${Date.now()}.jpg`, {
-          type: "image/jpeg",
+        const file = new File([blob], `camera-capture-${Date.now()}.webp`, {
+          type: "image/webp",
         });
         setCapturedImage(file);
         setCapturedReplaceKey(cameraReplaceKey);
         setCapturedTarget(cameraTarget);
         stopCamera();
       },
-      "image/jpeg",
+      "image/webp",
       0.92,
     );
   };
