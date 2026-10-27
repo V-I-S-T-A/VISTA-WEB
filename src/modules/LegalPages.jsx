@@ -1,14 +1,13 @@
-import { Children, useEffect } from "react";
+import { Children, useEffect, useState } from "react";
 import { ArrowLeft, ArrowUpRight, CalendarDays, ChevronDown, Mail, ShieldCheck, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "../components/Header";
 import Footer from "../components/footer";
-import privacyArt from "../assets/legal/privacy-students.webp";
-import termsArt from "../assets/legal/terms-students.webp";
+import LegalMascots from "../components/LegalMascots";
 import "./LegalPages.css";
 import { APP_UPDATED_AT, APP_UPDATED_LABEL } from "../config/buildInfo";
 
-const CONTACT = "moyarojo@gmail.com";
+const CONTACT = "vista.ustp.edu.ph@gmail.com";
 
 function Section({ id, title, children }) {
   return (
@@ -23,9 +22,9 @@ function Contact() {
   return <a className="underline underline-offset-4" href={`mailto:${CONTACT}`}>{CONTACT}</a>;
 }
 
-function SectionLinks({ sections }) {
+function SectionLinks({ sections, activeId }) {
   return sections.map((section, index) => (
-    <a key={section.props.id} href={`#${section.props.id}`}>
+    <a key={section.props.id} href={`#${section.props.id}`} aria-current={section.props.id === activeId ? "location" : undefined}>
       <span>{String(index + 1).padStart(2, "0")}</span>
       {section.props.title.replace(/^\d+\.\s*/, "")}
     </a>
@@ -36,11 +35,28 @@ function LegalLayout({ title, summary, children }) {
   const sections = Children.toArray(children);
   const isPrivacy = title === "Privacy Policy";
   const DocumentIcon = isPrivacy ? ShieldCheck : FileText;
+  const [activeId, setActiveId] = useState(null);
+  const activeIndex = Math.max(0, sections.findIndex(section => section.props.id === activeId));
+  const currentId = sections[activeIndex].props.id;
   useEffect(() => {
     const previousTitle = document.title;
     document.title = `${title} | VISTA`;
     window.scrollTo(0, 0);
     return () => { document.title = previousTitle; };
+  }, [title]);
+
+  useEffect(() => {
+    let frame;
+    const update = () => {
+      const items = [...document.querySelectorAll(".legal-section")];
+      const threshold = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--public-header-height")) + 70;
+      const current = items.filter(item => item.getBoundingClientRect().top <= threshold).at(-1) || items[0];
+      if (current) setActiveId(current.id);
+    };
+    const onScroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(update); };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", onScroll); };
   }, [title]);
 
   return (
@@ -53,22 +69,28 @@ function LegalLayout({ title, summary, children }) {
         </div>
         <section className="legal-hero" aria-labelledby="legal-title">
           <div className="legal-hero-inner">
-            <p className="legal-eyebrow">VISTA / Information &amp; policies</p>
+            <p className="legal-eyebrow"><span aria-hidden="true">✦</span> VISTA / Trust &amp; transparency</p>
             <h1 id="legal-title">{title}</h1>
             <p className="legal-hero-description">{isPrivacy ? "Your information. Handled with care." : "Clear guidelines. Shared responsibilities."}</p>
             <div className="legal-updated"><CalendarDays size={15} aria-hidden="true" /><span>Last updated <time dateTime={APP_UPDATED_AT}>{APP_UPDATED_LABEL}</time></span></div>
           </div>
-          <div className="legal-hero-art" aria-hidden="true"><img src={isPrivacy ? privacyArt : termsArt} alt="" width="768" height="512" fetchPriority="high" /></div>
+          <div className="legal-hero-art"><LegalMascots /></div>
         </section>
+        <nav className="legal-doc-tabs" aria-label="VISTA policies">
+          <Link to="/privacy-policy" aria-current={isPrivacy ? "page" : undefined}><ShieldCheck size={17} />Privacy Policy</Link>
+          <Link to="/terms-of-service" aria-current={!isPrivacy ? "page" : undefined}><FileText size={17} />Terms of Service</Link>
+          <span>Clarity comes first.</span>
+        </nav>
         <div className="legal-workspace">
           <aside className="legal-sidebar">
             <nav aria-label="On this page" className="legal-toc">
-              <h2>On this page</h2>
-              <div className="legal-toc-links"><SectionLinks sections={sections} /></div>
+              <h2>On this page<span>{String(sections.length).padStart(2, "0")} sections</span></h2>
+              <div className="legal-toc-links"><SectionLinks sections={sections} activeId={currentId} /></div>
+              <div className="legal-reading"><span>Section {activeIndex + 1} of {sections.length}</span><div className="legal-reading-track" aria-hidden="true"><span style={{ width: `${(activeIndex + 1) / sections.length * 100}%` }} /></div></div>
             </nav>
             <details className="legal-mobile-contents" key={title}>
               <summary>On this page<ChevronDown size={18} aria-hidden="true" /></summary>
-              <nav aria-label="Jump to a policy section" className="legal-toc-links"><SectionLinks sections={sections} /></nav>
+              <nav aria-label="Jump to a policy section" className="legal-toc-links"><SectionLinks sections={sections} activeId={currentId} /></nav>
             </details>
             <div className="legal-help">
               <span className="legal-help-icon"><Mail size={22} aria-hidden="true" /></span>
@@ -81,6 +103,9 @@ function LegalLayout({ title, summary, children }) {
             <div className="legal-intro">
               <div className="legal-intro-header"><DocumentIcon size={20} aria-hidden="true" /><h2>{isPrivacy ? "Privacy at VISTA" : "Using VISTA responsibly"}</h2></div>
               <p className="legal-summary">{summary}</p>
+              <div className="legal-quick-links" aria-label="Quick links">
+                {(isPrivacy ? [["information", "Your information"], ["google", "Connected services"], ["retention", "Your choices"]] : [["accounts", "Your account"], ["acceptable-use", "Responsible use"], ["integrations", "Connected services"]]).map(([id, label]) => <a key={id} href={`#${id}`}>{label}<ArrowUpRight size={15} aria-hidden="true" /></a>)}
+              </div>
             </div>
             {children}
             <div className="legal-related"><div><span className="legal-nav-label">Related document</span><Link to={isPrivacy ? "/terms-of-service" : "/privacy-policy"}>{isPrivacy ? "Terms of Service" : "Privacy Policy"}<ArrowUpRight size={20} aria-hidden="true" /></Link></div><Link to="/" className="legal-home-link">Back to VISTA<ArrowUpRight size={16} aria-hidden="true" /></Link></div>

@@ -450,8 +450,8 @@
   padding-inline: max(var(--public-gutter), calc((100% - 1600px) / 2));
 }
 .skeleton-legal-page { padding-block: 28px 64px; }
-.skeleton-legal-hero { height: 250px; margin-top: 24px; background: #dce9f3; }
-.skeleton-legal-hero .vista-skeleton { background: #b9cfe3; }
+.skeleton-legal-hero { height: 290px; margin-top: 24px; background: #205ca9; }
+.skeleton-legal-hero .vista-skeleton { background: #6a94c4; }
 .skeleton-legal { max-width: none; margin-top: 28px; padding: 0; grid-template-columns: 260px minmax(0, 1fr); gap: 28px; }
 @media (max-width: 1000px) {
   .skeleton-legal { grid-template-columns: 220px minmax(0, 1fr); gap: 20px; }
@@ -469,7 +469,7 @@
   .skeleton-hero { min-height: 500px; }
 }
 
-.skeleton-public-content:has(.skeleton-legal-page) { background: #e8eff4; }
+.skeleton-public-content:has(.skeleton-legal-page) { background: #cddde8; }
 .skeleton-legal-page .skeleton-panel,
 .skeleton-login-card { background: var(--public-surface); border-color: var(--public-border); }
 
