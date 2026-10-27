@@ -1,3 +1,4 @@
+import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
@@ -79,6 +80,7 @@ export default function ReviewPanel() {
             ) : (
               <SystemSubmissionsPanel onViewReview={setSelectedSubmission} />
             )}
+            <SystemScopeBanner />
           </div>
         </main>
       </div>
