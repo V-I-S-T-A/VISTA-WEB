@@ -1,3 +1,4 @@
+import { SystemScopeBanner, VerticalBanner } from "../../../components/banners/WorkspaceBanners";
 import VistaSelect from "../../../components/VistaSelect";
 import { PanelSkeleton } from "../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
@@ -14,7 +15,6 @@ import Sidebar from "../../../components/Sidebar";
 import DocumentEntryHeader from "./components/DocumentEntryHeader";
 import SubmitRegistration from "./components/SubmitRegistration";
 import OCRResults from "./components/OCRResults";
-import registrationSider from "../../assets/registration_sider.webp";
 import { useSidebar } from "../../../hooks/useSidebar";
 import { convertImageToWebP } from "../../../utils/fileOptimizer";
 import { StatusModal } from "../../../components";
@@ -323,9 +323,7 @@ export default function DocumentEntry() {
             <ErrorNotice message={error} />
             <ErrorNotice message={dropdownError} onRetry={() => setDropdownRetry(c => c + 1)} retrying={loadingDropdowns} />
 
-            <div
-              style={{ display: "flex", gap: "32px", alignItems: "flex-start" }}
-            >
+            <div className="workspace-illustrated-layout">
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
                 {loadingDropdowns ? <PanelSkeleton kind="form" label="Loading registration form options" /> : activeView === "form" ? (
                   <div className="registration-form-card"
@@ -593,22 +591,9 @@ export default function DocumentEntry() {
                 )}
               </div>
 
-              <div
-                style={{ width: "180px", flexShrink: 0 }}
-                className="hidden lg:block"
-              >
-                <img
-                  src={registrationSider}
-                  alt="Registration illustration"
-                  style={{
-                    width: "100%",
-                    height: "auto",
-                    borderRadius: "12px",
-                    objectFit: "cover",
-                  }}
-                />
-              </div>
+              <VerticalBanner />
             </div>
+            <SystemScopeBanner />
           </div>
         </main>
       </div>
