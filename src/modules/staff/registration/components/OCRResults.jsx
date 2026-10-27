@@ -59,112 +59,24 @@ export default function OCRResults({
             gap: "20px",
           }}
         >
-          <div>
-            <p
-              className="font-inter font-bold text-[#142d55] uppercase"
-              style={{
-                fontSize: "11px",
-                letterSpacing: "0.04em",
-                marginBottom: "6px",
-              }}
-            >
-              Submitter Name
-            </p>
-            <div
-              style={{
-                border: "1.5px solid #d1d5db",
-                borderRadius: "8px",
-                padding: "9px 13px",
-                fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
-                color: "#111827",
-                backgroundColor: "#fff",
-              }}
-            >
-              {summaryData?.submitted_by_name || "Unknown"}
+          {[
+            ["Organization", summaryData?.org_name],
+            ["Submitter Name", summaryData?.submitted_by_name],
+            ["Academic Year", summaryData?.academic_year],
+            ["Document Type", summaryData?.doc_type_name],
+            ["Category", summaryData?.category_name],
+            ["Document Title", summaryData?.title],
+            ["Date of Submission", `${new Date().toLocaleDateString()} (Today)`],
+            ["Attached File", summaryData?.file_name || "No File Attached"],
+          ].map(([label, value]) => (
+            <div key={label} style={{ minWidth: 0 }}>
+              <p className="font-inter font-bold text-[#142d55] uppercase"
+                style={{ fontSize: "11px", letterSpacing: "0.04em", marginBottom: "6px" }}>{label}</p>
+              <div style={{ border: "1.5px solid #d1d5db", borderRadius: "8px", padding: "9px 13px", fontSize: "13px", fontFamily: "Inter, sans-serif", color: "#111827", backgroundColor: "#fff", overflowWrap: "anywhere" }}>
+                {value || "Unknown"}
+              </div>
             </div>
-          </div>
-
-          <div>
-            <p
-              className="font-inter font-bold text-[#142d55] uppercase"
-              style={{
-                fontSize: "11px",
-                letterSpacing: "0.04em",
-                marginBottom: "6px",
-              }}
-            >
-              Date of Submission
-            </p>
-            <div
-              style={{
-                border: "1.5px solid #d1d5db",
-                borderRadius: "8px",
-                padding: "9px 13px",
-                fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
-                color: "#111827",
-                backgroundColor: "#fff",
-              }}
-            >
-              {new Date().toLocaleDateString()} (Today)
-            </div>
-          </div>
-
-          <div>
-            <p
-              className="font-inter font-bold text-[#142d55] uppercase"
-              style={{
-                fontSize: "11px",
-                letterSpacing: "0.04em",
-                marginBottom: "6px",
-              }}
-            >
-              Document Type
-            </p>
-            <div
-              style={{
-                border: "1.5px solid #d1d5db",
-                borderRadius: "8px",
-                padding: "9px 13px",
-                fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
-                color: "#111827",
-                backgroundColor: "#fff",
-              }}
-            >
-              {summaryData?.doc_type_name || "Unknown"}
-            </div>
-          </div>
-
-          <div>
-            <p
-              className="font-inter font-bold text-[#142d55] uppercase"
-              style={{
-                fontSize: "11px",
-                letterSpacing: "0.04em",
-                marginBottom: "6px",
-              }}
-            >
-              Attached File
-            </p>
-            <div
-              style={{
-                border: "1.5px solid #d1d5db",
-                borderRadius: "8px",
-                padding: "9px 13px",
-                fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
-                color: "#111827",
-                backgroundColor: "#fff",
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {summaryData?.file_name || "No File Attached"}
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 

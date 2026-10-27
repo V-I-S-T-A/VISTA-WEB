@@ -2,9 +2,11 @@ import VistaSelect from "../../../components/VistaSelect";
 import { PanelSkeleton } from "../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../components/ErrorNotice";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { fetchAllPages } from "../../../utils/fetchAllPages";
+import { getRegistrationValidationError, mergeRegistrationSuggestions } from "../../../utils/registrationDraft";
 import api from "./../../../lib/axios";
 
 import Header from "../../../components/Header";
@@ -27,6 +29,8 @@ export default function DocumentEntry() {
   const [dropdownError, setDropdownError] = useState("");
   const [dropdownRetry, setDropdownRetry] = useState(0);
   const [loadingDropdowns, setLoadingDropdowns] = useState(true);
+  const manualFields = useRef(new Set());
+  const scanRequest = useRef({ version: 0, controller: null });
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     type: "success",
@@ -79,42 +83,52 @@ export default function DocumentEntry() {
   });
 
   useEffect(() => {
+    const controller = new AbortController();
     const fetchDropdowns = async () => {
       setDropdownError("");
       setLoadingDropdowns(true);
       try {
-        const [orgRes, userRes, acadRes, docTypeRes, catRes] =
+        const [orgs, members, years, types, categoryOptions] =
           await Promise.all([
-            api.get("/organizations/"),
-            api.get("/users/"),
-            api.get("/academic-years/"),
-            api.get("/document-types/"),
-            api.get("/categories/"),
+            fetchAllPages(api, "/organizations/", { signal: controller.signal, params: { is_active: true } }),
+            fetchAllPages(api, "/users/", { signal: controller.signal, params: { is_active: true } }),
+            fetchAllPages(api, "/academic-years/", { signal: controller.signal }),
+            fetchAllPages(api, "/document-types/", { signal: controller.signal }),
+            fetchAllPages(api, "/categories/", { signal: controller.signal }),
           ]);
-        setOrganizations(orgRes.data.results || orgRes.data || []);
-        setUsers(userRes.data.results || userRes.data || []);
-        setAcademicYears(acadRes.data.results || acadRes.data || []);
-        setDocumentTypes(docTypeRes.data.results || docTypeRes.data || []);
-        setCategories(catRes.data.results || catRes.data || []);
+        if (controller.signal.aborted) return;
+        setOrganizations(orgs);
+        setUsers(members);
+        setAcademicYears(years);
+        setDocumentTypes(types);
+        setCategories(categoryOptions);
       } catch (err) {
+        if (controller.signal.aborted) return;
         console.error("Failed to load dropdown data:", err);
         setDropdownError("Could not load the form options. Please try again before submitting.");
       } finally {
-        setLoadingDropdowns(false);
+        if (!controller.signal.aborted) setLoadingDropdowns(false);
       }
     };
     fetchDropdowns();
+    return () => controller.abort();
   }, [dropdownRetry]);
+
+  useEffect(() => () => {
+    scanRequest.current.version += 1;
+    scanRequest.current.controller?.abort();
+  }, []);
 
   const availableUsers = useMemo(() => {
     if (!formData.org_id) return [];
-    return users.filter((u) => String(u.org_id) === String(formData.org_id));
+    return users.filter((u) => u.is_active !== false && String(u.org_id) === String(formData.org_id));
   }, [users, formData.org_id]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    manualFields.current.add(name);
     if (name === "org_id") {
-      setFormData((prev) => ({ ...prev, [name]: value, submitted_by: "" }));
+      setFormData((prev) => ({ ...prev, [name]: value, submitted_by: String(prev.org_id) === String(value) ? prev.submitted_by : "" }));
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
@@ -122,8 +136,14 @@ export default function DocumentEntry() {
   };
 
   const handleFileUpload = async (uploadedFile) => {
+    scanRequest.current.controller?.abort();
+    const version = ++scanRequest.current.version;
+    const controller = new AbortController();
+    scanRequest.current.controller = controller;
     if (!uploadedFile) {
       setFile(null);
+      setIsScanning(false);
+      setError("");
       return;
     }
 
@@ -132,60 +152,45 @@ export default function DocumentEntry() {
 
     try {
       const optimizedFile = await convertImageToWebP(uploadedFile);
+      if (version !== scanRequest.current.version) return;
       setFile(optimizedFile);
 
       const fd = new FormData();
       fd.append("file", optimizedFile);
       const res = await api.post("/submissions/autofill/", fd, {
         headers: { "Content-Type": "multipart/form-data" },
+        signal: controller.signal,
       });
 
+      if (version !== scanRequest.current.version) return;
       const draft = res.data;
       if (draft.status === "draft_pending_review") {
-        const matchedCategory = categories.find(
-          (c) => c.name === draft.suggested_category_name,
-        )?.category_id;
-        const matchedDocType = documentTypes.find(
-          (dt) => dt.name === draft.suggested_doc_type_name,
-        )?.doc_type_id;
-
-        setFormData((prev) => ({
-          ...prev,
-          org_id: draft.suggested_org_id || prev.org_id,
-          academic_year_id:
-            draft.suggested_academic_year_id || prev.academic_year_id,
-          category_id:
-            matchedCategory || draft.suggested_category_id || prev.category_id,
-          doc_type_id:
-            matchedDocType || draft.suggested_doc_type_id || prev.doc_type_id,
-          title: draft.display_name || prev.title || "",
-        }));
+        setFormData(prev => mergeRegistrationSuggestions(prev, draft, manualFields.current, { categories, documentTypes }));
       }
     } catch (err) {
+      if (controller.signal.aborted || version !== scanRequest.current.version) return;
       console.error("OCR Failed:", err);
       setError(
         "OCR Engine failed to read the document. You can still select the fields manually.",
       );
     } finally {
-      setIsScanning(false);
+      if (version === scanRequest.current.version) setIsScanning(false);
     }
   };
 
   // 1. Move to Review Screen (Does NOT save to DB yet)
   const handleNextReview = () => {
+    if (isScanning) {
+      setError("Please wait for document scanning to finish before continuing.");
+      return;
+    }
     if (loadingDropdowns || dropdownError) {
       setError("Please wait for the form options to load, or retry loading them before continuing.");
       return;
     }
-    if (
-      !formData.org_id ||
-      !formData.submitted_by ||
-      !formData.academic_year_id ||
-      !formData.doc_type_id ||
-      !formData.category_id ||
-      !formData.title.trim()
-    ) {
-      setError("Please fill out all fields before continuing.");
+    const validationError = getRegistrationValidationError(formData, { organizations, users });
+    if (validationError) {
+      setError(validationError);
       return;
     }
     setError("");
@@ -206,6 +211,10 @@ export default function DocumentEntry() {
         ? `${selectedUser.first_name} ${selectedUser.last_name}`
         : "Unknown",
       doc_type_name: selectedDocType?.name || "Unknown",
+      org_name: organizations.find(item => String(item.org_id) === String(formData.org_id))?.name || "Unknown",
+      academic_year: academicYears.find(item => String(item.academic_year_id) === String(formData.academic_year_id))?.year || "Unknown",
+      category_name: categories.find(item => String(item.category_id) === String(formData.category_id))?.name || "Unknown",
+      title: formData.title,
       file_name: file?.name || "No File Attached",
     };
   };
@@ -213,6 +222,12 @@ export default function DocumentEntry() {
   // 3. Finalize and Save to Database
   const handleFinalApprove = async () => {
     if (loadingDropdowns || dropdownError) return;
+    const validationError = getRegistrationValidationError(formData, { organizations, users });
+    if (validationError) {
+      setError(validationError);
+      setActiveView("form");
+      return;
+    }
     setIsSubmitting(true);
     setError("");
 
@@ -268,7 +283,6 @@ export default function DocumentEntry() {
     } catch (err) {
       console.error("Submission failed:", err);
       setError(getApiErrorMessage(err, "Could not create the submission."));
-      setActiveView("form"); // Bump them back to the form so they can fix it
     } finally {
       setIsSubmitting(false);
     }
@@ -306,6 +320,7 @@ export default function DocumentEntry() {
         <main className="dashboard-main flex-1 overflow-y-auto">
           <div className="dashboard-page-body page-content-stack" style={{ padding: "20px 24px" }}>
             <DocumentEntryHeader />
+            <ErrorNotice message={error} />
             <ErrorNotice message={dropdownError} onRetry={() => setDropdownRetry(c => c + 1)} retrying={loadingDropdowns} />
 
             <div
@@ -321,33 +336,6 @@ export default function DocumentEntry() {
                       marginBottom: "24px",
                     }}
                   >
-                    {error && (
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                          background: "#fef2f2",
-                          border: "1px solid #fecaca",
-                          padding: "12px 16px",
-                          borderRadius: "8px",
-                          color: "#dc2626",
-                          fontFamily: "Inter, sans-serif",
-                          fontSize: "13px",
-                          marginBottom: "20px",
-                        }}
-                      >
-                        <AlertCircle
-                          style={{
-                            width: "16px",
-                            height: "16px",
-                            flexShrink: 0,
-                          }}
-                        />
-                        <span style={{ wordBreak: "break-word" }}>{error}</span>
-                      </div>
-                    )}
-
                     <div className="responsive-form-grid"
                       style={{
                         display: "grid",
