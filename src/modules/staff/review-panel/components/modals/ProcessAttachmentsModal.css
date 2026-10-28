@@ -1,0 +1,24 @@
+.process-attachments-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+}
+
+.process-attachments-choice {
+  padding: 12px 14px;
+}
+
+.process-attachments-file-input {
+  padding: 8px;
+}
+
+@media (max-width: 520px) {
+  .process-attachments-summary {
+    padding: 14px;
+  }
+
+  .process-attachments-choice {
+    padding: 11px 12px;
+  }
+}

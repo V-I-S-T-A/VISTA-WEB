@@ -64,6 +64,14 @@ export const submissionService = {
     return response.data;
   },
 
+  async deleteSubmission(submissionId, reason) {
+    const response = await apiClient.delete(
+      API_ENDPOINTS.SUBMISSIONS.DETAIL(submissionId),
+      { data: reason },
+    );
+    return response.data;
+  },
+
   async updateStatus(
     submissionId,
     status,
@@ -71,6 +79,8 @@ export const submissionService = {
     finalFiles = [],
     driveFolderId = "",
     reportFiles = [],
+    attachmentAction = "",
+    attachment = null,
     priorityEscalation,
   ) {
     const formData = new FormData();
@@ -80,6 +90,10 @@ export const submissionService = {
     finalFiles.forEach((file) => formData.append("files", file)); // repeated key = list
     reportFiles.forEach((file) => formData.append("report_files", file));
     if (driveFolderId) formData.append("drive_folder_id", driveFolderId);
+    if (attachmentAction && attachment) {
+      formData.append("attachment_action", attachmentAction);
+      formData.append("attachment", JSON.stringify(attachment));
+    }
 
     const response = await apiClient.patch(
       API_ENDPOINTS.SUBMISSIONS.STATUS(submissionId),

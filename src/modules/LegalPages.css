@@ -1,6 +1,6 @@
 .legal-page { --legal-blue:#205ca9; --legal-navy:#133456; --legal-gold:#ffc847; --public-surface:#e4edf3; --public-surface-muted:#d8e5ef; --public-border:#b9cddd; min-height:100vh; background:#cddde8; color:var(--legal-navy); font-family:var(--font-body); }
 :root:has(.legal-page) { scroll-behavior:smooth; }
-.legal-page .public-shell { max-width:1320px; }
+.legal-page main .public-shell,.legal-page footer .public-shell { max-width:1320px; }
 .legal-main { padding-block:28px 72px; }
 .legal-page h1,.legal-page h2 { font-family:var(--font-display); }
 .legal-breadcrumb { display:flex; align-items:center; gap:14px; margin-bottom:24px; font-size:12px; color:#4f657a; }

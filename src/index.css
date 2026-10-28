@@ -69,8 +69,10 @@ html,body,#root { min-height:100%; }
 /* Available before lazy page CSS arrives, including during first navigation. */
 .public-layout.get-app-page { background:#f0f2ef; }
 .public-layout.legal-page { background:#cddde8; }
-.public-layout.get-app-page .public-shell { max-width:1240px; }
-.public-layout.legal-page .public-shell { max-width:1320px; }
+.public-layout.get-app-page main .public-shell,
+.public-layout.get-app-page footer .public-shell { max-width:1240px; }
+.public-layout.legal-page main .public-shell,
+.public-layout.legal-page footer .public-shell { max-width:1320px; }
 
 .landing-page,
 .login-page {
@@ -756,6 +758,7 @@ html,body,#root { min-height:100%; }
   z-index: 40;
   flex-shrink: 0;
   min-height: var(--public-header-height);
+  font-family: var(--font-inter);
   background: var(--public-surface);
   border-bottom: 1px solid var(--public-border);
 }
