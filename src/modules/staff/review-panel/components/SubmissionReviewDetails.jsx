@@ -10,6 +10,8 @@ import {
   CheckCircle2,
   Loader2,
   Download,
+  Trash2,
+  History,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { submissionService } from "../../../../services/submissionService";
@@ -19,7 +21,11 @@ import {
   watchTasks,
 } from "../../../../hooks/useBackgroundDriveUpload";
 import ConfirmDriveSyncModal from "./modals/ConfirmDriveSyncModal";
-import StatusModal from "../../../../components/StatusModal";
+import ProcessAttachmentsModal from "./modals/ProcessAttachmentsModal";
+import DeleteSubmissionModal from "./modals/DeleteSubmissionModal";
+import DriveArchiveCard from "./DriveArchiveCard";
+import { ActionButton, StatusModal } from "../../../../components";
+import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
 import { getOptimizedViewUrl, isPdfUrl } from "../../../../utils/fileOptimizer";
 
 const STATUS_ACTIONS = [
@@ -37,6 +43,7 @@ const ACTION_TO_STATUS_MAP = {
 
 // Only show Drive modal when approving a submission that needs a final Drive upload confirmation.
 const REQUIRES_DRIVE_CONFIRM = new Set(["Approved"]);
+const REQUIRES_REJECTION_CONFIRM = new Set(["Returned"]);
 
 export default function SubmissionReviewDetails({ submission, onBack }) {
   const queryClient = useQueryClient();
@@ -45,6 +52,10 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const [priorityEscalation, setPriorityEscalation] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showProcessModal, setShowProcessModal] = useState(false);
+  const [showRejectConfirm, setShowRejectConfirm] = useState(false);
+  const [returnConfirmation, setReturnConfirmation] = useState("");
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [modalConfig, setModalConfig] = useState({
     isOpen: false,
     type: "success",
@@ -100,6 +111,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         setSubmissionDetails(null);
         const data = await submissionService.getSubmissionById(submission.id);
         setSubmissionDetails(data);
+        setPriorityEscalation(Boolean(data?.priority_escalation));
       } catch (error) {
         console.error("Failed to fetch full submission details:", error);
         setDetailsError("Could not load the submission files. Please try again.");
@@ -132,6 +144,23 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     fetchLogs();
   }, [submission, logsRetry]);
 
+  useEffect(() => {
+    if (!submission?.id) return undefined;
+
+    const refreshDriveArchive = async (event) => {
+      if (String(event.detail?.submissionId) !== String(submission.id)) return;
+      try {
+        const data = await submissionService.getSubmissionById(submission.id);
+        setSubmissionDetails(data);
+      } catch (error) {
+        console.error("Could not refresh Drive archive details:", error);
+      }
+    };
+
+    window.addEventListener("vista:drive-archive-updated", refreshDriveArchive);
+    return () => window.removeEventListener("vista:drive-archive-updated", refreshDriveArchive);
+  }, [submission?.id]);
+
   if (!submission) return null;
 
   function handleOpenConfirmModal() {
@@ -146,6 +175,11 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     // Only an approval requires the final Drive folder confirmation.
     if (REQUIRES_DRIVE_CONFIRM.has(statusAction)) {
       setShowConfirmModal(true);
+    } else if (statusAction === "On Process") {
+      setShowProcessModal(true);
+    } else if (REQUIRES_REJECTION_CONFIRM.has(statusAction)) {
+      setReturnConfirmation("");
+      setShowRejectConfirm(true);
     } else {
       handleSubmitDecision();
     }
@@ -154,6 +188,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   async function invalidateAndGoBack() {
     // Invalidate all submission-related queries so Recent Submissions & Review Panel refresh
     await queryClient.invalidateQueries({ queryKey: ["submissions"] });
+    await queryClient.invalidateQueries({ queryKey: ["priority-submissions"] });
     await queryClient.invalidateQueries({
       queryKey: ["submission", submission?.id],
     });
@@ -161,15 +196,29 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     onBack();
   }
 
-  async function handleSubmitDecision() {
+  async function handleSubmitDecision({ attachmentAction = "", attachment = null } = {}) {
     setIsSubmitting(true);
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
-      await submissionService.updateStatus(
+      const updatedSubmission = await submissionService.updateStatus(
         submission.id,
         backendStatus,
         remarks,
+        [],
+        "",
+        [],
+        attachmentAction,
+        attachment,
+        priorityEscalation,
       );
+      // The detail view loaded its attachments before the decision. Use the
+      // backend's post-transition document list so Returned clears the visible
+      // files immediately instead of leaving a stale preview on screen.
+      if (updatedSubmission) {
+        setSubmissionDetails(updatedSubmission);
+      }
+      await queryClient.invalidateQueries({ queryKey: ["priority-submissions"] });
+      await queryClient.invalidateQueries({ queryKey: ["submissions"] });
       showNotification(
         "Decision Submitted",
         "Decision submitted successfully!",
@@ -178,10 +227,12 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           await invalidateAndGoBack();
         },
       );
+      return true;
     } catch (error) {
       console.error("Submission error:", error);
       const backendError = getApiErrorMessage(error, "Could not submit the decision.");
       showNotification("Submission Error", backendError, "error");
+      return false;
     } finally {
       setIsSubmitting(false);
     }
@@ -192,16 +243,36 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     try {
       const backendStatus = ACTION_TO_STATUS_MAP[statusAction];
 
+      const finalFiles = driveFolderData?.finalFiles ?? [];
+      const reportFiles = driveFolderData?.reportFiles ?? [];
+      if (submission.status === "rejected" && finalFiles.length === 0) {
+        setShowConfirmModal(true);
+        showNotification(
+          "Approved document required",
+          "This rejected entry has no active attachment. Add the approved document in the Drive modal before approving it.",
+          "warning",
+        );
+        return;
+      }
+
       // 1. Fast, synchronous status change — no file, so this returns immediately
       await submissionService.updateStatus(
         submission.id,
         backendStatus,
         remarks,
+        [],
+        "",
+        [],
+        "",
+        null,
+        priorityEscalation,
       );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["priority-submissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["submissions"] }),
+      ]);
 
       // 2. Kick off the Drive upload in the background, don't await it
-      const finalFiles = driveFolderData?.finalFiles ?? [];
-      const reportFiles = driveFolderData?.reportFiles ?? [];
       const uploads = [
         ...finalFiles.map((item) => ({ ...item, uploadKind: "approved" })),
         ...reportFiles.map((item) => ({ ...item, uploadKind: "report" })),
@@ -250,19 +321,17 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
   return (
     <div className="w-full">
-      <div
-        className="flex items-center gap-3"
-        style={{ paddingBottom: "20px" }}
-      >
-        <button
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center rounded-full transition hover:brightness-105 active:scale-95"
-          style={{
-            backgroundColor: "#FFE452",
-            padding: "3px",
-          }}
-        >
+      <div className="flex w-full flex-wrap items-center justify-between gap-3" style={{ paddingBottom: "20px" }}>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={onBack}
+            className="inline-flex items-center rounded-full transition hover:brightness-105 active:scale-95"
+            style={{
+              backgroundColor: "#FFE452",
+              padding: "3px",
+            }}
+          >
           <span
             className="inline-flex items-center rounded-full font-inter font-medium text-[#1a1a1a]"
             style={{
@@ -282,13 +351,19 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
             </span>
             Back
           </span>
-        </button>
-        <span
-          className="font-inter font-medium text-gray-500"
-          style={{ fontSize: "13.5px" }}
-        >
-          Review panel details.
-        </span>
+          </button>
+          <span className="font-inter font-medium text-gray-500" style={{ fontSize: "13.5px" }}>
+            Review panel details.
+          </span>
+        </div>
+        <ActionButton
+          onClick={() => setShowDeleteModal(true)}
+          label="Delete Entry"
+          icon={<Trash2 size={13} aria-hidden="true" />}
+          disabled={isSubmitting}
+          className="disabled:cursor-not-allowed disabled:opacity-50"
+          style={{ fontSize: "13px", padding: "8px 14px", borderRadius: "8px", cursor: isSubmitting ? "not-allowed" : "pointer" }}
+        />
       </div>
 
       <div
@@ -475,6 +550,11 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         </div>
       </div>
 
+      <DriveArchiveCard
+        archives={submissionDetails?.drive_archives ?? []}
+        handledBy={reviewLogs.find((log) => log.new_status === "approved")}
+      />
+
       <div
         className="submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
         style={{ padding: "24px" }}
@@ -594,28 +674,107 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         statusAction={statusAction}
         remarks={remarks}
       />
+      {showProcessModal && <ProcessAttachmentsModal
+        isOpen={showProcessModal}
+        onClose={() => setShowProcessModal(false)}
+        onConfirm={async (attachmentData) => {
+          const succeeded = await handleSubmitDecision(attachmentData);
+          if (succeeded) setShowProcessModal(false);
+          return succeeded;
+        }}
+        submission={submission}
+        submissionDetails={submissionDetails}
+      />}
+      <StatusModal
+        isOpen={showRejectConfirm}
+        onClose={() => {
+          setShowRejectConfirm(false);
+          setReturnConfirmation("");
+        }}
+        onCancel={() => {
+          setShowRejectConfirm(false);
+          setReturnConfirmation("");
+        }}
+        title="Return Submission?"
+        message="This will mark the entry as rejected and remove its active attachment associations. The submission entry and review history will remain."
+        type="warning"
+        maxWidth="540px"
+        cancelText="Cancel"
+        confirmText={isSubmitting ? "Returning…" : "Return Submission"}
+        confirmDisabled={returnConfirmation !== "RETURNED" || isSubmitting}
+        closeDisabled={isSubmitting}
+        onConfirm={async () => {
+          if (returnConfirmation !== "RETURNED" || isSubmitting) return;
+          const succeeded = await handleSubmitDecision();
+          if (succeeded) {
+            setShowRejectConfirm(false);
+            setReturnConfirmation("");
+          }
+        }}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+          <div
+            style={{
+              padding: "14px 16px",
+              border: "1px solid #dbe5ef",
+              borderRadius: "10px",
+              background: "#f7faff",
+            }}
+          >
+            <p style={{ margin: 0, color: "#6b7280", fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>
+              Submission
+            </p>
+            <p style={{ margin: "5px 0 0", color: "#142d55", fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700 }}>
+              {submission.title || "Untitled submission"}
+            </p>
+            <p style={{ margin: "5px 0 0", color: "#6b7280", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "11px", overflowWrap: "anywhere" }}>
+              Reference ID: {submission.id || "Unavailable"}
+            </p>
+          </div>
+          <div>
+            <label htmlFor="return-submission-confirmation" style={{ display: "block", marginBottom: "6px", color: "#374151", fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 600 }}>
+              Type RETURNED to confirm <span style={{ color: "#b4232f" }}>*</span>
+            </label>
+            <input
+              id="return-submission-confirmation"
+              type="text"
+              value={returnConfirmation}
+              onChange={(event) => setReturnConfirmation(event.target.value)}
+              autoComplete="off"
+              disabled={isSubmitting}
+              style={{ display: "block", boxSizing: "border-box", width: "100%", padding: "9px 11px", border: "1px solid #cbd5e1", borderRadius: "8px", backgroundColor: "#ffffff", color: "#1f2937", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "13px", outlineColor: "#1f5cae" }}
+            />
+          </div>
+        </div>
+      </StatusModal>
 
-      {/* ── STATUS HISTORY ─────────────────────────────────────────── */}
+      {/* ── STATUS HISTORY & FEEDBACK ─────────────────────────────── */}
       <div
         className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
         style={{ marginTop: "20px" }}
       >
-        {/* Yellow header band */}
         <div
-          style={{
-            background: "#ffc700",
-            padding: "12px 20px",
-          }}
+          className="flex flex-wrap items-center justify-between gap-3"
+          style={{ background: "#1f5cae", padding: "11px 20px" }}
         >
-          <h4
-            className="font-inter font-extrabold uppercase tracking-widest text-gray-900"
-            style={{ fontSize: "12px" }}
+          <div className="flex items-center gap-3">
+            <History size={16} color="#ffffff" aria-hidden="true" />
+            <h4
+              className="m-0 font-inter font-extrabold text-white"
+              style={{ fontSize: "12px", letterSpacing: "0.08em", textTransform: "uppercase" }}
+            >
+              Status History
+            </h4>
+          </div>
+          <span
+            className="rounded-full font-inter font-extrabold text-gray-900"
+            style={{ background: "#ffc700", padding: "3px 10px", fontSize: "10px" }}
           >
-            Status History
-          </h4>
+            {reviewLogs.length} {reviewLogs.length === 1 ? "update" : "updates"}
+          </span>
         </div>
 
-        <div style={{ padding: "20px 24px" }}>
+        <div style={{ padding: "18px 24px" }}>
           {isLoadingLogs ? (
             <PanelSkeleton kind="timeline" framed={false} rows={3} label="Loading review history" />
           ) : logsError ? (
@@ -625,9 +784,9 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               No status changes recorded yet.
             </p>
           ) : (
-            <ol className="relative" style={{ paddingLeft: "20px" }}>
+            <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
               {reviewLogs.map((log, idx) => {
-                const isFirst = idx === 0;
+                const isLatest = idx === 0;
                 const labelMap = {
                   pending: "New / Pending",
                   under_review: "Under Review",
@@ -635,52 +794,62 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                   rejected: "Flagged / Rejected",
                   resubmission_required: "Resubmission Required",
                 };
+                const oldStatus = labelMap[log.old_status] || log.old_status || "Unknown";
+                const newStatus = labelMap[log.new_status] || log.new_status || "Unknown";
+                const author = log.changed_by_name || "Unknown Staff";
+                const initials = author
+                  .split(" ")
+                  .map((part) => part[0])
+                  .join("")
+                  .slice(0, 2)
+                  .toUpperCase();
+
                 return (
                   <li
                     key={log.log_id}
-                    className="relative"
-                    style={{ paddingBottom: "20px" }}
+                    className="flex gap-5"
+                    style={{ position: "relative", paddingBottom: idx < reviewLogs.length - 1 ? "20px" : 0 }}
                   >
-                    {/* Timeline vertical line */}
-                    {idx < reviewLogs.length - 1 && (
+                    <div aria-hidden="true" style={{ width: "18px", flex: "0 0 18px", position: "relative" }}>
+                      {idx < reviewLogs.length - 1 && (
+                        <span
+                          style={{ position: "absolute", top: "16px", bottom: "-20px", left: "7px", width: "2px", background: "#d1d5db" }}
+                        />
+                      )}
                       <span
-                        className="absolute left-0 top-3"
                         style={{
-                          width: "1px",
-                          bottom: 0,
-                          background: "#d1d5db",
-                          transform: "translateX(-50%)",
+                          position: "relative",
+                          zIndex: 1,
+                          display: "block",
+                          width: "16px",
+                          height: "16px",
+                          marginTop: "3px",
+                          borderRadius: "50%",
+                          background: isLatest ? "#1a59a5" : "#9ca3af",
+                          border: "3px solid #eff6ff",
+                          boxShadow: isLatest ? "0 0 0 1px #bfdbfe" : "none",
                         }}
                       />
-                    )}
-                    {/* Timeline dot */}
-                    <span
-                      className="absolute rounded-full"
-                      style={{
-                        width: "10px",
-                        height: "10px",
-                        left: 0,
-                        top: "4px",
-                        transform: "translateX(-50%)",
-                        background: isFirst ? "#3b82f6" : "#9ca3af",
-                        border: "2px solid white",
-                        boxShadow: isFirst ? "0 0 0 2px #93c5fd" : "none",
-                      }}
-                    />
-                    <div style={{ paddingLeft: "16px" }}>
-                      <p
-                        className="font-inter font-bold text-gray-900"
-                        style={{
-                          fontSize: "13.5px",
-                          color: isFirst ? "#1d4ed8" : "#374151",
-                        }}
-                      >
-                        {labelMap[log.new_status] || log.new_status}
-                      </p>
-                      <p
-                        className="font-inter text-gray-400"
-                        style={{ fontSize: "11.5px", marginTop: "1px" }}
-                      >
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h5
+                          className="m-0 font-inter font-bold text-[#142d55]"
+                          style={{ fontSize: "15px", lineHeight: 1.3 }}
+                        >
+                          {newStatus}
+                        </h5>
+                        {isLatest && (
+                          <span
+                            className="rounded-full bg-[#ffc700] font-inter font-bold text-gray-900"
+                            style={{ padding: "3px 9px", fontSize: "10px" }}
+                          >
+                            Latest
+                          </span>
+                        )}
+                      </div>
+                      <p className="m-0 font-inter text-gray-500" style={{ marginTop: "4px", fontSize: "12px" }}>
                         {new Date(log.changed_at).toLocaleString("en-US", {
                           month: "short",
                           day: "numeric",
@@ -689,15 +858,53 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                           minute: "2-digit",
                           hour12: true,
                         })}
-                        {log.changed_by_name ? ` · ${log.changed_by_name}` : ""}
                       </p>
-                      {log.remarks_text && (
-                        <p
-                          className="font-inter text-gray-600"
-                          style={{ fontSize: "13px", marginTop: "6px" }}
-                        >
-                          {log.remarks_text}
+                      {log.old_status !== log.new_status && (
+                        <p className="m-0 font-inter text-gray-600" style={{ marginTop: "6px", fontSize: "13px" }}>
+                          {oldStatus} <span aria-hidden="true">→</span> {newStatus}
                         </p>
+                      )}
+
+                      <AttachmentChangeNote change={log.attachment_change} />
+
+                      <div className="flex items-center gap-3" style={{ marginTop: "10px" }}>
+                        <div
+                          className="flex-shrink-0 flex items-center justify-center overflow-hidden rounded-lg bg-[#eef1f9] font-inter font-bold text-[#1f5cae]"
+                          style={{ width: "36px", height: "36px", fontSize: "12px" }}
+                        >
+                          {log.changed_by_image_url ? (
+                            <img
+                              src={log.changed_by_image_url}
+                              alt=""
+                              className="h-full w-full object-cover"
+                            />
+                          ) : initials}
+                        </div>
+                        <div>
+                          <p className="m-0 font-inter text-gray-500" style={{ fontSize: "11px" }}>Updated by</p>
+                          <p className="m-0 font-inter font-bold text-[#142d55]" style={{ fontSize: "13px" }}>
+                            {author}
+                          </p>
+                        </div>
+                      </div>
+
+                      {log.remarks_text?.trim() && (
+                        <div
+                          style={{
+                            marginTop: "10px",
+                            padding: "9px 12px",
+                            borderRadius: "10px",
+                            border: "1px solid #dbe4f0",
+                            background: "#f1f5fd",
+                          }}
+                        >
+                          <p className="m-0 font-inter font-semibold text-gray-600" style={{ fontSize: "12px" }}>
+                            Remarks &amp; feedback
+                          </p>
+                          <p className="m-0 font-inter text-[#142d55]" style={{ marginTop: "4px", fontSize: "13px", lineHeight: 1.45 }}>
+                            {log.remarks_text}
+                          </p>
+                        </div>
                       )}
                     </div>
                   </li>
@@ -707,107 +914,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           )}
         </div>
       </div>
-
-      {/* ── STAFF REMARKS & FEEDBACKS ──────────────────────────────── */}
-      {reviewLogs.some((l) => l.remarks_text) && (
-        <div
-          className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-          style={{ marginTop: "16px" }}
-        >
-          {/* Blue header band */}
-          <div
-            className="flex items-center justify-between"
-            style={{
-              background: "#1f5cae",
-              padding: "12px 20px",
-            }}
-          >
-            <h4
-              className="font-inter font-extrabold uppercase tracking-widest text-white"
-              style={{ fontSize: "12px" }}
-            >
-              Staff Remarks &amp; Feedbacks
-            </h4>
-            {/* update badge */}
-            <span
-              className="inline-flex items-center rounded-full font-inter font-extrabold text-gray-900"
-              style={{
-                background: "#ffc700",
-                fontSize: "11px",
-                padding: "3px 10px",
-              }}
-            >
-              {reviewLogs.filter((l) => l.remarks_text).length} UPDATE
-              {reviewLogs.filter((l) => l.remarks_text).length !== 1 ? "S" : ""}
-            </span>
-          </div>
-
-          <div style={{ padding: "16px 20px" }} className="flex flex-col gap-4">
-            {reviewLogs
-              .filter((l) => l.remarks_text)
-              .map((log) => (
-                <div key={log.log_id} className="flex gap-3">
-                  <div
-                    className="flex-shrink-0 flex items-center justify-center rounded-full bg-[#eef1f9] font-inter font-bold text-[#1f5cae]"
-                    style={{ width: "38px", height: "38px", fontSize: "13px" }}
-                  >
-                    {log.changed_by_image_url ? (
-                      <img
-                        src={log.changed_by_image_url}
-                        alt={log.changed_by_name || "Staff profile"}
-                        className="h-full w-full rounded-full object-cover"
-                      />
-                    ) : log.changed_by_name ? (
-                      log.changed_by_name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .slice(0, 2)
-                        .toUpperCase()
-                    ) : (
-                      "?"
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline justify-between gap-2 flex-wrap">
-                      <div>
-                        <span
-                          className="font-inter font-bold text-gray-900"
-                          style={{ fontSize: "13.5px" }}
-                        >
-                          {log.changed_by_name || "Unknown Staff"}
-                        </span>
-                      </div>
-                      <span
-                        className="font-inter text-gray-400 flex-shrink-0"
-                        style={{ fontSize: "11.5px" }}
-                      >
-                        {new Date(log.changed_at).toLocaleString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </span>
-                    </div>
-                    <div
-                      className="rounded-lg bg-gray-50 border border-gray-200 font-inter text-gray-700"
-                      style={{
-                        fontSize: "13px",
-                        padding: "10px 14px",
-                        marginTop: "6px",
-                      }}
-                    >
-                      {log.remarks_text}
-                    </div>
-                  </div>
-                </div>
-              ))}
-          </div>
-        </div>
-      )}
-
       {/* Notification / Alert Modal (Table palette styled) */}
       <StatusModal
         isOpen={modalConfig.isOpen}
@@ -817,6 +923,15 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         type={modalConfig.type}
         confirmText="OK"
         onConfirm={closeNotification}
+      />
+      <DeleteSubmissionModal
+        isOpen={showDeleteModal}
+        submission={submissionDetails || submission}
+        onClose={() => setShowDeleteModal(false)}
+        onDeleted={async () => {
+          setShowDeleteModal(false);
+          await invalidateAndGoBack();
+        }}
       />
     </div>
   );

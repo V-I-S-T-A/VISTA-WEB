@@ -21,6 +21,14 @@ export default function StatusModal({
   type = "success", // success | error | warning | info
   confirmText = "OK",
   onConfirm,
+  subtitle = "",
+  children,
+  cancelText = "",
+  onCancel,
+  confirmDisabled = false,
+  closeDisabled = false,
+  confirmVariant = "primary",
+  maxWidth = "440px",
 }) {
   if (!isOpen) return null;
 
@@ -87,7 +95,8 @@ export default function StatusModal({
           background: "#ffffff",
           borderRadius: "14px",
           width: "100%",
-          maxWidth: "440px",
+          maxWidth,
+          maxHeight: "calc(100vh - 32px)",
           boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25)",
           overflow: "hidden",
           display: "flex",
@@ -106,33 +115,50 @@ export default function StatusModal({
             flexShrink: 0,
           }}
         >
-          <h3
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "15px",
-              fontWeight: "700",
-              color: "#ffffff",
-              margin: 0,
-            }}
-          >
-            {title}
-          </h3>
+          <div style={{ minWidth: 0, flex: 1 }}>
+            <h3
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontSize: "15px",
+                fontWeight: "700",
+                color: "#ffffff",
+                margin: 0,
+              }}
+            >
+              {title}
+            </h3>
+
+            {subtitle && (
+              <p
+                style={{
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "12px",
+                  color: "rgba(255, 255, 255, 0.8)",
+                  margin: "2px 0 0",
+                }}
+              >
+                {subtitle}
+              </p>
+            )}
+          </div>
 
           <button
             type="button"
             onClick={onClose}
+            disabled={closeDisabled}
             style={{
               background: "rgba(255, 255, 255, 0.2)",
               border: "none",
               borderRadius: "6px",
               width: "28px",
               height: "28px",
-              cursor: "pointer",
+              cursor: closeDisabled ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "#ffffff",
               transition: "background-color 0.15s ease",
+              opacity: closeDisabled ? 0.5 : 1,
             }}
             aria-label="Close"
           >
@@ -141,50 +167,97 @@ export default function StatusModal({
         </div>
 
         {/* Body */}
-        <div
-          style={{
-            padding: "24px 22px",
-            display: "flex",
-            alignItems: "flex-start",
-            gap: "16px",
-          }}
-        >
+        {children ? (
           <div
             style={{
-              width: "44px",
-              height: "44px",
-              borderRadius: "50%",
-              backgroundColor: typeConfig.iconBg,
+              padding: "22px",
               display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
+              flexDirection: "column",
+              gap: "16px",
+              overflowY: "auto",
+              minHeight: 0,
             }}
           >
-            <IconComponent
-              style={{
-                width: "24px",
-                height: "24px",
-                color: typeConfig.iconColor,
-              }}
-            />
+            {message && (
+              <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
+                <div
+                  style={{
+                    width: "36px",
+                    height: "36px",
+                    borderRadius: "50%",
+                    backgroundColor: typeConfig.iconBg,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  <IconComponent style={{ width: "19px", height: "19px", color: typeConfig.iconColor }} />
+                </div>
+                <p
+                  style={{
+                    flex: 1,
+                    minWidth: 0,
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "13.5px",
+                    lineHeight: "1.5",
+                    color: "#374151",
+                    margin: 0,
+                    whiteSpace: "pre-line",
+                  }}
+                >
+                  {message}
+                </p>
+              </div>
+            )}
+            {children}
           </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <p
+        ) : (
+          <div
+            style={{
+              padding: "24px 22px",
+              display: "flex",
+              alignItems: "flex-start",
+              gap: "16px",
+            }}
+          >
+            <div
               style={{
-                fontFamily: "Inter, sans-serif",
-                fontSize: "13.5px",
-                lineHeight: "1.5",
-                color: "#374151",
-                margin: 0,
-                whiteSpace: "pre-line",
+                width: "44px",
+                height: "44px",
+                borderRadius: "50%",
+                backgroundColor: typeConfig.iconBg,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                flexShrink: 0,
               }}
             >
-              {message}
-            </p>
+              <IconComponent
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  color: typeConfig.iconColor,
+                }}
+              />
+            </div>
+
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <p
+                style={{
+                  fontFamily: "Inter, sans-serif",
+                  fontSize: "13.5px",
+                  lineHeight: "1.5",
+                  color: "#374151",
+                  margin: 0,
+                  whiteSpace: "pre-line",
+                }}
+              >
+                {message}
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Footer */}
         <div
@@ -195,22 +268,47 @@ export default function StatusModal({
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
+            gap: "10px",
           }}
         >
+          {cancelText && (
+            <button
+              type="button"
+              onClick={onCancel || onClose}
+              disabled={closeDisabled}
+              style={{
+                fontFamily: "Inter, sans-serif",
+                fontSize: "13px",
+                fontWeight: "600",
+                color: "#374151",
+                backgroundColor: "#ffffff",
+                border: "1px solid #d1d5db",
+                borderRadius: "8px",
+                padding: "8px 18px",
+                cursor: closeDisabled ? "not-allowed" : "pointer",
+                opacity: closeDisabled ? 0.5 : 1,
+              }}
+            >
+              {cancelText}
+            </button>
+          )}
           <button
             type="button"
             onClick={handleConfirm}
+            disabled={confirmDisabled}
             className="transition hover:brightness-105 active:scale-95 cursor-pointer"
             style={{
               fontFamily: "Inter, sans-serif",
               fontSize: "13px",
               fontWeight: "700",
-              color: "#031c36",
-              backgroundColor: "#ffc700",
-              border: "none",
+              color: confirmVariant === "danger" ? "#ffffff" : "#031c36",
+              backgroundColor: confirmVariant === "danger" ? "#b4232f" : "#ffc700",
+              border: confirmVariant === "danger" ? "1px solid #9f1d28" : "none",
               borderRadius: "8px",
               padding: "8px 22px",
               boxShadow: "0 1px 2px rgba(0, 0, 0, 0.08)",
+              opacity: confirmDisabled ? 0.5 : 1,
+              cursor: confirmDisabled ? "not-allowed" : "pointer",
             }}
           >
             {confirmText}

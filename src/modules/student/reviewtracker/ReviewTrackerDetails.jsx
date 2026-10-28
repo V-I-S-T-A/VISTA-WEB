@@ -2,6 +2,7 @@ import { SystemScopeBanner } from "../../../components/banners/WorkspaceBanners"
 import PageSkeleton from "../../../components/loading/PageSkeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { submissionService } from "../../../services/submissionService";
 import Header from "../../../components/Header";
@@ -10,20 +11,27 @@ import DetailsHeader from "./components/DetailsHeader";
 import DetailsNotice from "./components/DetailsNotice";
 import DetailsSubmissionInfo from "./components/DetailsSubmissionInfo";
 import DetailsStatusHistory from "./components/DetailsStatusHistory";
-import DetailsStaffRemarks from "./components/DetailsStaffRemarks";
 import { useSidebar } from "../../../hooks/useSidebar";
+import { useCurrentUser } from "../../../hooks/useAuth";
+import { getLoginRedirectPath } from "../../../utils/redirectTarget";
 
 export default function ReviewTrackerDetails() {
   const params = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const { isOpen, open, close } = useSidebar();
+  const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
 
   // BULLETPROOF ID EXTRACTION:
   // Grabs the ID from params, OR forcefully extracts it from the end of the URL
   // just in case your App.jsx route parameter is named something else.
   const id =
     params.id || params.submissionId || location.pathname.split("/").pop();
+
+  useEffect(() => {
+    if (isLoadingUser) return;
+    if (!currentUser) navigate(getLoginRedirectPath(`${location.pathname}${location.search}`), { replace: true });
+  }, [currentUser, isLoadingUser, location.pathname, location.search, navigate]);
 
   const {
     data: submission,
@@ -33,10 +41,17 @@ export default function ReviewTrackerDetails() {
   } = useQuery({
     queryKey: ["submission", id],
     queryFn: () => submissionService.getSubmissionById(id),
-    enabled: !!id,
+    enabled: !!id && currentUser?.role === "student",
   });
 
-  if (isLoading) return <PageSkeleton />;
+  if (isLoadingUser || (currentUser?.role === "student" && isLoading)) return <PageSkeleton />;
+
+  if (currentUser && currentUser.role !== "student") {
+    const home = currentUser.role === "admin" ? "/admin/dashboard" : "/staff/dashboard";
+    return <div className="flex min-h-screen items-center justify-center bg-white p-6"><div className="max-w-lg rounded-xl border border-amber-200 bg-amber-50 p-8 text-center"><h2 className="mb-2 text-xl font-bold text-amber-900">Student account required</h2><p role="alert" className="text-gray-700">This submission link is available to its student owner after sign in.</p><button onClick={() => navigate(home, { replace: true })} className="mt-5 rounded-full bg-[#1f5cae] px-6 py-2 font-bold text-white">Continue</button></div></div>;
+  }
+
+  if (!currentUser) return <PageSkeleton />;
 
   if (isError || !submission) {
     return (
@@ -80,7 +95,6 @@ export default function ReviewTrackerDetails() {
             <DetailsNotice status={submission.status} />
             <DetailsSubmissionInfo submission={submission} />
             <DetailsStatusHistory submissionId={submission.submission_id} />
-            <DetailsStaffRemarks submissionId={submission.submission_id} />
             <SystemScopeBanner />
           </div>
         </main>

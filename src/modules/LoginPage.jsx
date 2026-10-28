@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { CircleAlert, Eye, EyeOff } from "lucide-react";
 import backgroundImage from "../assets/shared/vista_background.webp";
 import vistaLogo from "../assets/shared/vista_logo.webp";
 import { useLogin } from "../hooks/useAuth";
+import { getSafeStudentSubmissionTarget } from "../utils/redirectTarget";
 
 const STORAGE_KEY = "vista_remembered_accounts";
 const LAST_EMAIL_KEY = "vista_last_remembered_email";
@@ -66,6 +67,7 @@ export default function LoginPage() {
   const [remember, setRemember] = useState(false);
   const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
   const loginMutation = useLogin();
 
   // Load last remembered account on this device on mount
@@ -122,7 +124,7 @@ export default function LoginPage() {
       } else if (role === "staff") {
         navigate("/staff/profile");
       } else if (role === "student") {
-        navigate("/student/profile");
+        navigate(getSafeStudentSubmissionTarget(new URLSearchParams(location.search).get("next")) || "/student/profile", { replace: true });
       } else {
         navigate("/login");
       }

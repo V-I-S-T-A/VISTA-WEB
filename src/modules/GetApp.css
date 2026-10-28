@@ -3,8 +3,8 @@
  --public-surface:#edf1f2; --public-border:#cdd9e2;
  background:#f0f2ef; color:var(--ga-navy); font-family:var(--font-body);
 }
-.get-app-page .public-shell { max-width:1240px; }
-.get-app-page h1,.get-app-page h2,.get-app-page h3,.get-app-page .public-brand-name { font-family:var(--font-display); }
+.get-app-page main .public-shell,.get-app-page footer .public-shell { max-width:1240px; }
+.get-app-page h1,.get-app-page h2,.get-app-page h3 { font-family:var(--font-display); }
 :root:has(.get-app-page) { scroll-behavior:smooth; }
 .ga-main { overflow:clip; background:radial-gradient(ellipse 40% 13% at 92% 10%,#ffd98f50,transparent),radial-gradient(ellipse 38% 14% at 5% 23%,#a2cff457,transparent),radial-gradient(ellipse 40% 16% at 85% 62%,#cae8ca60,transparent); }
 .ga-main section[id] { scroll-margin-top:calc(var(--public-header-height) + 24px); }

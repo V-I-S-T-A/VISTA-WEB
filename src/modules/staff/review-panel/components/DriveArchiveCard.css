@@ -1,0 +1,83 @@
+/* Keep this card's spacing resilient to the app-wide zero-margin/padding reset. */
+.drive-archive-card__status {
+  gap: 6px;
+  padding: 4px 10px;
+}
+
+.drive-archive-card__root {
+  gap: 12px;
+  margin-top: 20px;
+  padding: 12px 16px;
+}
+
+.drive-archive-card__paths {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px 20px;
+}
+
+.drive-archive-card__archive {
+  padding: 16px 20px;
+}
+
+.drive-archive-card__tree {
+  margin-top: 12px;
+  padding-left: 16px;
+}
+
+.drive-archive-card__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.drive-archive-card__path-step {
+  gap: 8px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+
+.drive-archive-card__path-label,
+.drive-archive-card__file-label {
+  padding: 2px 8px;
+}
+
+.drive-archive-card__file-row {
+  gap: 12px;
+  margin-top: 20px;
+  padding: 14px 16px;
+}
+
+.drive-archive-card__file-info {
+  gap: 10px;
+}
+
+.drive-archive-card__file-label {
+  margin-top: 4px;
+}
+
+.drive-archive-card__drive-link {
+  gap: 8px;
+  padding: 8px 14px;
+}
+
+.drive-archive-card__footer {
+  margin-top: 16px;
+}
+
+@media (max-width: 639px) {
+  .drive-archive-card__paths,
+  .drive-archive-card__archive {
+    padding: 14px;
+  }
+
+  .drive-archive-card__path-step {
+    flex-wrap: wrap;
+  }
+
+  .drive-archive-card__file-row {
+    padding: 12px;
+  }
+}

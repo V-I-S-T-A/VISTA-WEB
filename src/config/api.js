@@ -10,6 +10,7 @@ export const API_CONFIG = {
     SUBMISSIONS: "/submissions",
     AUDIT_LOGS: "/audit-logs",
     DRIVE: "/drive",
+    NOTIFICATIONS: "/notifications",
   },
 };
 
@@ -60,5 +61,10 @@ export const API_ENDPOINTS = {
     DISCONNECT: `${API_CONFIG.ENDPOINTS.DRIVE}/disconnect/`,
     UPLOAD: `${API_CONFIG.ENDPOINTS.DRIVE}/upload/`,
     UPLOAD_STATUS: (taskId) => `${API_CONFIG.ENDPOINTS.DRIVE}/upload/status/${taskId}/`,
+  },
+  NOTIFICATIONS: {
+    LIST: `${API_CONFIG.ENDPOINTS.NOTIFICATIONS}/`,
+    UNREAD_COUNT: `${API_CONFIG.ENDPOINTS.NOTIFICATIONS}/unread-count/`,
+    READ: (notificationId) => `${API_CONFIG.ENDPOINTS.NOTIFICATIONS}/${notificationId}/read/`,
   },
 };

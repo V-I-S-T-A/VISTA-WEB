@@ -9,7 +9,7 @@ const activePolls = new Map();
 let nextBatchId = 0;
 const DRIVE_PENDING_UPLOAD_STORAGE_KEY = "vista-drive-pending-upload-task-ids";
 
-function readPersistedTaskIds() {
+function readPersistedTasks() {
   if (typeof window === "undefined") return [];
 
   try {
@@ -17,11 +17,21 @@ function readPersistedTaskIds() {
     if (!raw) return [];
 
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed)
-      ? parsed.filter(
-          (taskId) => typeof taskId === "string" && taskId.length > 0,
-        )
-      : [];
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.flatMap((item) => {
+      // Keep accepting the legacy string-only format written by earlier builds.
+      if (typeof item === "string" && item.length > 0) {
+        return [{ taskId: item, submissionId: null }];
+      }
+      if (item && typeof item.taskId === "string" && item.taskId.length > 0) {
+        return [{
+          taskId: item.taskId,
+          submissionId: typeof item.submissionId === "string" ? item.submissionId : null,
+        }];
+      }
+      return [];
+    });
   } catch {
     return [];
   }
@@ -31,15 +41,18 @@ function persistActivePolls() {
   if (typeof window === "undefined") return;
 
   try {
-    const taskIds = [...activePolls.keys()];
-    if (!taskIds.length) {
+    const tasks = [...activePolls.entries()].map(([taskId, tracking]) => ({
+      taskId,
+      submissionId: tracking.submissionId || null,
+    }));
+    if (!tasks.length) {
       window.localStorage.removeItem(DRIVE_PENDING_UPLOAD_STORAGE_KEY);
       return;
     }
 
     window.localStorage.setItem(
       DRIVE_PENDING_UPLOAD_STORAGE_KEY,
-      JSON.stringify([...new Set(taskIds)]),
+      JSON.stringify(tasks),
     );
   } catch {
     // Ignore storage quota or browser privacy issues; in-memory polling still works.
@@ -66,22 +79,31 @@ export function startBackgroundDriveUpload({
     .post(API_ENDPOINTS.DRIVE.UPLOAD, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     })
-    .then((res) => res.data.task_id);
+    .then((res) => ({
+      taskId: res.data.task_id,
+      submissionId: String(submissionId),
+    }));
 }
 
-export function watchTasks(taskIds) {
-  if (!taskIds.length) return;
+export function watchTasks(taskInputs) {
+  if (!taskInputs.length) return;
+
+  const tasks = taskInputs
+    .map((item) => typeof item === "string" ? { taskId: item, submissionId: null } : item)
+    .filter((item) => item && typeof item.taskId === "string" && item.taskId.length > 0);
+  if (!tasks.length) return;
 
   const batch = {
-    remaining: taskIds.length,
-    total: taskIds.length,
+    remaining: tasks.length,
+    total: tasks.length,
     failures: [],
   };
   const batchId = `drive-upload-${++nextBatchId}`;
-  taskIds.forEach((taskId) =>
+  tasks.forEach(({ taskId, submissionId }) =>
     activePolls.set(taskId, {
       batchId,
       batch,
+      submissionId: submissionId || null,
       startedAt: Date.now(),
       pollFailures: 0,
       warned: false,
@@ -96,9 +118,9 @@ export function useDriveUploadWatcher() {
   const queryClient = useQueryClient();
 
   useEffect(() => {
-    const restoredTaskIds = readPersistedTaskIds();
-    if (restoredTaskIds.length) {
-      watchTasks(restoredTaskIds);
+    const restoredTasks = readPersistedTasks();
+    if (restoredTasks.length) {
+      watchTasks(restoredTasks);
     }
 
     let polling = false;
@@ -122,6 +144,12 @@ export function useDriveUploadWatcher() {
                 showToast("Google Drive is taking longer than expected. The upload is still unconfirmed; we will keep checking.", "error", 15000);
               }
               continue;
+            }
+
+            if (data.archive?.archive_id && tracking.submissionId) {
+              window.dispatchEvent(new CustomEvent("vista:drive-archive-updated", {
+                detail: { submissionId: tracking.submissionId },
+              }));
             }
 
             activePolls.delete(taskId);
