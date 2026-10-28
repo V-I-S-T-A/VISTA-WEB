@@ -20,6 +20,7 @@ import {
 } from "../../../../hooks/useBackgroundDriveUpload";
 import ConfirmDriveSyncModal from "./modals/ConfirmDriveSyncModal";
 import StatusModal from "../../../../components/StatusModal";
+import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
 import { getOptimizedViewUrl, isPdfUrl } from "../../../../utils/fileOptimizer";
 
 const STATUS_ACTIONS = [
@@ -176,6 +177,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         [],
         priorityEscalation,
       );
+      await queryClient.invalidateQueries({ queryKey: ["priority-submissions"] });
+      await queryClient.invalidateQueries({ queryKey: ["submissions"] });
       showNotification(
         "Decision Submitted",
         "Decision submitted successfully!",
@@ -709,6 +712,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                           {log.remarks_text}
                         </p>
                       )}
+                      <AttachmentChangeNote change={log.attachment_change} />
                     </div>
                   </li>
                 );
