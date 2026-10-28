@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import { submissionService } from "../../../../services/submissionService";
 import defaultUser from "../../../../assets/shared/default_user.webp";
+import ErrorNotice from "../../../../components/ErrorNotice";
 import {
   ActionButton,
   FilterButton,
@@ -199,7 +200,7 @@ export default function RecentSubmissionsTable({
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const { data, isLoading } = useSubmissions({
+  const { data, isLoading, isError, refetch, isFetching } = useSubmissions({
     page: currentPage,
     pageSize: PAGE_SIZE,
     search: searchTerm,
@@ -505,6 +506,12 @@ export default function RecentSubmissionsTable({
           <tbody>
             {isLoading ? (
               <TableRowsSkeleton columns={6} />
+            ) : isError && !data ? (
+              <tr>
+                <td colSpan={6} className="px-5 py-5">
+                  <ErrorNotice message="Could not load recent submissions." onRetry={() => refetch()} retrying={isFetching} />
+                </td>
+              </tr>
             ) : filteredSubmissions.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-5 py-10 text-center font-inter text-sm text-gray-500">

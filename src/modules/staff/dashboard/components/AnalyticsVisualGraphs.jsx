@@ -307,7 +307,12 @@ export default function AnalyticsVisualGraphs({
     }
   }
 
-  if (isError) return <ErrorNotice message="Could not load submission analytics." onRetry={() => refetch()} retrying={isFetching} />;
+  if (isError && !stats) {
+    return <>
+      <AnalyticsSkeleton />
+      <ErrorNotice message="Could not load submission analytics." onRetry={() => refetch()} retrying={isFetching} />
+    </>;
+  }
 
   if (isLoading && !stats) return <AnalyticsSkeleton />;
 

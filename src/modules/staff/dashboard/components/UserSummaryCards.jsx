@@ -63,8 +63,6 @@ export default function SubmissionSummaryCards({
     }
   };
 
-  if (isError) return <ErrorNotice message="Could not load submission totals." onRetry={() => refetch()} retrying={isFetching} />;
-
   return (
     <div className="w-full" style={{ marginBottom: "16px" }}>
       <div
@@ -96,7 +94,9 @@ export default function SubmissionSummaryCards({
                   className="font-inter font-bold leading-none"
                   style={{ fontSize: "44px" }}
                 >
-                  {isLoading ? <Skeleton width={72} height={40} /> : value.toString()}
+                  {isLoading || (isError && !stats)
+                    ? <Skeleton width={72} height={40} />
+                    : value.toString()}
                 </p>
                 <span
                   className={`flex items-center justify-center rounded-xl ${badgeBg}`}
@@ -112,6 +112,9 @@ export default function SubmissionSummaryCards({
           );
         })}
       </div>
+      {isError && !stats && (
+        <ErrorNotice message="Could not load submission totals." onRetry={() => refetch()} retrying={isFetching} />
+      )}
     </div>
   );
 }
