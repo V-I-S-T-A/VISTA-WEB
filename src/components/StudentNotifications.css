@@ -31,6 +31,7 @@
 .student-notification-unread-dot { width: 8px; height: 8px; flex: 0 0 8px; border-radius: 50%; background: #1f5cae; }
 .student-notification-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 5px; color: #778397; font: 400 10px/1.4 Inter, sans-serif; }
 .student-notification-status { padding: 3px 7px; border-radius: 999px; font: 700 10px/1 Inter, sans-serif; }
+.student-notification-status.priority { background: #fff2bf; color: #765700; }
 .student-notification-message { display: block; margin-top: 6px; color: #46546a; font: 400 12px/1.5 Inter, sans-serif; overflow-wrap: anywhere; }
 .student-notification-empty, .student-notification-loading { padding: 26px 16px; border: 1px solid #e2e6ee; border-radius: 9px; background: #fff; color: #64748b; text-align: center; font: 400 13px/1.5 Inter, sans-serif; }
 .student-notification-empty strong { display: block; margin-top: 7px; color: #34445c; font-weight: 700; }

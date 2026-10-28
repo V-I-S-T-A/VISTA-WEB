@@ -64,6 +64,10 @@ export default function Dashboard() {
             />
 
             <div className="dashboard-section" style={{ marginTop: "20px" }}>
+              <PrioritySubmissionsCard role="staff" />
+            </div>
+
+            <div className="dashboard-section" style={{ marginTop: "20px" }}>
               <AnalyticsVisualGraphs
                 selectedStatus={selectedStatus}
                 onStatusSelect={handleStatusSelect}
@@ -75,10 +79,6 @@ export default function Dashboard() {
                 activeStatusFilter={selectedStatus}
                 onStatusChange={setSelectedStatus}
               />
-            </div>
-
-            <div className="dashboard-section" style={{ marginTop: "20px" }}>
-              <PrioritySubmissionsCard role="staff" />
             </div>
 
             <div

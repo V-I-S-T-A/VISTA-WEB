@@ -1,6 +1,9 @@
 import defaultAvatar from "../assets/shared/default_user.webp";
 
-function notificationStatus(status = "") {
+function notificationStatus(status = "", type = "") {
+  if (type === "submission_priority_changed") {
+    return { label: "Priority", tone: "priority" };
+  }
   switch (status.toLowerCase()) {
     case "approved":
       return { label: "Approved", tone: "approved" };
@@ -23,7 +26,7 @@ function formatTime(value) {
 }
 
 export default function NotificationListItem({ notification, onClick }) {
-  const { label, tone } = notificationStatus(notification.submission_status);
+  const { label, tone } = notificationStatus(notification.submission_status, notification.type);
   const title = notification.submission_title || `Submission ${notification.submission_id.slice(0, 8)}`;
 
   return (

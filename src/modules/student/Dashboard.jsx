@@ -49,11 +49,11 @@ export default function Dashboard() {
             </div>
 
             <div className="dashboard-section" style={{ marginTop: "20px" }}>
-              <RecentSubmissionsTable />
+              <PrioritySubmissionsCard role="student" />
             </div>
 
             <div className="dashboard-section" style={{ marginTop: "20px" }}>
-              <PrioritySubmissionsCard role="student" />
+              <RecentSubmissionsTable />
             </div>
 
             <SystemScopeBanner />

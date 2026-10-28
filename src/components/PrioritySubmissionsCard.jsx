@@ -15,7 +15,7 @@ function dateLabel(value) {
 export default function PrioritySubmissionsCard({ role }) {
   const navigate = useNavigate();
   const { data: submissions = [], isPending, isError, refetch, isFetching } = useQuery({
-    queryKey: ["priority-submissions"],
+    queryKey: ["priority-submissions", role],
     queryFn: submissionService.getPrioritySubmissions,
     staleTime: 30_000,
   });
