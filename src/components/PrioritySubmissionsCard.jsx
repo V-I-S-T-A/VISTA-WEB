@@ -22,6 +22,7 @@ export default function PrioritySubmissionsCard({ role }) {
     queryKey: ["priority-submissions", role],
     queryFn: submissionService.getPrioritySubmissions,
     staleTime: 30_000,
+    refetchInterval: 30_000,
   });
 
   const openSubmission = (submission) => {

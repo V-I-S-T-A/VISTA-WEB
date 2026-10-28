@@ -211,6 +211,10 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         [],
         priorityEscalation,
       );
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["priority-submissions"] }),
+        queryClient.invalidateQueries({ queryKey: ["submissions"] }),
+      ]);
 
       // 2. Kick off the Drive upload in the background, don't await it
       const finalFiles = driveFolderData?.finalFiles ?? [];
