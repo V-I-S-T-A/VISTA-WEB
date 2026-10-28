@@ -4,6 +4,7 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import ProfileBanner from "./profile/components/ProfileBanner";
 import ProfileForm from "./profile/components/Profileform";
+import StudentNotificationsCard from "./profile/components/StudentNotificationsCard";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
@@ -39,7 +40,12 @@ export default function Profile() {
         <main className="dashboard-main flex-1 overflow-y-auto bg-[#f5f7fb]">
           <div className="dashboard-page-body profile-page-body page-content-stack" style={{ padding: "20px 24px" }}>
             <ProfileBanner />
-            <ProfileBannerLayout><ProfileForm /></ProfileBannerLayout>
+            <div className="student-profile-layout">
+              <div className="student-profile-info">
+                <ProfileBannerLayout><ProfileForm /></ProfileBannerLayout>
+              </div>
+              <StudentNotificationsCard />
+            </div>
           </div>
         </main>
       </div>
