@@ -24,6 +24,7 @@ export const submissionService = {
     status = "",
     dateFrom = "",
     dateTo = "",
+    priorityEscalation,
   } = {}) {
     const params = new URLSearchParams();
 
@@ -37,11 +38,25 @@ export const submissionService = {
     // (DateTimeFilter, gte/lte) — filtering happens in the DB, not the client.
     if (dateFrom) params.append("submitted_after", dateFrom);
     if (dateTo) params.append("submitted_before", dateTo);
+    if (priorityEscalation !== undefined) params.append("priority_escalation", String(priorityEscalation));
 
     const response = await apiClient.get(API_ENDPOINTS.SUBMISSIONS.LIST, {
       params,
     });
     return response.data;
+  },
+
+  async getPrioritySubmissions() {
+    const prioritized = [];
+    let page = 1;
+    let totalPages = 1;
+    do {
+      const result = await submissionService.getSubmissions({ page, pageSize: 100, priorityEscalation: true });
+      prioritized.push(...(result.results ?? []).filter((item) => item.priority_escalation === true));
+      totalPages = result.total_pages ?? 1;
+      page += 1;
+    } while (page <= totalPages);
+    return prioritized.sort((a, b) => new Date(b.submitted_at) - new Date(a.submitted_at));
   },
 
   async getSubmissionById(id) {
@@ -56,9 +71,11 @@ export const submissionService = {
     finalFiles = [],
     driveFolderId = "",
     reportFiles = [],
+    priorityEscalation,
   ) {
     const formData = new FormData();
     formData.append("status", STATUS_API_MAP[status] || status);
+    if (priorityEscalation !== undefined) formData.append("priority_escalation", String(priorityEscalation));
     if (remarksText) formData.append("remarks_text", remarksText);
     finalFiles.forEach((file) => formData.append("files", file)); // repeated key = list
     reportFiles.forEach((file) => formData.append("report_files", file));

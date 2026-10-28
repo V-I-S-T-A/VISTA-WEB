@@ -7,6 +7,7 @@ import Sidebar from "../../components/Sidebar";
 import DashboardBanner from "./dashboard/components/DashboardBanner";
 import SubmissionSummaryCards from "./dashboard/components/SubmissionSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
+import PrioritySubmissionsCard from "../../components/PrioritySubmissionsCard";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useSidebar } from "../../hooks/useSidebar";
 
@@ -49,6 +50,10 @@ export default function Dashboard() {
 
             <div className="dashboard-section" style={{ marginTop: "20px" }}>
               <RecentSubmissionsTable />
+            </div>
+
+            <div className="dashboard-section" style={{ marginTop: "20px" }}>
+              <PrioritySubmissionsCard role="student" />
             </div>
 
             <SystemScopeBanner />

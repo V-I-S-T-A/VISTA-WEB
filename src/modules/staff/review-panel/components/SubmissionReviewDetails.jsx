@@ -100,6 +100,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         setSubmissionDetails(null);
         const data = await submissionService.getSubmissionById(submission.id);
         setSubmissionDetails(data);
+        setPriorityEscalation(Boolean(data?.priority_escalation));
       } catch (error) {
         console.error("Failed to fetch full submission details:", error);
         setDetailsError("Could not load the submission files. Please try again.");
@@ -154,6 +155,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   async function invalidateAndGoBack() {
     // Invalidate all submission-related queries so Recent Submissions & Review Panel refresh
     await queryClient.invalidateQueries({ queryKey: ["submissions"] });
+    await queryClient.invalidateQueries({ queryKey: ["priority-submissions"] });
     await queryClient.invalidateQueries({
       queryKey: ["submission", submission?.id],
     });
@@ -169,6 +171,10 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         submission.id,
         backendStatus,
         remarks,
+        [],
+        "",
+        [],
+        priorityEscalation,
       );
       showNotification(
         "Decision Submitted",
@@ -197,6 +203,10 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         submission.id,
         backendStatus,
         remarks,
+        [],
+        "",
+        [],
+        priorityEscalation,
       );
 
       // 2. Kick off the Drive upload in the background, don't await it

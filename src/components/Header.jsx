@@ -8,6 +8,7 @@ import { useCurrentUser, useLogout } from "../hooks/useAuth";
 import { Skeleton } from "./loading/Skeleton";
 
 import { ANDROID_APK_URL, APP_ONBOARDING_PATH } from "../config/appDownload";
+import NotificationCenter from "./NotificationCenter";
 
 export default function Header({ layout = "public", profilePath, onMenuToggle }) {
   const navigate = useNavigate();
@@ -73,6 +74,8 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
         </div>
 
         {profilePath ? (
+          <div className="flex items-center gap-3">
+            {profileRole === "student" && <NotificationCenter />}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
@@ -130,6 +133,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
                 </button>
               </div>
             )}
+          </div>
           </div>
         ) : (
           <img

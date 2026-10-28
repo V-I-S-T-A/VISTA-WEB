@@ -9,6 +9,7 @@ import AnalyticsVisualGraphs from "./dashboard/components/AnalyticsVisualGraphs"
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
 import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
 import AuditLogWidget from "./dashboard/components/AuditLogWidget";
+import PrioritySubmissionsCard from "../../components/PrioritySubmissionsCard";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useSidebar } from "../../hooks/useSidebar";
 
@@ -74,6 +75,10 @@ export default function Dashboard() {
                 activeStatusFilter={selectedStatus}
                 onStatusChange={setSelectedStatus}
               />
+            </div>
+
+            <div className="dashboard-section" style={{ marginTop: "20px" }}>
+              <PrioritySubmissionsCard role="staff" />
             </div>
 
             <div
