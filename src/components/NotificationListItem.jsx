@@ -1,16 +1,16 @@
-import { CheckCircle2, Clock3, RotateCcw } from "lucide-react";
+import defaultAvatar from "../assets/shared/default_user.webp";
 
 function notificationStatus(status = "") {
   switch (status.toLowerCase()) {
     case "approved":
-      return { label: "Approved", tone: "approved", Icon: CheckCircle2 };
+      return { label: "Approved", tone: "approved" };
     case "rejected":
     case "resubmission_required":
-      return { label: "Returned", tone: "returned", Icon: RotateCcw };
+      return { label: "Returned", tone: "returned" };
     case "under_review":
-      return { label: "In review", tone: "review", Icon: Clock3 };
+      return { label: "In review", tone: "review" };
     default:
-      return { label: "Pending", tone: "pending", Icon: Clock3 };
+      return { label: "Pending", tone: "pending" };
   }
 }
 
@@ -23,7 +23,7 @@ function formatTime(value) {
 }
 
 export default function NotificationListItem({ notification, onClick }) {
-  const { label, tone, Icon } = notificationStatus(notification.submission_status);
+  const { label, tone } = notificationStatus(notification.submission_status);
   const title = notification.submission_title || `Submission ${notification.submission_id.slice(0, 8)}`;
 
   return (
@@ -33,12 +33,18 @@ export default function NotificationListItem({ notification, onClick }) {
         onClick={() => onClick(notification)}
         className={`student-notification-item ${notification.is_read ? "is-read" : "is-unread"}`}
       >
-        <span className={`student-notification-icon ${tone}`} aria-hidden="true"><Icon size={17} /></span>
+        <img
+          className="student-notification-avatar"
+          src={notification.actor_image_url || defaultAvatar}
+          alt={notification.actor_name ? `${notification.actor_name} profile` : "Staff profile"}
+          onError={(event) => { event.currentTarget.src = defaultAvatar; }}
+        />
         <span className="student-notification-copy">
           <span className="student-notification-title-row">
             <span className="student-notification-title">{title}</span>
             {!notification.is_read && <span className="student-notification-unread-dot" aria-label="Unread" />}
           </span>
+          {notification.actor_name && <span className="student-notification-actor">Updated by {notification.actor_name}</span>}
           <span className="student-notification-meta">
             <span className={`student-notification-status ${tone}`}>{label}</span>
             <time dateTime={notification.created_at}>{formatTime(notification.created_at)}</time>
