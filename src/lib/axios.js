@@ -1,6 +1,7 @@
 import axios from "axios";
 import { API_CONFIG } from "../config/api";
 import { getApiErrorMessage } from "../utils/apiErrorMessage";
+import { getLoginRedirectPath } from "../utils/redirectTarget";
 
 const apiClient = axios.create({
   baseURL: API_CONFIG.BASE_URL,
@@ -57,7 +58,7 @@ apiClient.interceptors.response.use(
         const publicPaths = ["/", "/login", "/get-app", "/privacy-policy", "/terms-of-service"];
         const currentPath = window.location.pathname.replace(/\/+$/, "") || "/";
         if (!publicPaths.includes(currentPath)) {
-          window.location.href = "/login";
+          window.location.href = getLoginRedirectPath(`${window.location.pathname}${window.location.search}`);
         }
         return Promise.reject(refreshError);
       }
