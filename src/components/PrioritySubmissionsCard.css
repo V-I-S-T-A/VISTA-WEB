@@ -1,0 +1,17 @@
+.priority-submissions { min-width: 0; max-width: 100%; }
+.priority-submissions > .overflow-x-auto { overflow-x: visible; }
+.priority-submissions table { width: 100%; table-layout: fixed; }
+.priority-submissions th, .priority-submissions td { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+.priority-submissions td[data-label="Document"] p { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.priority-submissions td[data-label="Category"] > span { white-space: normal; text-align: center; }
+.priority-submissions td[data-label="Actions"] > button { max-width: 100%; white-space: normal; justify-content: center; }
+@media (min-width: 1025px) {
+  .priority-submissions th, .priority-submissions td { padding: 12px 10px !important; }
+  .priority-submissions th:first-child, .priority-submissions td:first-child { padding-left: 20px !important; }
+  .priority-submissions td[data-label="Status"] span { white-space: normal; text-align: center; }
+  .priority-submissions td[data-label="Document"] > div { align-items: flex-start; gap: 10px; }
+  .priority-submissions td[data-label="Actions"] > button { font-size: 11px; padding: 7px 9px; }
+}
+@media (max-width: 1024px) {
+  .priority-submissions table { table-layout: auto; }
+}

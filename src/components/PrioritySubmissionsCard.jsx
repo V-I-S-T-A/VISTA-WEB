@@ -6,6 +6,7 @@ import { ActionButton, SubmissionStatusLabel, TableContainer } from "./index";
 import { TableRowsSkeleton } from "./loading/Skeleton";
 import defaultUser from "../assets/shared/default_user.webp";
 import ErrorNotice from "./ErrorNotice";
+import './PrioritySubmissionsCard.css';
 
 function formatDate(value) {
   if (!value) return "N/A";
@@ -48,7 +49,7 @@ export default function PrioritySubmissionsCard({ role }) {
 
   return (
     <TableContainer
-      className="responsive-records"
+      className="responsive-records priority-submissions"
       title="Priority Submissions"
       headerRight={(
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[#ffc700] font-inter text-[11px] font-bold text-gray-900" style={{ padding: "5px 12px" }}>
@@ -60,13 +61,14 @@ export default function PrioritySubmissionsCard({ role }) {
       shownCount={submissions.length}
       recordLabel="priority submissions"
     >
-      <table className="min-w-full border-collapse">
+      <table className="w-full border-collapse">
+        <colgroup>{[12, 32, 13, 13, 15, 15].map((width, i) => <col key={i} style={{ width: `${width}%` }} />)}</colgroup>
         <thead>
           <tr className="h-14 border-b border-gray-100 bg-[#f8f9fc]">
             {["ID", "DOCUMENT / APPLICANT", "CATEGORY", "DATE", "STATUS", "ACTIONS"].map((heading) => (
               <th
                 key={heading}
-                className={`whitespace-nowrap text-left font-inter text-[13px] font-bold uppercase tracking-wider text-gray-500 ${heading === "ACTIONS" ? "w-[170px]" : ""} ${heading === "STATUS" ? "min-w-[120px]" : ""}`}
+                className="text-left font-inter text-[12px] font-bold uppercase tracking-wide text-gray-500"
                 style={{ padding: "12px 16px", ...(heading === "ID" ? { paddingLeft: "24px" } : {}) }}
               >
                 {heading}
@@ -112,9 +114,6 @@ export default function PrioritySubmissionsCard({ role }) {
                         {submission.org_name || submission.submitted_by_name || "Unknown Applicant"}
                       </p>
                     </div>
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-[#fff6d6] font-inter text-[10px] font-bold text-[#765700]" style={{ padding: "4px 8px" }}>
-                      <Pin size={10} aria-hidden="true" /> Priority
-                    </span>
                   </div>
                 </td>
                 <td data-label="Category" style={{ padding: "10px 16px" }}>

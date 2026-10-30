@@ -1,13 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { Bell, Loader2 } from "lucide-react";
 import ErrorNotice from "../../../../components/ErrorNotice";
-import NotificationListItem from "../../../../components/NotificationListItem";
+import NotificationFeed from "../../../../components/NotificationFeed";
+import NotificationTabs from "../../../../components/NotificationTabs";
+import { filterNotifications, notificationEmptyState } from "../../../../utils/notificationFilters";
 import { notificationService } from "../../../../services/notificationService";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export default function StudentNotificationsCard() {
+  const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { data, isPending, isError, refetch, isFetching } = useQuery({
@@ -23,6 +27,8 @@ export default function StudentNotificationsCard() {
   });
   const cutoff = Date.now() - THIRTY_DAYS_MS;
   const notifications = (data?.results ?? []).filter((item) => new Date(item.created_at).getTime() >= cutoff);
+  const filteredNotifications = filterNotifications(notifications, filter);
+  const [emptyTitle, emptyDescription] = notificationEmptyState(filter);
 
   const openNotification = async (item) => {
     if (!item.is_read) {
@@ -40,11 +46,12 @@ export default function StudentNotificationsCard() {
         </div>
         {!isError && <span className="student-profile-notification-count">{notifications.length} updates</span>}
       </header>
-      <div className="student-profile-notification-body">
+      <NotificationTabs value={filter} onChange={setFilter} id="notification-profile" />
+      <div className="student-profile-notification-body" id="notification-profile-panel" role="tabpanel" aria-labelledby={`notification-profile-${filter}`} tabIndex={0}>
         {isPending ? <div className="student-notification-loading"><Loader2 size={16} className="mr-2 inline animate-spin" />Loading your updates…</div>
           : isError ? <ErrorNotice message="Notifications could not be loaded. Check the connection and try again." onRetry={() => refetch()} retrying={isFetching} />
-            : notifications.length === 0 ? <div className="student-notification-empty"><Bell size={22} /><strong>No recent notifications</strong><p>New submission updates will appear here.</p></div>
-              : <ul className="student-notification-list">{notifications.map((item) => <NotificationListItem key={item.notification_id} notification={item} onClick={openNotification} />)}</ul>}
+            : filteredNotifications.length === 0 ? <div className="student-notification-empty"><Bell size={22} /><strong>{emptyTitle}</strong><p>{emptyDescription}</p></div>
+              : <NotificationFeed key={filter} notifications={filteredNotifications} onClick={openNotification} />}
       </div>
       <footer className="student-profile-notification-footer">Select an update to open its submission.</footer>
     </section>
