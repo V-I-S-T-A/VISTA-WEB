@@ -5,7 +5,7 @@ import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../components/ErrorNotice";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2 } from "lucide-react";
+import { Loader2, RotateCcw } from "lucide-react";
 import { fetchAllPages } from "../../../utils/fetchAllPages";
 import { getRegistrationValidationError, mergeRegistrationSuggestions } from "../../../utils/registrationDraft";
 import api from "./../../../lib/axios";
@@ -16,10 +16,12 @@ import DocumentEntryHeader from "./components/DocumentEntryHeader";
 import SubmitRegistration from "./components/SubmitRegistration";
 import OCRResults from "./components/OCRResults";
 import { useSidebar } from "../../../hooks/useSidebar";
-import { convertImageToWebP } from "../../../utils/fileOptimizer";
-import { StatusModal } from "../../../components";
+import { prepareAttachment } from "../../../utils/prepareAttachment";
+import { createRegistrationSaver, processRegistrationUpload } from "../../../utils/registrationUpload";
+import { ActionButton, StatusModal } from "../../../components";
 export default function DocumentEntry() {
   const navigate = useNavigate();
+  const [saveRegistration] = useState(createRegistrationSaver);
   const { isOpen, open, close } = useSidebar();
 
   const [activeView, setActiveView] = useState("form");
@@ -135,6 +137,23 @@ export default function DocumentEntry() {
     setError("");
   };
 
+  const handleRedo = () => {
+    scanRequest.current.controller?.abort();
+    scanRequest.current.version += 1;
+    manualFields.current.clear();
+    setIsScanning(false);
+    setFile(null);
+    setFormData({
+      org_id: "",
+      submitted_by: "",
+      academic_year_id: "",
+      doc_type_id: "",
+      category_id: "",
+      title: "",
+    });
+    setError("");
+  };
+
   const handleFileUpload = async (uploadedFile) => {
     scanRequest.current.controller?.abort();
     const version = ++scanRequest.current.version;
@@ -148,30 +167,43 @@ export default function DocumentEntry() {
     }
 
     setIsScanning(true);
+    setFile(uploadedFile);
     setError("");
 
     try {
-      const optimizedFile = await convertImageToWebP(uploadedFile);
-      if (version !== scanRequest.current.version) return;
-      setFile(optimizedFile);
-
-      const fd = new FormData();
-      fd.append("file", optimizedFile);
-      const res = await api.post("/submissions/autofill/", fd, {
-        headers: { "Content-Type": "multipart/form-data" },
+      const { preparationError, readingError } = await processRegistrationUpload(uploadedFile, {
         signal: controller.signal,
+        prepare: source => prepareAttachment(source, controller.signal),
+        read: source => {
+          const fd = new FormData();
+          fd.append("file", source);
+          return api.post("/submissions/autofill/", fd, {
+            headers: { "Content-Type": "multipart/form-data" },
+            signal: controller.signal,
+          });
+        },
+        onPrepared: prepared => {
+          if (!controller.signal.aborted && version === scanRequest.current.version) setFile(prepared);
+        },
+        onRead: res => {
+          if (controller.signal.aborted || version !== scanRequest.current.version) return;
+          const draft = res.data;
+          if (draft.status === "draft_pending_review") {
+            setFormData(prev => mergeRegistrationSuggestions(prev, draft, manualFields.current, { categories, documentTypes }));
+          }
+        },
       });
-
-      if (version !== scanRequest.current.version) return;
-      const draft = res.data;
-      if (draft.status === "draft_pending_review") {
-        setFormData(prev => mergeRegistrationSuggestions(prev, draft, manualFields.current, { categories, documentTypes }));
-      }
+      if (controller.signal.aborted || version !== scanRequest.current.version) return;
+      const messages = [];
+      // Preview is optional: retain an openable original if conversion is unavailable.
+      if (preparationError) console.warn("Attachment conversion unavailable; using original preview.");
+      if (readingError) messages.push(getApiErrorMessage(readingError, "The document could not be read. Your file is still attached; review the fields manually or try again."));
+      setError(messages.join(" "));
     } catch (err) {
       if (controller.signal.aborted || version !== scanRequest.current.version) return;
       console.error("OCR Failed:", err);
       setError(
-        "OCR Engine failed to read the document. You can still select the fields manually.",
+        "The document could not be processed. Your original file is still attached; review the fields manually or try again.",
       );
     } finally {
       if (version === scanRequest.current.version) setIsScanning(false);
@@ -232,57 +264,38 @@ export default function DocumentEntry() {
     setError("");
 
     try {
-      // Step A: Create the Database Record
-      const submissionRes = await api.post("/submissions/", {
-        ...formData,
-        description: "Direct Staff Upload",
+      await saveRegistration({
+        payload: { ...formData, description: "Direct Staff Upload" }, file,
+        create: async payload => (await api.post("/submissions/", payload)).data.submission_id,
+        upload: async source => {
+          const body = new FormData();
+          body.append("file", source);
+          body.append("upload_preset", "vista_uploads");
+          const response = await fetch("https://api.cloudinary.com/v1_1/djtdar2ex/auto/upload", { method: "POST", body });
+          const result = await response.json();
+          if (!response.ok || !result.secure_url || !result.public_id || !result.resource_type) throw new Error("Attachment storage did not confirm the upload.");
+          return result;
+        },
+        findAttachment: async (id, url) => {
+          const documents = await fetchAllPages(api, "/documents/", { params: { submission_id: id } });
+          return documents.some(document => document.file_url === url);
+        },
+        attach: (id, source, stored) => api.post("/documents/", {
+          submission_id: id, file_name: source.name, file_url: stored.secure_url,
+          cloudinary_public_id: stored.public_id, cloudinary_resource_type: stored.resource_type,
+          mime_type: source.type || (/\.pdf$/i.test(source.name) ? "application/pdf" : "application/octet-stream"),
+          file_size_kb: Math.max(1, Math.round(source.size / 1024)),
+        }),
       });
-      const subId = submissionRes.data.submission_id;
-
-      // Step B: Upload to Cloudinary
-      if (file) {
-        try {
-          const uploadFile = await convertImageToWebP(file);
-          const cloudinaryData = new FormData();
-          cloudinaryData.append("file", uploadFile);
-          cloudinaryData.append("upload_preset", "vista_uploads");
-
-          const cloudName = "djtdar2ex";
-          const cloudinaryRes = await fetch(
-            `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`,
-            { method: "POST", body: cloudinaryData },
-          );
-
-          const cloudinaryJson = await cloudinaryRes.json();
-
-          if (cloudinaryJson.secure_url) {
-            await api.post("/documents/", {
-              submission_id: subId,
-              file_name: uploadFile.name,
-              file_url: cloudinaryJson.secure_url,
-              mime_type: uploadFile.type || "application/pdf",
-              file_size_kb: Math.max(1, Math.round(uploadFile.size / 1024)),
-            });
-          } else {
-            throw new Error(JSON.stringify(cloudinaryJson));
-          }
-        } catch (docErr) {
-          console.error("Cloudinary upload failed:", docErr);
-          showNotification(
-            "Upload Warning",
-            "Submission created, but file failed to upload to Cloudinary. Check your upload preset.",
-            "warning",
-            () => navigate("/staff/dashboard"),
-          );
-          return;
-        }
-      }
 
       // Step C: Route to dashboard on absolute success
       navigate("/staff/dashboard");
     } catch (err) {
       console.error("Submission failed:", err);
       setError(getApiErrorMessage(err, "Could not create the submission."));
+      if (err.message?.includes('attachment is not confirmed')) {
+        showNotification('Finish attachment upload', err.message, 'warning');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -319,12 +332,40 @@ export default function DocumentEntry() {
 
         <main className="dashboard-main flex-1 overflow-y-auto">
           <div className="dashboard-page-body page-content-stack" style={{ padding: "20px 24px" }}>
-            <DocumentEntryHeader />
-            <ErrorNotice message={error} />
-            <ErrorNotice message={dropdownError} onRetry={() => setDropdownRetry(c => c + 1)} retrying={loadingDropdowns} />
-
+            <div className="workspace-illustrated-layout">
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  alignItems: "flex-end",
+                  justifyContent: "space-between",
+                  gap: "12px",
+                  minWidth: 0,
+                }}
+              >
+                <DocumentEntryHeader />
+                {!loadingDropdowns && activeView === "form" && (
+                  <ActionButton
+                    onClick={handleRedo}
+                    label="Redo"
+                    icon={<RotateCcw size={13} aria-hidden="true" />}
+                    disabled={isSubmitting}
+                    className="disabled:cursor-not-allowed disabled:opacity-50"
+                    style={{
+                      fontSize: "13px",
+                      padding: "8px 14px",
+                      borderRadius: "8px",
+                      marginBottom: "20px",
+                      cursor: isSubmitting ? "not-allowed" : "pointer",
+                    }}
+                  />
+                )}
+              </div>
+            </div>
             <div className="workspace-illustrated-layout">
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
+                <ErrorNotice message={error} />
+                <ErrorNotice message={dropdownError} onRetry={() => setDropdownRetry(c => c + 1)} retrying={loadingDropdowns} />
                 {loadingDropdowns ? <PanelSkeleton kind="form" label="Loading registration form options" /> : activeView === "form" ? (
                   <div className="registration-form-card"
                     style={{
@@ -583,6 +624,7 @@ export default function DocumentEntry() {
                   </div>
                 ) : (
                   <OCRResults
+                    file={file}
                     summaryData={getSummaryData()}
                     isSubmitting={isSubmitting}
                     onApprove={handleFinalApprove}
