@@ -3,14 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell, CheckCheck, ChevronRight, Loader2, X } from "lucide-react";
 import ErrorNotice from "./ErrorNotice";
-import NotificationListItem from "./NotificationListItem";
+import NotificationFeed from "./NotificationFeed";
+import NotificationTabs from "./NotificationTabs";
+import { filterNotifications, notificationEmptyState } from "../utils/notificationFilters";
 import "./StudentNotifications.css";
 import { notificationService } from "../services/notificationService";
 
-const PREVIEW_LIMIT = 9;
+const PREVIEW_LIMIT = 5;
 
 export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
+  const [filter, setFilter] = useState('all');
   const rootRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -27,6 +30,8 @@ export default function NotificationCenter() {
   });
   const notifications = data?.results ?? [];
   const unreadCount = data?.unread_count ?? 0;
+  const filteredNotifications = filterNotifications(notifications, filter);
+  const [emptyTitle, emptyDescription] = notificationEmptyState(filter);
 
   useEffect(() => {
     const closeOutside = (event) => {
@@ -71,11 +76,12 @@ export default function NotificationCenter() {
             <button type="button" onClick={() => setIsOpen(false)} aria-label="Close notifications" className="student-notification-close"><X size={17} aria-hidden="true" /></button>
           </div>
         </header>
-        <div className="student-notification-popover-body">
+        <NotificationTabs value={filter} onChange={setFilter} id="notification-preview" />
+        <div className="student-notification-popover-body" id="notification-preview-panel" role="tabpanel" aria-labelledby={`notification-preview-${filter}`} tabIndex={0}>
           {isPending ? <div className="student-notification-loading"><Loader2 size={16} className="mr-2 inline animate-spin" />Loading notifications…</div>
             : isError ? <div className="rounded-lg border border-[#e2e6ee] bg-white px-3 py-1"><ErrorNotice message="Notifications could not be loaded. Check the connection and try again." onRetry={() => refetch()} retrying={isFetching} /></div>
-              : notifications.length === 0 ? <div className="student-notification-empty"><Bell size={22} /><strong>You're all caught up</strong><p>Submission updates will appear here.</p></div>
-                : <ul className="student-notification-list">{notifications.slice(0, PREVIEW_LIMIT).map((item) => <NotificationListItem key={item.notification_id} notification={item} onClick={openNotification} />)}</ul>}
+              : filteredNotifications.length === 0 ? <div className="student-notification-empty"><Bell size={22} /><strong>{emptyTitle}</strong><p>{emptyDescription}</p></div>
+                : <NotificationFeed key={filter} notifications={filteredNotifications} onClick={openNotification} />}
         </div>
         <footer className="student-notification-popover-footer">
           {notifications.length > PREVIEW_LIMIT

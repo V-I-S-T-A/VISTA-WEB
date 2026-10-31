@@ -2,14 +2,13 @@ import VistaSelect from "../../../../components/VistaSelect";
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Building2,
   Mail,
   FileText,
   CheckCircle2,
   Loader2,
-  Download,
   Trash2,
   History,
 } from "lucide-react";
@@ -25,8 +24,9 @@ import ProcessAttachmentsModal from "./modals/ProcessAttachmentsModal";
 import DeleteSubmissionModal from "./modals/DeleteSubmissionModal";
 import DriveArchiveCard from "./DriveArchiveCard";
 import { ActionButton, StatusModal } from "../../../../components";
+import AttachmentImagePreview from "../../../../components/AttachmentImagePreview";
 import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
-import { getOptimizedViewUrl, isPdfUrl } from "../../../../utils/fileOptimizer";
+import { isPdfUrl } from "../../../../utils/fileOptimizer";
 
 const STATUS_ACTIONS = [
   "Select Action...",
@@ -72,6 +72,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const [isLoadingDetails, setIsLoadingDetails] = useState(true);
   const [reviewLogs, setReviewLogs] = useState([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
+  const draftEdits = useRef({ id: null, status: false, remarks: false });
 
   const showNotification = (
     title,
@@ -103,6 +104,12 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    if (draftEdits.current.id !== submission?.id) {
+      draftEdits.current = { id: submission?.id, status: false, remarks: false };
+      setStatusAction(STATUS_ACTIONS[0]);
+      setRemarks("");
+    }
     async function fetchFullDetails() {
       if (!submission?.id) return;
       try {
@@ -110,19 +117,26 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         setDetailsError("");
         setSubmissionDetails(null);
         const data = await submissionService.getSubmissionById(submission.id);
+        if (cancelled) return;
         setSubmissionDetails(data);
         setPriorityEscalation(Boolean(data?.priority_escalation));
+        if (!draftEdits.current.status) {
+          setStatusAction(Object.keys(ACTION_TO_STATUS_MAP).find(action => ACTION_TO_STATUS_MAP[action] === data.status) || STATUS_ACTIONS[0]);
+        }
       } catch (error) {
+        if (cancelled) return;
         console.error("Failed to fetch full submission details:", error);
         setDetailsError("Could not load the submission files. Please try again.");
       } finally {
-        setIsLoadingDetails(false);
+        if (!cancelled) setIsLoadingDetails(false);
       }
     }
     fetchFullDetails();
+    return () => { cancelled = true; };
   }, [submission, detailsRetry]);
 
   useEffect(() => {
+    let cancelled = false;
     async function fetchLogs() {
       if (!submission?.id) return;
       try {
@@ -133,24 +147,30 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           submissionId: submission.id,
           pageSize: 50,
         });
-        setReviewLogs(data?.results ?? []);
+        if (cancelled) return;
+        const logs = data?.results ?? [];
+        setReviewLogs(logs);
       } catch (error) {
+        if (cancelled) return;
         console.error("Failed to fetch review logs:", error);
         setLogsError("Could not load the review history. Please try again.");
       } finally {
-        setIsLoadingLogs(false);
+        if (!cancelled) setIsLoadingLogs(false);
       }
     }
     fetchLogs();
+    return () => { cancelled = true; };
   }, [submission, logsRetry]);
 
   useEffect(() => {
     if (!submission?.id) return undefined;
+    let cancelled = false;
 
     const refreshDriveArchive = async (event) => {
       if (String(event.detail?.submissionId) !== String(submission.id)) return;
       try {
         const data = await submissionService.getSubmissionById(submission.id);
+        if (cancelled) return;
         setSubmissionDetails(data);
       } catch (error) {
         console.error("Could not refresh Drive archive details:", error);
@@ -158,7 +178,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     };
 
     window.addEventListener("vista:drive-archive-updated", refreshDriveArchive);
-    return () => window.removeEventListener("vista:drive-archive-updated", refreshDriveArchive);
+    return () => { cancelled = true; window.removeEventListener("vista:drive-archive-updated", refreshDriveArchive); };
   }, [submission?.id]);
 
   if (!submission) return null;
@@ -491,45 +511,34 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
             <div className="flex flex-col gap-2">
               {submissionDetails.documents.map((doc, idx) => (
                 <div
-                  key={doc.id || idx}
-                  className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3"
+                  key={doc.document_id || doc.id || idx}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#eaf1ff]">
                       <FileText className="h-4 w-4 text-[#1d4ed8]" />
                     </div>
-                    <span className="truncate font-inter text-[13.5px] font-semibold text-gray-800">
-                      {doc.file_name || `Document ${idx + 1}`}
-                    </span>
+                    {doc.file_url ? (
+                      <AttachmentImagePreview
+                        fileUrl={doc.file_url}
+                        fileName={doc.file_name || `Document ${idx + 1}`}
+                        mimeType={doc.mime_type}
+                        triggerLabel={doc.file_name || `Document ${idx + 1}`}
+                        triggerClassName="min-w-0 truncate text-left font-inter"
+                      />
+                    ) : (
+                      <span className="font-inter text-[13.5px] text-gray-600">{doc.file_name || `Document ${idx + 1}`} — file link unavailable</span>
+                    )}
                   </div>
                   {/* FIXED: Uses doc.file_url with WebP CDN acceleration & PDF archive link */}
                   <div className="flex items-center gap-2 flex-shrink-0">
-                    <a
-                      href={getOptimizedViewUrl(doc.file_url) || "#"}
-                      onClick={(e) => {
-                        if (!doc.file_url) {
-                          e.preventDefault();
-                          showNotification(
-                            "Document Unavailable",
-                            "This file's URL is missing from the database.",
-                            "error",
-                          );
-                        }
-                      }}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title="Fast WebP preview (CDN accelerated)"
-                      className="inline-flex items-center gap-1.5 rounded bg-white px-3 py-1.5 font-inter text-[11.5px] font-bold text-[#1f5cae] border border-gray-200 transition hover:bg-gray-100 active:scale-95 flex-shrink-0"
-                    >
-                      <Download className="h-3.5 w-3.5" />
-                      VIEW FILE
-                    </a>
                     {isPdfUrl(doc.file_url, doc.file_name) && (
                       <a
                         href={doc.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         download={doc.file_name || "document.pdf"}
+                        onClick={(e) => e.stopPropagation()}
                         title="Download original uncompressed PDF document"
                         className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1.5 font-inter text-[11px] font-semibold text-gray-600 border border-gray-200 transition hover:bg-gray-200 active:scale-95 flex-shrink-0"
                       >
@@ -585,8 +594,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           <VistaSelect
             aria-label="Status selection"
             value={statusAction}
-            onChange={(e) => setStatusAction(e.target.value)}
-            disabled={isSubmitting}
+            onChange={(e) => { draftEdits.current.status = true; setStatusAction(e.target.value); }}
+            disabled={isSubmitting || isLoadingDetails}
             className="w-full appearance-none rounded-lg bg-[#eef1f9] font-inter font-bold text-gray-800 outline-none cursor-pointer disabled:opacity-70"
             style={{ fontSize: "14px", padding: "12px 40px 12px 14px" }}
           >
@@ -606,8 +615,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         </label>
         <textarea
           value={remarks}
-          onChange={(e) => setRemarks(e.target.value)}
-          disabled={isSubmitting}
+          onChange={(e) => { draftEdits.current.remarks = true; setRemarks(e.target.value); }}
+          disabled={isSubmitting || isLoadingLogs}
           placeholder="Provide detailed justification for your decision..."
           rows={4}
           className="w-full resize-none rounded-lg bg-[#eef1f9] font-inter font-medium text-gray-700 placeholder-gray-400 outline-none disabled:opacity-70"
@@ -642,7 +651,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           <button
             type="button"
             onClick={handleOpenConfirmModal}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isLoadingDetails || isLoadingLogs || Boolean(detailsError || logsError)}
             className="inline-flex w-full items-center justify-center gap-2 rounded-lg font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
               fontSize: "13.5px",

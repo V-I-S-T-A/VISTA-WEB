@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import AttachmentImagePreview from '../../../../components/AttachmentImagePreview';
 import { CloudUpload, FileText, X, Loader2 } from "lucide-react";
 
 export default function SubmitRegistration({
@@ -13,6 +14,7 @@ export default function SubmitRegistration({
   const handleFileChange = (e) => {
     if (e.target.files && e.target.files.length > 0) {
       setFile(e.target.files[0]);
+      e.target.value = "";
     }
   };
 
@@ -86,76 +88,97 @@ export default function SubmitRegistration({
           </p>
         </div>
       ) : (
-        <div
-          style={{
-            border: "1.5px solid #1f5cae",
-            backgroundColor: "#f7f9ff",
-            borderRadius: "12px",
-            padding: "16px 20px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            marginBottom: "28px",
-          }}
-        >
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "12px",
-              overflow: "hidden",
-            }}
-          >
+        <AttachmentImagePreview file={file}>
+          {({ openPreview, canPreview }) => (
             <div
               style={{
-                padding: "8px",
-                backgroundColor: "#eef2fa",
-                borderRadius: "8px",
+                border: "1.5px solid #1f5cae",
+                backgroundColor: "#f7f9ff",
+                borderRadius: "12px",
+                padding: "16px 20px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                marginBottom: "28px",
               }}
             >
-              <FileText
-                style={{ width: "24px", height: "24px", color: "#1f5cae" }}
-              />
-            </div>
-            <div style={{ minWidth: 0 }}>
-              <p
-                className="font-inter font-semibold text-gray-900 truncate"
-                style={{ fontSize: "13px" }}
+              <button
+                type="button"
+                onClick={canPreview ? openPreview : undefined}
+                disabled={!canPreview}
+                title={canPreview ? `Preview ${file.name}` : undefined}
+                aria-label={canPreview ? `Preview ${file.name}` : undefined}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  overflow: "hidden",
+                  background: "transparent",
+                  border: "none",
+                  padding: 0,
+                  textAlign: "left",
+                  cursor: canPreview ? "pointer" : "default",
+                  flex: 1,
+                  minWidth: 0,
+                }}
               >
-                {file.name}
-              </p>
-              <p
-                className="font-inter text-gray-500"
-                style={{ fontSize: "11px", marginTop: "2px" }}
+                <div
+                  style={{
+                    padding: "8px",
+                    backgroundColor: "#eef2fa",
+                    borderRadius: "8px",
+                    flexShrink: 0,
+                  }}
+                >
+                  <FileText
+                    style={{ width: "24px", height: "24px", color: "#1f5cae" }}
+                    aria-hidden="true"
+                  />
+                </div>
+                <div style={{ minWidth: 0 }}>
+                  <p
+                    className="font-inter font-semibold text-gray-900 truncate"
+                    style={{ fontSize: "13px", margin: 0 }}
+                  >
+                    {file.name}
+                  </p>
+                  <p
+                    className="font-inter text-gray-500"
+                    style={{ fontSize: "11px", marginTop: "2px", margin: 0 }}
+                  >
+                    {(file.size / 1024 / 1024).toFixed(2)} MB
+                  </p>
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFile(null)}
+                aria-label="Remove uploaded file"
+                title="Remove file"
+                style={{
+                  padding: "6px",
+                  color: "#9ca3af",
+                  borderRadius: "6px",
+                  border: "none",
+                  background: "transparent",
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "#e5e7eb";
+                  e.currentTarget.style.color = "#ef4444";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#9ca3af";
+                }}
               >
-                {(file.size / 1024 / 1024).toFixed(2)} MB
-              </p>
+                <X style={{ width: "18px", height: "18px" }} aria-hidden="true" />
+              </button>
             </div>
-          </div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              setFile(null);
-            }}
-            style={{
-              padding: "6px",
-              color: "#9ca3af",
-              borderRadius: "6px",
-              transition: "all 0.2s",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = "#e5e7eb";
-              e.currentTarget.style.color = "#ef4444";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = "transparent";
-              e.currentTarget.style.color = "#9ca3af";
-            }}
-          >
-            <X style={{ width: "18px", height: "18px" }} />
-          </button>
-        </div>
+          )}
+        </AttachmentImagePreview>
       )}
 
       <input

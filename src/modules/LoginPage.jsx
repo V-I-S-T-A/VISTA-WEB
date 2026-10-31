@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { CircleAlert, Eye, EyeOff } from "lucide-react";
 import backgroundImage from "../assets/shared/vista_background.webp";
 import vistaLogo from "../assets/shared/vista_logo.webp";
 import { useLogin } from "../hooks/useAuth";
-import { getSafeStudentSubmissionTarget } from "../utils/redirectTarget";
+import { getPostLoginTarget } from "../utils/redirectTarget";
 
 const STORAGE_KEY = "vista_remembered_accounts";
 const LAST_EMAIL_KEY = "vista_last_remembered_email";
@@ -13,7 +13,7 @@ function getRememberedAccounts() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? JSON.parse(raw) : {};
-  } catch (e) {
+  } catch {
     return {};
   }
 }
@@ -54,7 +54,7 @@ function getStoredPassword(email) {
     if (encoded) {
       return decodeURIComponent(escape(atob(encoded)));
     }
-  } catch (e) {
+  } catch {
     return null;
   }
   return null;
@@ -118,16 +118,7 @@ export default function LoginPage() {
       }
 
       // Role-based redirect
-      const role = res?.user?.role;
-      if (role === "admin") {
-        navigate("/admin/dashboard");
-      } else if (role === "staff") {
-        navigate("/staff/profile");
-      } else if (role === "student") {
-        navigate(getSafeStudentSubmissionTarget(new URLSearchParams(location.search).get("next")) || "/student/profile", { replace: true });
-      } else {
-        navigate("/login");
-      }
+      navigate(getPostLoginTarget(res, new URLSearchParams(location.search).get("next")), { replace: true });
     } catch (err) {
       console.error("Login failed", err);
       setLoginError(err?.response?.status === 401

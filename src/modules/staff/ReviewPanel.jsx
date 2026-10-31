@@ -69,6 +69,7 @@ export default function ReviewPanel() {
 
             {selectedSubmission ? (
               <SubmissionReviewDetails
+                key={selectedSubmission.id}
                 submission={selectedSubmission}
                 onBack={() => {
                   setSelectedSubmission(null);

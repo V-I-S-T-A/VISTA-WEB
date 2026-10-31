@@ -1,6 +1,8 @@
 import { Loader2 } from "lucide-react";
+import AttachmentImagePreview from '../../../../components/AttachmentImagePreview';
 
 export default function OCRResults({
+  file,
   summaryData,
   onApprove,
   onRedo,
@@ -72,9 +74,43 @@ export default function OCRResults({
             <div key={label} style={{ minWidth: 0 }}>
               <p className="font-inter font-bold text-[#142d55] uppercase"
                 style={{ fontSize: "11px", letterSpacing: "0.04em", marginBottom: "6px" }}>{label}</p>
-              <div style={{ border: "1.5px solid #d1d5db", borderRadius: "8px", padding: "9px 13px", fontSize: "13px", fontFamily: "Inter, sans-serif", color: "#111827", backgroundColor: "#fff", overflowWrap: "anywhere" }}>
-                {value || "Unknown"}
-              </div>
+              {label === "Attached File" ? (
+                <AttachmentImagePreview file={file}>
+                  {({ openPreview, canPreview }) => (
+                    <div
+                      role={canPreview ? "button" : undefined}
+                      tabIndex={canPreview ? 0 : undefined}
+                      onClick={canPreview ? openPreview : undefined}
+                      onKeyDown={canPreview ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          openPreview();
+                        }
+                      } : undefined}
+                      title={canPreview ? "Click to preview attachment" : undefined}
+                      aria-label={canPreview ? `Preview ${value || "attachment"}` : undefined}
+                      style={{
+                        border: canPreview ? "1.5px solid #1f5cae" : "1.5px solid #d1d5db",
+                        borderRadius: "8px",
+                        padding: "9px 13px",
+                        fontSize: "13px",
+                        fontFamily: "Inter, sans-serif",
+                        color: canPreview ? "#1f5cae" : "#111827",
+                        fontWeight: canPreview ? 600 : 400,
+                        backgroundColor: canPreview ? "#f7f9ff" : "#fff",
+                        overflowWrap: "anywhere",
+                        cursor: canPreview ? "pointer" : "default",
+                      }}
+                    >
+                      {value || "Unknown"}
+                    </div>
+                  )}
+                </AttachmentImagePreview>
+              ) : (
+                <div style={{ border: "1.5px solid #d1d5db", borderRadius: "8px", padding: "9px 13px", fontSize: "13px", fontFamily: "Inter, sans-serif", color: "#111827", backgroundColor: "#fff", overflowWrap: "anywhere" }}>
+                  {value || "Unknown"}
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -89,8 +125,9 @@ export default function OCRResults({
           style={{
             fontSize: "12px",
             padding: "10px 24px",
-            backgroundColor: "#fff",
+
             color: "#142d55",
+            backgroundColor: "#fff",
             border: "2px solid #142d55",
             borderRadius: "6px",
             cursor: isSubmitting ? "not-allowed" : "pointer",
@@ -103,19 +140,20 @@ export default function OCRResults({
           type="button"
           onClick={onApprove}
           disabled={isSubmitting}
-          className="inline-flex items-center gap-2 font-inter font-bold uppercase tracking-wider transition hover:bg-[#e8b832] active:scale-95 disabled:opacity-50"
+          className="inline-flex items-center gap-2 font-inter font-bold uppercase tracking-wider transition hover:brightness-105 active:scale-95 disabled:opacity-50"
           style={{
             fontSize: "12px",
             padding: "10px 24px",
-            backgroundColor: "#FDC849",
-            color: "#6E5C00",
-            border: "2px solid #FDC849",
+
+            backgroundColor: "#ffc700",
+            color: "#9a3412",
+            border: "2px solid #ea580c",
             borderRadius: "6px",
             cursor: isSubmitting ? "not-allowed" : "pointer",
             letterSpacing: "0.06em",
           }}
         >
-          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin text-[#9a3412]" />}
           {isSubmitting ? "Saving..." : "Approve"}
         </button>
       </div>
