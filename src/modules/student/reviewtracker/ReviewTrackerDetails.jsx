@@ -3,6 +3,7 @@ import PageSkeleton from "../../../components/loading/PageSkeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { useSubmissionRealtime } from "../../../hooks/useSubmissionRealtime";
 import { useQuery } from "@tanstack/react-query";
 import { submissionService } from "../../../services/submissionService";
 import Header from "../../../components/Header";
@@ -27,6 +28,8 @@ export default function ReviewTrackerDetails() {
   // just in case your App.jsx route parameter is named something else.
   const id =
     params.id || params.submissionId || location.pathname.split("/").pop();
+
+  useSubmissionRealtime(currentUser?.role === "student" ? id : null);
 
   useEffect(() => {
     if (isLoadingUser) return;
