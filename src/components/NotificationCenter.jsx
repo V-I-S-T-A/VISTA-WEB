@@ -8,6 +8,7 @@ import NotificationTabs from "./NotificationTabs";
 import { filterNotifications, notificationEmptyState } from "../utils/notificationFilters";
 import "./StudentNotifications.css";
 import { notificationService } from "../services/notificationService";
+import { useSubmissionRealtime } from "../hooks/useSubmissionRealtime";
 
 const PREVIEW_LIMIT = 5;
 
@@ -17,6 +18,7 @@ export default function NotificationCenter() {
   const rootRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  useSubmissionRealtime(null);
   const { data, isPending, isError, refetch, isFetching } = useQuery({
     queryKey: ["student-notifications"],
     queryFn: notificationService.getNotifications,
