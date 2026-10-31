@@ -1,5 +1,7 @@
 import apiClient from "../lib/axios";
 
+const REPLY_PAGE_SIZE = 20;
+
 export const reviewLogService = {
   async getReviewLogs({
     page = 1,
@@ -23,6 +25,22 @@ export const reviewLogService = {
     // FIXED: Changed from AUDIT_LOGS to standard review-logs endpoint
     const response = await apiClient.get("/review-logs/", {
       params,
+    });
+    return response.data;
+  },
+
+  async getReplies(logId, { page = 1, pageSize = REPLY_PAGE_SIZE } = {}) {
+    const response = await apiClient.get(`/review-logs/${logId}/replies/`, {
+      params: { page, page_size: pageSize },
+    });
+    return response.data;
+  },
+
+  async createReply(logId, { message, parentReply = null, clientRequestId }) {
+    const response = await apiClient.post(`/review-logs/${logId}/replies/`, {
+      message,
+      parent_reply: parentReply,
+      client_request_id: clientRequestId,
     });
     return response.data;
   },
