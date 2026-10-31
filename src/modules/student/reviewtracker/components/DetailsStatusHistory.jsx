@@ -168,7 +168,6 @@ export default function DetailsStatusHistory({ submissionId }) {
                         <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />
                       </div>
                     )}
-                    <ReviewReplies log={log} canReply={Boolean(log.can_reply && log.remarks_text?.trim())} />
                   </div>
                 </li>
               );
