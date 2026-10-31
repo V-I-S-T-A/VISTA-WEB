@@ -23,7 +23,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
   const headerTitle = layout === "profile" ? profileTitle || config.title : config.title;
   const { data: currentUser, isLoading } = useCurrentUser();
   const logoutMutation = useLogout();
-  useSubmissionRealtime(null);
+  useSubmissionRealtime(null, undefined, Boolean(currentUser?.role));
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isAppQrOpen, setIsAppQrOpen] = useState(false);
   const [isQrUnavailable, setIsQrUnavailable] = useState(false);

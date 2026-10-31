@@ -7,10 +7,11 @@ import { API_CONFIG } from "../config/api";
  * Authentication uses a JWT in the FIRST socket frame, never the URL.
  * Events are invalidation hints; REST APIs remain the source of truth.
  */
-export function useSubmissionRealtime(submissionId, onChange) {
+export function useSubmissionRealtime(submissionId, onChange, enabled = true) {
   const queryClient = useQueryClient();
 
   useEffect(() => {
+    if (!enabled) return undefined;
     let stopped = false;
     let socket;
     let timer;
@@ -86,5 +87,5 @@ export function useSubmissionRealtime(submissionId, onChange) {
       document.removeEventListener("visibilitychange", resume);
       socket?.close();
     };
-  }, [submissionId, queryClient, onChange]);
+  }, [submissionId, queryClient, onChange, enabled]);
 }
