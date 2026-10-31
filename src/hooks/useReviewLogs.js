@@ -26,5 +26,8 @@ export const useReviewLogs = ({
       }),
     keepPreviousData: true,
     staleTime: 30 * 1000,
+    refetchInterval: submissionId ? 20_000 : false,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: true,
   });
 };
