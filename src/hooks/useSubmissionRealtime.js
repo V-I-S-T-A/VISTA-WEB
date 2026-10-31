@@ -15,6 +15,7 @@ export function useSubmissionRealtime(submissionId, onChange, enabled = true) {
     let stopped = false;
     let socket;
     let timer;
+    let heartbeat;
     let attempts = 0;
     const base = new URL(API_CONFIG.BASE_URL, window.location.href);
     const url = new URL(`${base.protocol === "https:" ? "wss:" : "ws:"}//${base.host}/ws/notifications/`);
@@ -60,11 +61,18 @@ export function useSubmissionRealtime(submissionId, onChange, enabled = true) {
       socket.onmessage = (message) => {
         try {
           const payload = JSON.parse(message.data);
-          if (payload.type === "ready") attempts = 0;
+          if (payload.type === "ready") {
+            attempts = 0;
+            clearInterval(heartbeat);
+            heartbeat = setInterval(() => {
+              if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ type: "ping" }));
+            }, 25_000);
+          }
           refresh(payload);
         } catch { /* Ignore malformed events. */ }
       };
       socket.onclose = () => {
+        clearInterval(heartbeat);
         if (stopped) return;
         const wait = Math.min(30_000, 1000 * 2 ** Math.min(attempts++, 5));
         timer = setTimeout(connect, wait);
@@ -84,6 +92,7 @@ export function useSubmissionRealtime(submissionId, onChange, enabled = true) {
     return () => {
       stopped = true;
       clearTimeout(timer);
+      clearInterval(heartbeat);
       document.removeEventListener("visibilitychange", resume);
       socket?.close();
     };
