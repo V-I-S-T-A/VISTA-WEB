@@ -50,7 +50,7 @@ export default function ReviewReplyThread({ log, submissionId }) {
     {log.can_reply && <form onSubmit={event => { event.preventDefault(); if (draft.trim()) mutation.mutate(); }} className="space-y-2">
       {parentReply && <button type="button" onClick={() => setParentReply(null)} className="text-xs text-blue-700">Replying to a message ×</button>}
       <textarea aria-label="Write a reply" value={draft} maxLength={4000}
-        onChange={event => { setDraft(event.target.value); if (mutation.isError) mutation.reset(); }}
+        onChange={event => { setDraft(event.target.value); if (mutation.isError) { mutation.reset(); setClientRequestId(crypto.randomUUID()); } }}
         className="w-full rounded-lg border border-slate-300 p-2 text-sm" rows={2} placeholder="Write a reply…" />
       {mutation.isError && <p role="alert" className="text-xs text-red-700">Reply could not be sent. Retry without changing the message.</p>}
       <button type="submit" disabled={!draft.trim() || mutation.isPending}
