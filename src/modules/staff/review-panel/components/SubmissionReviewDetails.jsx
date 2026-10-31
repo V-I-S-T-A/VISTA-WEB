@@ -26,7 +26,7 @@ import DriveArchiveCard from "./DriveArchiveCard";
 import { ActionButton, StatusModal } from "../../../../components";
 import AttachmentImagePreview from "../../../../components/AttachmentImagePreview";
 import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
-import ReviewReplies from "../../../../components/ReviewReplies";
+import ReviewReplyThread from "../../../shared/ReviewReplyThread";
 import { isPdfUrl } from "../../../../utils/fileOptimizer";
 
 const STATUS_ACTIONS = [
@@ -918,21 +918,9 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                       </div>
 
                       {log.remarks_text?.trim() && (
-                        <div
-                          style={{
-                            marginTop: "10px",
-                            padding: "9px 12px",
-                            borderRadius: "10px",
-                            border: "1px solid #dbe4f0",
-                            background: "#f1f5fd",
-                          }}
-                        >
-                          <p className="m-0 font-inter font-semibold text-gray-600" style={{ fontSize: "12px" }}>
-                            Remarks &amp; feedback
-                          </p>
-                          <p className="m-0 font-inter text-[#142d55]" style={{ marginTop: "4px", fontSize: "13px", lineHeight: 1.45 }}>
-                            {log.remarks_text}
-                          </p>
+                        <div className="mt-2 rounded-lg border border-[#dbe4f0] bg-[#f1f5fd] px-3 py-2.5">
+                          <p className="m-0 font-inter text-[13px] leading-6 text-[#142d55]">{log.remarks_text}</p>
+                          <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />
                         </div>
                       )}
                       <ReviewReplies log={log} canReply={Boolean(log.can_reply && log.remarks_text?.trim())} />
