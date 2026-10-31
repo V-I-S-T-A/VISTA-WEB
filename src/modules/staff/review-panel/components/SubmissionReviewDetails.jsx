@@ -166,6 +166,29 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   useEffect(() => {
     if (!submission?.id) return undefined;
     let cancelled = false;
+    const refreshReviewState = async () => {
+      try {
+        const [details, logsResponse] = await Promise.all([
+          submissionService.getSubmissionById(submission.id),
+          reviewLogService.getReviewLogs({ submissionId: submission.id, pageSize: 50 }),
+        ]);
+        if (cancelled) return;
+        setSubmissionDetails(details);
+        setReviewLogs(logsResponse?.results ?? []);
+      } catch {
+        // Keep the view intact; the normal retry path remains available.
+      }
+    };
+    window.addEventListener("vista:realtime-notification", refreshReviewState);
+    return () => {
+      cancelled = true;
+      window.removeEventListener("vista:realtime-notification", refreshReviewState);
+    };
+  }, [submission?.id]);
+
+  useEffect(() => {
+    if (!submission?.id) return undefined;
+    let cancelled = false;
 
     const refreshDriveArchive = async (event) => {
       if (String(event.detail?.submissionId) !== String(submission.id)) return;

@@ -27,9 +27,11 @@ const StudentProfile = lazy(() => import("./modules/student/Profile"));
 const StudentAuditLogs = lazy(() => import("./modules/student/AuditLogs"));
 const StaffGdriveCallback = lazy(() => import("./modules/staff/gdrive/GdriveCallback"));
 import {useDriveUploadWatcher} from "./hooks/useBackgroundDriveUpload";
+import useVistaRealtime from "./hooks/useVistaRealtime";
 
 function App() {
   useDriveUploadWatcher(); // Start the background drive upload watcher
+  useVistaRealtime();
   return (
     <BrowserRouter>
       <RouteFrame>

@@ -75,6 +75,13 @@ export default function ReviewReplyThread({ log, canReply = false, onCountChange
     } finally { setLoading(false); }
   }, [logId, onCountChange]);
 
+  useEffect(() => {
+    if (!expanded) return undefined;
+    const refreshReplies = () => loadPage(1, false);
+    window.addEventListener("vista:realtime-notification", refreshReplies);
+    return () => window.removeEventListener("vista:realtime-notification", refreshReplies);
+  }, [expanded, loadPage]);
+
   const submit = async (event) => {
     event.preventDefault();
     const message = draft.trim();
