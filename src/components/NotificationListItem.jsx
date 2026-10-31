@@ -2,6 +2,7 @@ import defaultAvatar from "../assets/shared/default_user.webp";
 import { notificationActivity } from '../utils/notificationFilters';
 
 function notificationStatus(status = "", type = "") {
+  if (type === "review_reply_created") return { label: "New reply", tone: "review" };
   if (type === "submission_priority_changed") {
     return { label: "Priority", tone: "priority" };
   }

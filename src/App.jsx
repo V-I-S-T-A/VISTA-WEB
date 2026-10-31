@@ -28,6 +28,7 @@ const StudentAuditLogs = lazy(() => import("./modules/student/AuditLogs"));
 const StaffGdriveCallback = lazy(() => import("./modules/staff/gdrive/GdriveCallback"));
 import {useDriveUploadWatcher} from "./hooks/useBackgroundDriveUpload";
 import useVistaRealtime from "./hooks/useVistaRealtime";
+import StaffNotificationToasts from "./components/StaffNotificationToasts";
 
 function App() {
   useDriveUploadWatcher(); // Start the background drive upload watcher
@@ -35,6 +36,7 @@ function App() {
   return (
     <BrowserRouter>
       <RouteFrame>
+      <StaffNotificationToasts />
       <Routes>
         <Route element={<PublicLayout />}>
           <Route path="/" element={<LandingPage />} />

@@ -7,26 +7,27 @@ import NotificationFeed from "../../../../components/NotificationFeed";
 import NotificationTabs from "../../../../components/NotificationTabs";
 import { filterNotifications, notificationEmptyState } from "../../../../utils/notificationFilters";
 import { notificationService } from "../../../../services/notificationService";
+import { useCurrentUser } from "../../../../hooks/useAuth";
 
-const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 
 export default function StudentNotificationsCard() {
   const [filter, setFilter] = useState('all');
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
   const { data, isPending, isError, refetch, isFetching } = useQuery({
-    queryKey: ["student-notifications"],
+    queryKey: ["notifications", currentUser?.user_id],
     queryFn: notificationService.getNotifications,
-    refetchInterval: 30_000,
+    enabled: Boolean(currentUser?.user_id),
+    refetchOnWindowFocus: true,
     staleTime: 15_000,
     retry: false,
   });
   const markRead = useMutation({
     mutationFn: notificationService.markAsRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["student-notifications"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications", currentUser?.user_id] }),
   });
-  const cutoff = Date.now() - THIRTY_DAYS_MS;
-  const notifications = (data?.results ?? []).filter((item) => new Date(item.created_at).getTime() >= cutoff);
+  const notifications = data?.results ?? [];
   const filteredNotifications = filterNotifications(notifications, filter);
   const [emptyTitle, emptyDescription] = notificationEmptyState(filter);
 
