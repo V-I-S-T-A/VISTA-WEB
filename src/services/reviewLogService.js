@@ -1,6 +1,16 @@
 import apiClient from "../lib/axios";
 
 export const reviewLogService = {
+  async getReplies(logId, { page = 1, pageSize = 20 } = {}) {
+    const response = await apiClient.get(`/review-logs/${logId}/replies/`, {
+      params: { page, page_size: pageSize },
+    });
+    return response.data;
+  },
+  async createReply(logId, payload) {
+    const response = await apiClient.post(`/review-logs/${logId}/replies/`, payload);
+    return response.data;
+  },
   async getReviewLogs({
     page = 1,
     pageSize = 10,

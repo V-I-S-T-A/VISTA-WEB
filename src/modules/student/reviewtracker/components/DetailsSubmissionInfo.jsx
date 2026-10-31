@@ -1,6 +1,6 @@
 import { FolderOpen, Mail, ClipboardList } from "lucide-react";
 
-export default function DetailsSubmissionInfo({ submission }) {
+export default function DetailsSubmissionInfo({ submission, isOwner = true }) {
   if (!submission) return null;
 
   const formatDate = (dateString) => {
@@ -28,7 +28,7 @@ export default function DetailsSubmissionInfo({ submission }) {
           className="font-inter font-bold uppercase tracking-wider"
           style={{ fontSize: "11px", color: "#1A59A5" }}
         >
-          Submission Details
+          {isOwner ? "My Submission" : "Organization Submission · View only"}
         </p>
         <div className="text-right">
           <span
@@ -72,6 +72,8 @@ export default function DetailsSubmissionInfo({ submission }) {
           {submission.org_name || "Organization Pending"}
         </span>
       </div>
+
+      {!isOwner && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">This organization submission is read-only. Actions remain limited to the original submitter and authorized staff.</p>}
 
       {/* ---- Divider ---- */}
       <div

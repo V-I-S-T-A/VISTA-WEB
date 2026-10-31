@@ -21,6 +21,7 @@ export function notificationEmptyState(filter) {
 export function notificationActivity(item) {
   const actor = item.actor_name?.trim() || 'VISTA';
   const title = item.submission_title || `Submission ${item.submission_id?.slice(0, 8) || ''}`;
+  if (item.type === 'review_reply_created') return `${actor} replied to your review: ${title}`;
   const action = item.type === 'submission_created' ? 'added a new submission'
     : item.type === 'submission_priority_changed' ? 'marked as priority' : 'updated';
   return `${actor} ${action}: ${title}`;

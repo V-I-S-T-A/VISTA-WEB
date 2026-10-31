@@ -3,6 +3,7 @@ import defaultAvatar from "../../../../assets/shared/default_user.webp";
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useReviewLogs } from "../../../../hooks/useReviewLogs";
 import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
+import ReviewReplies from "../../../../components/ReviewReplies";
 
 export default function DetailsStatusHistory({ submissionId }) {
   const { data, isLoading } = useReviewLogs({ submissionId, pageSize: 100 });
@@ -179,6 +180,7 @@ export default function DetailsStatusHistory({ submissionId }) {
                         </p>
                       </div>
                     )}
+                    <ReviewReplies log={log} canReply={Boolean(log.can_reply && log.remarks_text?.trim())} />
                   </div>
                 </li>
               );

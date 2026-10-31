@@ -8,6 +8,7 @@ import NotificationTabs from "./NotificationTabs";
 import { filterNotifications, notificationEmptyState } from "../utils/notificationFilters";
 import "./StudentNotifications.css";
 import { notificationService } from "../services/notificationService";
+import { useCurrentUser } from "../hooks/useAuth";
 
 const PREVIEW_LIMIT = 5;
 
@@ -17,16 +18,18 @@ export default function NotificationCenter() {
   const rootRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
   const { data, isPending, isError, refetch, isFetching } = useQuery({
-    queryKey: ["student-notifications"],
+    queryKey: ["notifications", currentUser?.user_id],
     queryFn: notificationService.getNotifications,
-    refetchInterval: 30_000,
+    enabled: Boolean(currentUser?.user_id),
+    refetchOnWindowFocus: true,
     staleTime: 15_000,
     retry: false,
   });
   const markRead = useMutation({
     mutationFn: notificationService.markAsRead,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["student-notifications"] }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["notifications", currentUser?.user_id] }),
   });
   const notifications = data?.results ?? [];
   const unreadCount = data?.unread_count ?? 0;
@@ -50,7 +53,13 @@ export default function NotificationCenter() {
       }
     }
     setIsOpen(false);
-    navigate(`/student/review-tracker/${item.submission_id}`);
+    if (currentUser?.role === "staff") {
+      navigate("/staff/review-panel", { state: { submission: { id: item.submission_id }, notificationId: item.notification_id } });
+    } else if (currentUser?.role === "admin") {
+      navigate("/admin/dashboard");
+    } else {
+      navigate(`/student/review-tracker/${item.submission_id}`);
+    }
   };
 
   return (
@@ -61,7 +70,7 @@ export default function NotificationCenter() {
       </button>
       {isOpen && <section
         className="student-notification-popover"
-        aria-label="Student notifications"
+        aria-label={`${currentUser?.role || "Account"} notifications`}
       >
         <header className="student-notification-popover-header">
           <div className="student-notification-popover-title">
@@ -84,8 +93,8 @@ export default function NotificationCenter() {
                 : <NotificationFeed key={filter} notifications={filteredNotifications} onClick={openNotification} />}
         </div>
         <footer className="student-notification-popover-footer">
-          {notifications.length > PREVIEW_LIMIT
-            ? <button type="button" className="student-notification-all-link" onClick={() => { setIsOpen(false); navigate("/student/profile"); }}>
+          {notifications.length > PREVIEW_LIMIT && currentUser?.role === "student"
+            ? <button type="button" className="student-notification-all-link" onClick={() => { setIsOpen(false); navigate(`/${currentUser?.role || "student"}/profile`); }}>
                 View all notifications for the past 30 days <ChevronRight size={15} aria-hidden="true" />
               </button>
             : <><CheckCheck size={14} color="#1f5cae" aria-hidden="true" />Select an update to open its submission.</>}

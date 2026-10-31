@@ -3,7 +3,7 @@ import PageSkeleton from "../../../components/loading/PageSkeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { submissionService } from "../../../services/submissionService";
 import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
@@ -21,6 +21,7 @@ export default function ReviewTrackerDetails() {
   const navigate = useNavigate();
   const { isOpen, open, close } = useSidebar();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+  const queryClient = useQueryClient();
 
   // BULLETPROOF ID EXTRACTION:
   // Grabs the ID from params, OR forcefully extracts it from the end of the URL
@@ -43,6 +44,11 @@ export default function ReviewTrackerDetails() {
     queryFn: () => submissionService.getSubmissionById(id),
     enabled: !!id && currentUser?.role === "student",
   });
+
+  useEffect(() => {
+    const status = error?.response?.status;
+    if ([401, 403, 404].includes(status)) queryClient.removeQueries({ queryKey: ["submission", id], exact: true });
+  }, [error, id, queryClient]);
 
   if (isLoadingUser || (currentUser?.role === "student" && isLoading)) return <PageSkeleton />;
 
@@ -93,7 +99,7 @@ export default function ReviewTrackerDetails() {
           <div className="page-content-stack w-full">
             <DetailsHeader submission={submission} />
             <DetailsNotice status={submission.status} />
-            <DetailsSubmissionInfo submission={submission} />
+            <DetailsSubmissionInfo submission={submission} isOwner={String(submission.submitted_by) === String(currentUser.user_id)} />
             <DetailsStatusHistory submissionId={submission.submission_id} />
             <SystemScopeBanner />
           </div>
