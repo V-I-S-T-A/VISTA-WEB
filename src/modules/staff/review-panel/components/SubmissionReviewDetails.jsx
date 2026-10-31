@@ -2,7 +2,9 @@ import VistaSelect from "../../../../components/VistaSelect";
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useSubmissionRealtime } from "../../../../hooks/useSubmissionRealtime";
+import ReviewReplyThread from "../../../../components/ReviewReplyThread";
 import {
   Building2,
   Mail,
@@ -73,6 +75,20 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const [reviewLogs, setReviewLogs] = useState([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const draftEdits = useRef({ id: null, status: false, remarks: false });
+  const refreshOnEvent = useCallback(async () => {
+    if (!submission?.id) return;
+    try {
+      const [details, logs] = await Promise.all([
+        submissionService.getSubmissionById(submission.id),
+        reviewLogService.getReviewLogs({ submissionId: submission.id, pageSize: 50 }),
+      ]);
+      setSubmissionDetails(details);
+      setReviewLogs(logs?.results ?? []);
+    } catch (error) {
+      console.error("Could not refresh realtime review details", error);
+    }
+  }, [submission?.id]);
+  useSubmissionRealtime(submission?.id, refreshOnEvent);
 
   const showNotification = (
     title,
@@ -915,6 +931,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                           </p>
                         </div>
                       )}
+                      <ReviewReplyThread log={log} submissionId={submission.id} />
                     </div>
                   </li>
                 );
