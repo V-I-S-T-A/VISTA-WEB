@@ -20,7 +20,7 @@ export default function useVistaRealtime() {
     let refreshedAfterAuthFailure = false;
 
     const refreshRelevantQueries = (event) => {
-      if (event.type !== "notification.changed" && event.type !== "review_log.changed") return;
+      if (event.type !== "notification.changed" && event.type !== "review_log.changed" && event.type !== "review_reply.created") return;
       for (const queryKey of [["student-notifications"], ["submissions"], ["priority-submissions"], ["submission-statistics"], ["review-logs"], ["submission"]]) {
         queryClient.invalidateQueries({ queryKey });
       }
