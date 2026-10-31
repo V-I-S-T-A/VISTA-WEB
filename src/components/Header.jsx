@@ -75,7 +75,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
 
         {profilePath ? (
           <div className="flex items-center gap-3">
-            {profileRole === "student" && <NotificationCenter />}
+            {profileRole && <NotificationCenter />}
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"

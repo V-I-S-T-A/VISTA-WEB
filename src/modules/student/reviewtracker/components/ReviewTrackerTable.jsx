@@ -2,6 +2,7 @@ import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
+import { useCurrentUser } from "../../../../hooks/useAuth";
 import defaultUser from "../../../../assets/shared/default_user.webp";
 import {
   TableContainer,
@@ -39,6 +40,7 @@ const STATUS_MAP = {
 
 export default function ReviewTrackerTable() {
   const navigate = useNavigate();
+  const { data: currentUser } = useCurrentUser();
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("All Status");
@@ -265,7 +267,11 @@ export default function ReviewTrackerTable() {
               </td>
             </tr>
           ) : (
-            submissions.map((submission) => (
+            submissions.map((submission) => {
+              const isOwner = submission.submitted_by
+                ? String(submission.submitted_by) === String(currentUser?.user_id)
+                : Boolean(currentUser?.email && submission.submitted_by_email?.toLowerCase() === currentUser.email.toLowerCase());
+              return (
               <tr
                 key={submission.submission_id}
                 className="h-16 border-b border-gray-100 transition-colors last:border-b-0 hover:bg-[#f7f9ff]"
@@ -297,13 +303,16 @@ export default function ReviewTrackerTable() {
                       >
                         {submission.title || "Untitled Document"}
                       </p>
+                      {isOwner ? (
+                        <span className="mt-1 inline-flex rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-[#1f5cae]">My Submission</span>
+                      ) : (
+                        <span className="mt-1 inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-800">Organization Submission · View only</span>
+                      )}
                       <p
                         className="font-inter font-medium text-gray-400 leading-tight mt-0.5"
                         style={{ fontSize: "12px" }}
                       >
-                        {submission.org_name ||
-                          submission.submitted_by_name ||
-                          "Unknown Applicant"}
+                        {[submission.submitted_by_name, submission.org_name].filter(Boolean).join(" · ") || "Unknown Applicant"}
                       </p>
                     </div>
                   </div>
@@ -343,7 +352,8 @@ export default function ReviewTrackerTable() {
                   />
                 </td>
               </tr>
-            ))
+              );
+            })
           )}
         </tbody>
       </table>

@@ -138,12 +138,14 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
   useEffect(() => {
     let cancelled = false;
-    async function fetchLogs() {
+    let pending = false;
+    async function fetchLogs({ silent = false } = {}) {
       if (!submission?.id) return;
+      if (pending) return;
+      pending = true;
       try {
-        setIsLoadingLogs(true);
+        if (!silent) setIsLoadingLogs(true);
         setLogsError("");
-        setReviewLogs([]);
         const data = await reviewLogService.getReviewLogs({
           submissionId: submission.id,
           pageSize: 50,
@@ -156,11 +158,28 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         console.error("Failed to fetch review logs:", error);
         setLogsError("Could not load the review history. Please try again.");
       } finally {
+        pending = false;
         if (!cancelled) setIsLoadingLogs(false);
       }
     }
     fetchLogs();
-    return () => { cancelled = true; };
+    const timer = window.setInterval(() => {
+      if (!document.hidden) fetchLogs({ silent: true });
+    }, 20_000);
+    const refreshWhenVisible = () => {
+      if (!document.hidden) fetchLogs({ silent: true });
+    };
+    const refreshAfterReply = event => {
+      if (String(event.detail?.submissionId) === String(submission?.id)) fetchLogs({ silent: true });
+    };
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    window.addEventListener("vista:review-logs-updated", refreshAfterReply);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      window.removeEventListener("vista:review-logs-updated", refreshAfterReply);
+    };
   }, [submission, logsRetry]);
 
   useEffect(() => {
@@ -904,6 +923,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                           <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />
                         </div>
                       )}
+                      <ReviewReplies log={log} canReply={Boolean(log.can_reply && log.remarks_text?.trim())} />
                     </div>
                   </li>
                 );
