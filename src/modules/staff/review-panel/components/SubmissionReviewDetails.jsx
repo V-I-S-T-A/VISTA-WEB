@@ -28,6 +28,7 @@ import AttachmentImagePreview from "../../../../components/AttachmentImagePrevie
 import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
 import ReviewReplyThread from "../../../shared/ReviewReplyThread";
 import { isPdfUrl } from "../../../../utils/fileOptimizer";
+import { REALTIME_UPDATE } from "../../../../services/realtimeQueries";
 
 const STATUS_ACTIONS = [
   "Select Action...",
@@ -74,6 +75,29 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const [reviewLogs, setReviewLogs] = useState([]);
   const [isLoadingLogs, setIsLoadingLogs] = useState(true);
   const draftEdits = useRef({ id: null, status: false, remarks: false });
+  const loadedLogsFor = useRef(null);
+  const [liveRevision, setLiveRevision] = useState(0);
+  const submissionId = submission?.id;
+
+  useEffect(() => {
+    const refresh = ({ detail }) => {
+      if (detail.recover || detail.submissionIds.includes(String(submissionId))) {
+        setLiveRevision(value => value + 1);
+      }
+    };
+    const refreshLogs = () => { if (!document.hidden) setLogsRetry(value => value + 1); };
+    const afterReply = ({ detail }) => { if (String(detail?.submissionId) === String(submissionId)) refreshLogs(); };
+    const timer = window.setInterval(refreshLogs, 20_000);
+    window.addEventListener(REALTIME_UPDATE, refresh);
+    window.addEventListener("vista:review-logs-updated", afterReply);
+    document.addEventListener("visibilitychange", refreshLogs);
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener(REALTIME_UPDATE, refresh);
+      window.removeEventListener("vista:review-logs-updated", afterReply);
+      document.removeEventListener("visibilitychange", refreshLogs);
+    };
+  }, [submissionId]);
 
   const showNotification = (
     title,
@@ -106,21 +130,22 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
   useEffect(() => {
     let cancelled = false;
-    if (draftEdits.current.id !== submission?.id) {
-      draftEdits.current = { id: submission?.id, status: false, remarks: false };
+    const initial = draftEdits.current.id !== submissionId;
+    if (initial) {
+      draftEdits.current = { id: submissionId, status: false, remarks: false, priority: false };
       setStatusAction(STATUS_ACTIONS[0]);
       setRemarks("");
     }
     async function fetchFullDetails() {
-      if (!submission?.id) return;
+      if (!submissionId) return;
       try {
-        setIsLoadingDetails(true);
+        if (initial) setIsLoadingDetails(true);
         setDetailsError("");
-        setSubmissionDetails(null);
-        const data = await submissionService.getSubmissionById(submission.id);
+        if (initial) setSubmissionDetails(null);
+        const data = await submissionService.getSubmissionById(submissionId);
         if (cancelled) return;
         setSubmissionDetails(data);
-        setPriorityEscalation(Boolean(data?.priority_escalation));
+        if (!draftEdits.current.priority) setPriorityEscalation(Boolean(data?.priority_escalation));
         if (!draftEdits.current.status) {
           setStatusAction(Object.keys(ACTION_TO_STATUS_MAP).find(action => ACTION_TO_STATUS_MAP[action] === data.status) || STATUS_ACTIONS[0]);
         }
@@ -134,20 +159,20 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     }
     fetchFullDetails();
     return () => { cancelled = true; };
-  }, [submission, detailsRetry]);
+  }, [submissionId, detailsRetry, liveRevision]);
 
   useEffect(() => {
     let cancelled = false;
-    let pending = false;
-    async function fetchLogs({ silent = false } = {}) {
-      if (!submission?.id) return;
-      if (pending) return;
-      pending = true;
+    const initial = loadedLogsFor.current !== submissionId;
+    loadedLogsFor.current = submissionId;
+    async function fetchLogs() {
+      if (!submissionId) return;
       try {
-        if (!silent) setIsLoadingLogs(true);
+        if (initial) setIsLoadingLogs(true);
         setLogsError("");
+        if (initial) setReviewLogs([]);
         const data = await reviewLogService.getReviewLogs({
-          submissionId: submission.id,
+          submissionId,
           pageSize: 50,
         });
         if (cancelled) return;
@@ -158,29 +183,12 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         console.error("Failed to fetch review logs:", error);
         setLogsError("Could not load the review history. Please try again.");
       } finally {
-        pending = false;
         if (!cancelled) setIsLoadingLogs(false);
       }
     }
     fetchLogs();
-    const timer = window.setInterval(() => {
-      if (!document.hidden) fetchLogs({ silent: true });
-    }, 20_000);
-    const refreshWhenVisible = () => {
-      if (!document.hidden) fetchLogs({ silent: true });
-    };
-    const refreshAfterReply = event => {
-      if (String(event.detail?.submissionId) === String(submission?.id)) fetchLogs({ silent: true });
-    };
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-    window.addEventListener("vista:review-logs-updated", refreshAfterReply);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-      document.removeEventListener("visibilitychange", refreshWhenVisible);
-      window.removeEventListener("vista:review-logs-updated", refreshAfterReply);
-    };
-  }, [submission, logsRetry]);
+    return () => { cancelled = true; };
+  }, [submissionId, logsRetry, liveRevision]);
 
   useEffect(() => {
     if (!submission?.id) return undefined;
@@ -655,7 +663,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           <input
             type="checkbox"
             checked={priorityEscalation}
-            onChange={(e) => setPriorityEscalation(e.target.checked)}
+            onChange={(e) => { draftEdits.current.priority = true; setPriorityEscalation(e.target.checked); }}
             disabled={isSubmitting}
             className="h-4 w-4 rounded border-gray-300 text-[#1f5cae] focus:ring-[#1f5cae] disabled:opacity-70"
           />
@@ -806,7 +814,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         <div style={{ padding: "18px 24px" }}>
           {isLoadingLogs ? (
             <PanelSkeleton kind="timeline" framed={false} rows={3} label="Loading review history" />
-          ) : logsError ? (
+          ) : logsError && reviewLogs.length === 0 ? (
             <ErrorNotice message={logsError} onRetry={() => setLogsRetry(c => c + 1)} />
           ) : reviewLogs.length === 0 ? (
             <p className="font-inter text-[13px] italic text-gray-400">
@@ -918,11 +926,24 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                       </div>
 
                       {log.remarks_text?.trim() && (
-                        <div className="mt-2 rounded-lg border border-[#dbe4f0] bg-[#f1f5fd] px-3 py-2.5">
-                          <p className="m-0 font-inter text-[13px] leading-6 text-[#142d55]">{log.remarks_text}</p>
-                          <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />
+                        <div
+                          style={{
+                            marginTop: "10px",
+                            padding: "9px 12px",
+                            borderRadius: "10px",
+                            border: "1px solid #dbe4f0",
+                            background: "#f1f5fd",
+                          }}
+                        >
+                          <p className="m-0 font-inter font-semibold text-gray-600" style={{ fontSize: "12px" }}>
+                            Remarks &amp; feedback
+                          </p>
+                          <p className="m-0 font-inter text-[#142d55]" style={{ marginTop: "4px", fontSize: "13px", lineHeight: 1.45 }}>
+                            {log.remarks_text}
+                          </p>
                         </div>
                       )}
+                      {log.remarks_text?.trim() && <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />}
                     </div>
                   </li>
                 );

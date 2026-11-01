@@ -5,11 +5,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "../hooks/useAuth";
 import { notificationService } from "../services/notificationService";
 import defaultAvatar from "../assets/shared/default_user.webp";
+import { useToast } from "./toastContext";
+import { tokenClaims } from "../services/realtimeService";
 
 export default function StaffNotificationToasts() {
   const { data: user } = useCurrentUser();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const { showToast } = useToast();
   const [toast, setToast] = useState(null);
   const seen = useRef(new Set());
   const initialized = useRef(false);
@@ -54,13 +57,23 @@ export default function StaffNotificationToasts() {
 
   const open = async () => {
     const item = toast;
+    const isCurrent = () => String(tokenClaims(localStorage.getItem("access_token") || "").user_id) === String(item._accountId);
+    let submission;
+    try {
+      submission = await notificationService.getStaffReviewSubmission(item.submission_id);
+    } catch {
+      if (isCurrent()) showToast("This submission is unavailable or you no longer have access.", "error");
+      return;
+    }
+    if (!isCurrent()) return;
     setToast(null);
     try {
       await notificationService.markAsRead(item.notification_id);
       queryClient.invalidateQueries({ queryKey });
     } catch { /* Keep navigation available if the read request temporarily fails. */ }
     if (user.role === "staff") {
-      navigate("/staff/review-panel", { state: { submission: { id: item.submission_id }, notificationId: item.notification_id } });
+      if (!isCurrent()) return;
+      navigate("/staff/review-panel", { state: { submission, notificationId: item.notification_id } });
     } else {
       navigate("/admin/dashboard");
     }

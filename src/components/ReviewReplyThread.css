@@ -1,0 +1,15 @@
+/* Unlayered spacing keeps the thread usable alongside the app's global margin/padding reset. */
+.review-reply-thread { margin-top: 12px; min-width: 0; font-size: 13px; color: #142d55; }
+.review-reply-thread button { padding: 4px 2px; cursor: pointer; }
+.review-reply-thread button:disabled { cursor: default; }
+.review-reply-thread button:focus-visible { outline: 2px solid #1f5cae; outline-offset: 3px; }
+.review-reply-thread .reply-conversation { margin-top: 12px; padding-left: clamp(8px, 2vw, 16px); }
+.review-reply-thread .reply-list > li { margin: 12px 0; padding: 12px; }
+.review-reply-thread .reply-context { margin-top: 8px; }
+.review-reply-thread .reply-message { margin-top: 4px; line-height: 1.5; }
+.review-reply-thread .reply-compose { margin-top: 12px; padding: 12px; }
+.review-reply-thread .reply-compose label { margin-bottom: 8px; }
+.review-reply-thread textarea { padding: 10px; line-height: 1.5; min-height: 88px; }
+.review-reply-thread .reply-actions { margin-top: 8px; }
+.review-reply-thread .reply-actions button { padding: 8px 14px; }
+.review-reply-thread .reply-error { margin-top: 8px; }

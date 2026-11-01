@@ -9,6 +9,8 @@ import { filterNotifications, notificationEmptyState } from "../utils/notificati
 import "./StudentNotifications.css";
 import { notificationService } from "../services/notificationService";
 import { useCurrentUser } from "../hooks/useAuth";
+import { useToast } from "./toastContext";
+import { tokenClaims } from "../services/realtimeService";
 
 const PREVIEW_LIMIT = 5;
 
@@ -18,6 +20,7 @@ export default function NotificationCenter() {
   const rootRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const { data: currentUser } = useCurrentUser();
   const { data, isPending, isError, refetch, isFetching } = useQuery({
     queryKey: ["notifications", currentUser?.user_id],
@@ -45,6 +48,17 @@ export default function NotificationCenter() {
   }, []);
 
   const openNotification = async (item) => {
+    let staffSubmission;
+    const isCurrentStaff = () => String(tokenClaims(localStorage.getItem("access_token") || "").user_id) === String(currentUser?.user_id);
+    if (currentUser?.role === "staff") {
+      try {
+        staffSubmission = await notificationService.getStaffReviewSubmission(item.submission_id);
+      } catch {
+        if (isCurrentStaff()) showToast("This submission is unavailable or you no longer have access.", "error");
+        return;
+      }
+      if (!isCurrentStaff()) return;
+    }
     if (!item.is_read) {
       try {
         await markRead.mutateAsync(item.notification_id);
@@ -54,7 +68,8 @@ export default function NotificationCenter() {
     }
     setIsOpen(false);
     if (currentUser?.role === "staff") {
-      navigate("/staff/review-panel", { state: { submission: { id: item.submission_id }, notificationId: item.notification_id } });
+      if (!isCurrentStaff()) return;
+      navigate("/staff/review-panel", { state: { submission: staffSubmission, notificationId: item.notification_id } });
     } else if (currentUser?.role === "admin") {
       navigate("/admin/dashboard");
     } else {

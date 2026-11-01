@@ -29,6 +29,11 @@ export default defineConfig(({ mode }) => {
           target: env.DEV_API_PROXY_TARGET,
           changeOrigin: true,
         },
+        '/ws': {
+          target: env.DEV_API_PROXY_TARGET,
+          ws: true,
+          changeOrigin: true,
+        },
       } : undefined,
     },
   }
