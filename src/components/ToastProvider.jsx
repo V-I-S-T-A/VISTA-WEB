@@ -1,5 +1,7 @@
 import { useCallback, useState } from "react";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
+import defaultAvatar from "../assets/shared/default_user.webp";
+import vistaLogo from "../assets/shared/vista_logo.webp";
 import { ToastContext } from "./toastContext";
 
 export function ToastProvider({ children }) {
@@ -34,7 +36,61 @@ export function ToastProvider({ children }) {
           gap: 8,
         }}
       >
-        {toasts.map((t) => (
+        {toasts.map((t) => t.variant === "reply" ? (
+          <div
+            key={t.id}
+            role="status"
+            className="font-inter"
+            style={{
+              width: "min(420px, calc(100vw - 32px))",
+              boxSizing: "border-box",
+              padding: "12px 14px 14px",
+              border: "1px solid #dbe4f0",
+              borderRadius: 12,
+              background: "#fff",
+              boxShadow: "0 12px 32px rgba(20, 45, 85, .2)",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+              <img src={vistaLogo} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
+              <span style={{ flex: 1, color: "#64748b", fontSize: 12, fontWeight: 700, letterSpacing: ".04em" }}>VISTA</span>
+              <button
+                type="button"
+                aria-label="Dismiss reply notification"
+                onClick={() => setToasts((items) => items.filter((item) => item.id !== t.id))}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, padding: 0, border: 0, borderRadius: 6, background: "transparent", color: "#64748b", cursor: "pointer" }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+            {t.onClick ? (
+              <button
+                type="button"
+                onClick={t.onClick}
+                aria-label={`Open reply from ${t.actorName || "a staff member"} on ${t.submissionTitle || "your submission"}`}
+                style={{ display: "flex", width: "100%", minWidth: 0, alignItems: "flex-start", gap: 12, padding: 0, border: 0, background: "transparent", color: "inherit", textAlign: "left", cursor: "pointer" }}
+              >
+                <img
+                  src={t.actorImageUrl || defaultAvatar}
+                  alt=""
+                  onError={(event) => { event.currentTarget.src = defaultAvatar; }}
+                  style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", objectFit: "cover", background: "#eef2f7" }}
+                />
+                <span style={{ display: "flex", minWidth: 0, flexDirection: "column", gap: 3, paddingTop: 2 }}>
+                  <span style={{ color: "#142d55", fontSize: 14, lineHeight: 1.4 }}>
+                    <strong>{t.actorName || "Staff member"}</strong> replied to your submission
+                  </span>
+                  <span style={{ overflow: "hidden", color: "#64748b", fontSize: 13, lineHeight: 1.4, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {t.submissionTitle || "Open your submission"}
+                  </span>
+                  <span style={{ marginTop: 4, color: "#1f5cae", fontSize: 12, fontWeight: 700 }}>View conversation →</span>
+                </span>
+              </button>
+            ) : (
+              <span style={{ color: "#374151", fontSize: 13 }}>{t.message}</span>
+            )}
+          </div>
+        ) : (
           <div
             key={t.id}
             role={t.type === "error" ? "alert" : "status"}

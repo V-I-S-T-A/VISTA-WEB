@@ -165,10 +165,25 @@ export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
                     </div>
 
                     {log.remarks_text?.trim() && (
-                      <div className="mt-2 rounded-lg border border-[#dbe4f0] bg-[#f1f5fd] px-3 py-2.5">
-                        <p className="m-0 font-inter text-[13px] leading-6 text-[#142d55]">{log.remarks_text}</p>
+                      <>
+                        <div
+                          style={{
+                            marginTop: "10px",
+                            padding: "12px 16px",
+                            borderRadius: "10px",
+                            border: "1px solid #dbe4f0",
+                            background: "#f1f5fd",
+                          }}
+                        >
+                          <p className="m-0 font-inter font-semibold text-gray-600" style={{ fontSize: "12px" }}>
+                            Remarks &amp; feedback
+                          </p>
+                          <p className="m-0 font-inter text-[#142d55]" style={{ marginTop: "6px", fontSize: "13px", lineHeight: 1.5 }}>
+                            {log.remarks_text}
+                          </p>
+                        </div>
                         <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} onAccessLost={onAccessLost} />
-                      </div>
+                      </>
                     )}
                   </div>
                 </li>
