@@ -48,7 +48,7 @@ function StatusDot({ status }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 font-inter font-semibold"
+      className="inline-flex items-center gap-2 whitespace-nowrap font-inter font-semibold"
       style={{ color: config.text, fontSize: "13px" }}
     >
       <span

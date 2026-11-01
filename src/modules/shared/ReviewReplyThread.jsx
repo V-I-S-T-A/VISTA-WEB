@@ -23,7 +23,7 @@ function relativeTime(value) {
 
 function ReplyRow({ reply, onReply }) {
   return (
-    <div className="flex gap-3">
+    <div className="flex items-start gap-3">
       <img src={reply.author_image_url || defaultAvatar} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
@@ -138,10 +138,10 @@ function ThreadContent({ log, canReply, onCountChange, onAccessLost }) {
   if (accessDenied) return <p role="alert" className="mt-3 text-sm text-red-700">This conversation is no longer accessible. Reload the submission.</p>;
   const remaining = Math.max(0, count - replies.length);
   return (
-    <div className="mt-3 font-inter">
+    <div className="mt-4 font-inter">
       {error && <div className="mb-2"><ErrorNotice message={error} onRetry={() => loadPage(expanded ? page : 1, expanded && page > 1)} /></div>}
       {expanded && replies.length > 0 && (
-        <div className="space-y-4 border-l-2 border-[#dbe4f0] py-1 pl-4">
+        <div className="ml-1 space-y-4 border-l-2 border-[#dbe4f0] py-2 pl-4 sm:pl-5">
           {replies.map((reply) => <ReplyRow key={reply.reply_id} reply={reply} onReply={allowed ? setReplyTarget : null} />)}
         </div>
       )}
@@ -158,10 +158,10 @@ function ThreadContent({ log, canReply, onCountChange, onAccessLost }) {
         </button>
       )}
       {allowed && (
-        <form onSubmit={submit} className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+        <form onSubmit={submit} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1">
             {replyTarget && <div className="mb-1 flex items-center gap-2 text-[11px] text-gray-500"><MessageCircle size={13} /> Replying to {replyTarget.author_name}<button type="button" onClick={() => setReplyTarget(null)} className="font-semibold text-[#1f5cae]">Cancel</button></div>}
-            <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={2} placeholder="Write a reply…" className="w-full resize-y rounded-lg border border-gray-200 bg-[#f5f8fc] px-3 py-2 font-inter text-[13px] text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-[#1f5cae] focus:ring-2 focus:ring-blue-100" />
+            <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={2} placeholder="Write a reply…" className="block min-h-[72px] w-full resize-y rounded-lg border border-gray-200 bg-[#f5f8fc] px-3 py-2.5 font-inter text-[13px] leading-5 text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-[#1f5cae] focus:ring-2 focus:ring-blue-100" />
             {linkVisible && <div className="mt-2 flex min-w-0 items-center gap-2">
               <label htmlFor={linkId} className="sr-only">Optional reply link</label>
               <input id={linkId} type="url" inputMode="url" value={link} onChange={event => setLink(event.target.value)} placeholder="https://example.com" disabled={sending} aria-invalid={Boolean(link.trim() && content.error)} className="min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-[#1f5cae]" />
