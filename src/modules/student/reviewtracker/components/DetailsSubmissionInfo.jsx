@@ -100,6 +100,7 @@ export default function DetailsSubmissionInfo({ submission, isOwner = true }) {
           >
             Submitter Contact
           </p>
+          <p className="mb-1 font-inter text-[13px] font-semibold text-[#142d55]">{submission.submitted_by_name || "Original submitter"}</p>
           <div className="flex items-center gap-2">
             <Mail style={{ width: "14px", height: "14px", color: "#6b7280" }} />
             <span

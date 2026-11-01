@@ -4,9 +4,10 @@ import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useReviewLogs } from "../../../../hooks/useReviewLogs";
 import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
 import ReviewReplyThread from "../../../shared/ReviewReplyThread";
+import ErrorNotice from "../../../../components/ErrorNotice";
 
-export default function DetailsStatusHistory({ submissionId }) {
-  const { data, isLoading } = useReviewLogs({ submissionId, pageSize: 100 });
+export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
+  const { data, isLoading, isError, error, refetch } = useReviewLogs({ submissionId, pageSize: 100 });
   const logs = data?.results || [];
 
   const formatStatus = (status) => {
@@ -30,6 +31,7 @@ export default function DetailsStatusHistory({ submissionId }) {
   };
 
   if (isLoading) return <PanelSkeleton kind="timeline" label="Loading status history" />;
+  if (isError && (!data || [403, 404].includes(error?.response?.status))) return <ErrorNotice message="Unable to load review history." onRetry={refetch} />;
 
   return (
     <section
@@ -165,7 +167,7 @@ export default function DetailsStatusHistory({ submissionId }) {
                     {log.remarks_text?.trim() && (
                       <div className="mt-2 rounded-lg border border-[#dbe4f0] bg-[#f1f5fd] px-3 py-2.5">
                         <p className="m-0 font-inter text-[13px] leading-6 text-[#142d55]">{log.remarks_text}</p>
-                        <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />
+                        <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} onAccessLost={onAccessLost} />
                       </div>
                     )}
                   </div>

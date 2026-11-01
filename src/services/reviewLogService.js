@@ -1,16 +1,19 @@
 import apiClient from "../lib/axios";
 
-const REPLY_PAGE_SIZE = 20;
-
 export const reviewLogService = {
-  async getReplies(logId, { page = 1, pageSize = 20 } = {}) {
+  async getReplies(logId, { page = 1, pageSize = 20, signal } = {}) {
     const response = await apiClient.get(`/review-logs/${logId}/replies/`, {
-      params: { page, page_size: pageSize },
+      params: { page, page_size: pageSize }, signal,
     });
     return response.data;
   },
-  async createReply(logId, payload) {
-    const response = await apiClient.post(`/review-logs/${logId}/replies/`, payload);
+  async createReply(logId, payload, { signal } = {}) {
+    // Both existing reply UIs share the same canonical REST payload.
+    const response = await apiClient.post(`/review-logs/${logId}/replies/`, {
+      message: payload.message,
+      parent_reply: payload.parent_reply ?? payload.parentReply ?? null,
+      client_request_id: payload.client_request_id ?? payload.clientRequestId,
+    }, { signal });
     return response.data;
   },
   async getReviewLogs({
@@ -39,19 +42,4 @@ export const reviewLogService = {
     return response.data;
   },
 
-  async getReplies(logId, { page = 1, pageSize = REPLY_PAGE_SIZE } = {}) {
-    const response = await apiClient.get(`/review-logs/${logId}/replies/`, {
-      params: { page, page_size: pageSize },
-    });
-    return response.data;
-  },
-
-  async createReply(logId, { message, parentReply = null, clientRequestId }) {
-    const response = await apiClient.post(`/review-logs/${logId}/replies/`, {
-      message,
-      parent_reply: parentReply,
-      client_request_id: clientRequestId,
-    });
-    return response.data;
-  },
 };

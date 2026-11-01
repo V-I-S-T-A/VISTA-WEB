@@ -6,9 +6,9 @@ export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
 
   const showToast = useCallback(
-    (message, type = "success", duration = 5000) => {
+    (message, type = "success", duration = 5000, options = {}) => {
       const id = crypto.randomUUID();
-      setToasts((t) => [...t, { id, message, type }]);
+      setToasts((t) => [...t, { id, message, type, ...options }]);
       setTimeout(
         () => setToasts((t) => t.filter((x) => x.id !== id)),
         duration,
@@ -16,9 +16,12 @@ export function ToastProvider({ children }) {
     },
     [],
   );
+  const clearToasts = useCallback((scope) => {
+    setToasts((items) => items.filter((item) => item.scope !== scope));
+  }, []);
 
   return (
-    <ToastContext.Provider value={{ showToast }}>
+    <ToastContext.Provider value={{ showToast, clearToasts }}>
       {children}
       <div
         style={{
@@ -49,8 +52,15 @@ export function ToastProvider({ children }) {
             ) : (
               <CheckCircle2 className="text-green-600 w-4 h-4 flex-shrink-0" />
             )}
-            <span style={{ fontSize: 13, color: "#374151", minWidth: 0, overflowWrap: "anywhere" }}>{t.message}</span>
+            {t.onClick ? <button
+              type="button"
+              onClick={t.onClick}
+              aria-label={`Open notification: ${t.message}`}
+              style={{ fontSize: 13, color: "#374151", minWidth: 0, overflowWrap: "anywhere", textAlign: "left", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+            >{t.message}</button> : <span style={{ fontSize: 13, color: "#374151", minWidth: 0, overflowWrap: "anywhere" }}>{t.message}</span>}
             <button
+              type="button"
+              aria-label="Dismiss toast"
               onClick={() => setToasts((ts) => ts.filter((x) => x.id !== t.id))}
               style={{
                 marginLeft: "auto",
