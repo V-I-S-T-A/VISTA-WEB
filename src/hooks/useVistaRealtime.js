@@ -30,8 +30,12 @@ export default function useVistaRealtime() {
       loadNotifications: ({ fresh = false } = {}) => queryClient.fetchQuery({
         queryKey: ['notifications', userId], queryFn: notificationService.getNotifications, staleTime: fresh ? 0 : 1000,
       }),
-      show: item => showToast(item.message || 'A new submission update is available.', 'success', 5000, {
+      show: item => showToast(item.message || 'A new submission update is available.', 'success', item.type === 'review_reply_created' ? 8000 : 5000, {
         scope: toastScope,
+        variant: item.type === 'review_reply_created' ? 'reply' : 'default',
+        actorName: item.actor_name,
+        actorImageUrl: item.actor_image_url,
+        submissionTitle: item.submission_title,
         onClick: async () => {
           if (!isCurrent()) return;
           try { await notificationService.markAsRead(item.notification_id); } catch { /* Keep detail navigation available. */ }
