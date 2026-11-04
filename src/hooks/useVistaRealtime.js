@@ -1,80 +1,96 @@
-import { useEffect } from "react";
-import axios from "axios";
-import { useQueryClient } from "@tanstack/react-query";
-import { API_CONFIG } from "../config/api";
-import { useCurrentUser } from "./useAuth";
-import { createRealtimeSocket } from "../services/realtimeService";
+import { useEffect, useRef } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
+import { useToast } from '../components/toastContext';
+import { useCurrentUser } from './useAuth';
+import { API_CONFIG } from '../config/api';
+import { getAccessToken, refreshAccessToken } from '../lib/axios';
+import { createRealtimeClient, tokenClaims, websocketUrl } from '../services/realtimeService';
+import { REALTIME_UPDATE, refreshRealtimeQueries, createRealtimeQueryRefresher } from '../services/realtimeQueries';
+import { accessScope } from '../utils/accessScope';
+import { notificationService } from '../services/notificationService';
+import { createNotificationToasts } from '../services/notificationToasts';
 
 export default function useVistaRealtime() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const navigateRef = useRef(navigate);
+  useEffect(() => { navigateRef.current = navigate; }, [navigate]);
+  const { showToast, clearToasts } = useToast();
   const { data: user } = useCurrentUser();
+  const scope = accessScope(user);
   const userId = user?.user_id;
-
   useEffect(() => {
-    if (!userId) return undefined;
-
-    let stopped = false;
-    let socket;
-    let retryTimer;
-    let retryCount = 0;
-    let refreshedAfterAuthFailure = false;
-
-    const refreshRelevantQueries = (event) => {
-      if (event.type !== "notification.changed" && event.type !== "review_log.changed" && event.type !== "review_reply.created") return;
-      for (const queryKey of [["student-notifications"], ["submissions"], ["priority-submissions"], ["submission-statistics"], ["review-logs"], ["submission"]]) {
-        queryClient.invalidateQueries({ queryKey });
+    if (!userId || !localStorage.getItem('access_token')) return;
+    const isCurrent = () => String(tokenClaims(localStorage.getItem('access_token') || '').user_id) === String(userId);
+    const toastScope = `notifications:${userId}`;
+    const personalToasts = user.role === 'student' ? createNotificationToasts({
+      isCurrent,
+      isVisible: () => !document.hidden,
+      loadNotifications: ({ fresh = false } = {}) => queryClient.fetchQuery({
+        queryKey: ['notifications', userId], queryFn: notificationService.getNotifications, staleTime: fresh ? 0 : 1000,
+      }),
+      show: item => showToast(item.message || 'A new submission update is available.', 'success', item.type === 'review_reply_created' ? 8000 : 5000, {
+        scope: toastScope,
+        variant: item.type === 'review_reply_created' ? 'reply' : 'default',
+        actorName: item.actor_name,
+        actorImageUrl: item.actor_image_url,
+        submissionTitle: item.submission_title,
+        onClick: async () => {
+          if (!isCurrent()) return;
+          try { await notificationService.markAsRead(item.notification_id); } catch { /* Keep detail navigation available. */ }
+          if (!isCurrent()) return;
+          queryClient.invalidateQueries({ queryKey: ['notifications', userId] });
+          clearToasts(toastScope);
+          navigateRef.current(`/student/review-tracker/${item.submission_id}`);
+        },
+      }),
+    }) : null;
+    const refresh = events => refreshRealtimeQueries(queryClient, events, detail => {
+      window.dispatchEvent(new CustomEvent(REALTIME_UPDATE, { detail }));
+    });
+    const trackerRefresh = personalToasts ? createRealtimeQueryRefresher(refresh, isCurrent) : null;
+    const client = createRealtimeClient({
+      url: websocketUrl(API_CONFIG.BASE_URL, window.location.href), userId,
+      getToken: getAccessToken, refreshToken: refreshAccessToken, isCurrent,
+      onStatus: status => window.dispatchEvent(new CustomEvent('vista:realtime-status', { detail: { status } })),
+      onBatch: events => {
+        if (!personalToasts) return refresh(events);
+        // Tracker reads can be slow or retrying; they must not hold personal
+        // alerts or the next socket batch behind an unrelated history request.
+        trackerRefresh.enqueue(events);
+        return personalToasts.receive(events);
+      },
+    });
+    const sessionChanged = () => {
+      if (!isCurrent()) {
+        client.stop();
+        personalToasts?.stop();
+        trackerRefresh?.stop();
+        clearToasts(toastScope);
       }
-      window.dispatchEvent(new CustomEvent("vista:realtime-notification", { detail: event }));
     };
-
-    const reconnect = () => {
-      if (stopped) return;
-      const delay = Math.min(1000 * 2 ** retryCount, 30000);
-      retryCount = Math.min(retryCount + 1, 5);
-      retryTimer = window.setTimeout(connect, delay);
+    const visible = () => {
+      if (!document.hidden) {
+        void personalToasts?.reveal();
+        client.recover();
+      }
     };
-
-    const connect = () => {
-      if (stopped) return;
-      socket = createRealtimeSocket({
-        onEvent: refreshRelevantQueries,
-        onReady: () => {
-          retryCount = 0;
-          refreshedAfterAuthFailure = false;
-          queryClient.invalidateQueries();
-        },
-        onDisconnected: async (event) => {
-          if (stopped) return;
-          if (event.code === 4401) {
-            if (refreshedAfterAuthFailure) return;
-            refreshedAfterAuthFailure = true;
-            try {
-              const refresh = localStorage.getItem("refresh_token");
-              if (!refresh) throw new Error("Missing refresh token");
-              const { data: tokens } = await axios.post(
-                `${API_CONFIG.BASE_URL}/auth/token/refresh/`,
-                { refresh },
-              );
-              if (stopped) return;
-              if (tokens.access) localStorage.setItem("access_token", tokens.access);
-              if (tokens.refresh) localStorage.setItem("refresh_token", tokens.refresh);
-              retryCount = 0;
-            } catch {
-              // Stop socket retries; an authenticated HTTP request handles session recovery.
-              return;
-            }
-          }
-          reconnect();
-        },
-      });
-      if (!socket) reconnect();
-    };
-
-    connect();
+    window.addEventListener('storage', sessionChanged);
+    window.addEventListener('vista:session-changed', sessionChanged);
+    window.addEventListener('online', visible);
+    document.addEventListener('visibilitychange', visible);
+    client.start();
     return () => {
-      stopped = true;
-      window.clearTimeout(retryTimer);
-      socket?.close(1000, "Component cleanup");
+      client.stop();
+      personalToasts?.stop();
+      trackerRefresh?.stop();
+      clearToasts(toastScope);
+      window.removeEventListener('storage', sessionChanged);
+      window.removeEventListener('vista:session-changed', sessionChanged);
+      window.removeEventListener('online', visible);
+      document.removeEventListener('visibilitychange', visible);
     };
-  }, [userId, queryClient]);
+  }, [queryClient, userId, user?.role, scope, showToast, clearToasts]);
+  return null;
 }

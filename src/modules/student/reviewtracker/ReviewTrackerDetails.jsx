@@ -2,8 +2,8 @@ import { SystemScopeBanner } from "../../../components/banners/WorkspaceBanners"
 import PageSkeleton from "../../../components/loading/PageSkeleton";
 import { getApiErrorMessage } from "../../../utils/apiErrorMessage";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
-import { useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect, useState, useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { submissionService } from "../../../services/submissionService";
 import Header from "../../../components/Header";
 import Sidebar from "../../../components/Sidebar";
@@ -21,12 +21,15 @@ export default function ReviewTrackerDetails() {
   const navigate = useNavigate();
   const { isOpen, open, close } = useSidebar();
   const { data: currentUser, isLoading: isLoadingUser } = useCurrentUser();
+  const [deniedSubmissionId, setDeniedSubmissionId] = useState(null);
+  const queryClient = useQueryClient();
 
   // BULLETPROOF ID EXTRACTION:
   // Grabs the ID from params, OR forcefully extracts it from the end of the URL
   // just in case your App.jsx route parameter is named something else.
   const id =
     params.id || params.submissionId || location.pathname.split("/").pop();
+  const handleAccessLost = useCallback(() => setDeniedSubmissionId(id), [id]);
 
   useEffect(() => {
     if (isLoadingUser) return;
@@ -40,9 +43,21 @@ export default function ReviewTrackerDetails() {
     error,
   } = useQuery({
     queryKey: ["submission", id],
-    queryFn: () => submissionService.getSubmissionById(id),
-    enabled: !!id && currentUser?.role === "student",
+    queryFn: async () => {
+      try { return await submissionService.getSubmissionById(id); }
+      catch (requestError) {
+        if ([401, 403, 404].includes(requestError.response?.status)) setDeniedSubmissionId(id);
+        throw requestError;
+      }
+    },
+    enabled: !!id && currentUser?.role === "student" && deniedSubmissionId !== id,
   });
+
+  useEffect(() => {
+    if ([401, 403, 404].includes(error?.response?.status)) {
+      queryClient.removeQueries({ queryKey: ["submission", id], exact: true });
+    }
+  }, [error, id, queryClient]);
 
   if (isLoadingUser || (currentUser?.role === "student" && isLoading)) return <PageSkeleton />;
 
@@ -53,7 +68,7 @@ export default function ReviewTrackerDetails() {
 
   if (!currentUser) return <PageSkeleton />;
 
-  if (isError || !submission) {
+  if ((isError && [403, 404].includes(error?.response?.status)) || !submission || deniedSubmissionId === id) {
     return (
       <div className="flex min-h-screen bg-white items-center justify-center flex-col gap-4">
         <div className="p-8 bg-red-50 border border-red-200 rounded-xl text-center max-w-lg">
@@ -93,8 +108,8 @@ export default function ReviewTrackerDetails() {
           <div className="page-content-stack w-full">
             <DetailsHeader submission={submission} />
             <DetailsNotice status={submission.status} />
-            <DetailsSubmissionInfo submission={submission} />
-            <DetailsStatusHistory submissionId={submission.submission_id} />
+            <DetailsSubmissionInfo submission={submission} isOwner={String(submission.submitted_by) === String(currentUser.user_id)} />
+            <DetailsStatusHistory key={submission.submission_id} submissionId={submission.submission_id} onAccessLost={handleAccessLost} />
             <SystemScopeBanner />
           </div>
         </main>

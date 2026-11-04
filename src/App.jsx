@@ -2,7 +2,7 @@ import { lazy, Suspense } from "react";
 import PageSkeleton from "./components/loading/PageSkeleton";
 import PublicLayout from "./components/PublicLayout";
 import RouteFrame from "./components/RouteFrame";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 const LandingPage = lazy(() => import("./modules/LandingPage"));
 const GetApp = lazy(() => import("./modules/GetApp"));
 const LoginPage = lazy(() => import("./modules/LoginPage"));
@@ -28,13 +28,14 @@ const StudentAuditLogs = lazy(() => import("./modules/student/AuditLogs"));
 const StaffGdriveCallback = lazy(() => import("./modules/staff/gdrive/GdriveCallback"));
 import {useDriveUploadWatcher} from "./hooks/useBackgroundDriveUpload";
 import useVistaRealtime from "./hooks/useVistaRealtime";
+import StaffNotificationToasts from "./components/StaffNotificationToasts";
 
 function App() {
   useDriveUploadWatcher(); // Start the background drive upload watcher
   useVistaRealtime();
   return (
-    <BrowserRouter>
       <RouteFrame>
+      <StaffNotificationToasts />
       <Routes>
         <Route element={<PublicLayout />}>
           <Route path="/" element={<LandingPage />} />
@@ -81,7 +82,6 @@ function App() {
         <Route path="/student/profile" element={<Suspense fallback={<PageSkeleton />}><StudentProfile /></Suspense>} />
       </Routes>
       </RouteFrame>
-    </BrowserRouter>
   );
 }
 

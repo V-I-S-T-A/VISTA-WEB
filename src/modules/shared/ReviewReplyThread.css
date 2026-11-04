@@ -1,0 +1,92 @@
+.review-reply-thread {
+  min-width: 0;
+  margin-top: 16px;
+}
+
+.review-reply-thread .reply-thread-list {
+  margin-left: 4px;
+  padding: 10px 0 10px 20px;
+}
+
+.review-reply-thread .reply-compose {
+  display: flex;
+  min-width: 0;
+  margin-top: 16px;
+  gap: 12px;
+}
+
+.review-reply-thread .reply-compose-field {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.review-reply-thread .reply-compose-textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 88px;
+  padding: 12px 16px;
+  line-height: 1.5;
+}
+
+.review-reply-thread .reply-compose-textarea:focus {
+  border-color: #1f5cae;
+  box-shadow: 0 0 0 3px rgb(31 92 174 / 14%);
+}
+
+.review-reply-thread .reply-link-row {
+  display: flex;
+  min-width: 0;
+  margin-top: 10px;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-reply-thread .reply-link-input {
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 42px;
+  padding: 9px 14px;
+}
+
+.review-reply-thread .reply-link-remove,
+.review-reply-thread .reply-link-add {
+  display: inline-flex;
+  box-sizing: border-box;
+  width: 42px;
+  min-width: 42px;
+  height: 42px;
+  padding: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.review-reply-thread .reply-compose-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.review-reply-thread .reply-send-button {
+  display: inline-flex;
+  box-sizing: border-box;
+  min-width: 92px;
+  min-height: 42px;
+  padding: 10px 16px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 639px) {
+  .review-reply-thread .reply-compose {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .review-reply-thread .reply-compose-actions {
+    align-self: flex-end;
+  }
+}

@@ -48,14 +48,14 @@ function StatusDot({ status }) {
 
   return (
     <span
-      className="inline-flex items-center gap-1.5 font-inter font-semibold"
+      className="inline-flex w-max items-center gap-2 whitespace-nowrap font-inter font-semibold"
       style={{ color: config.text, fontSize: "13px" }}
     >
       <span
         className="h-1.5 w-1.5 rounded-full flex-shrink-0"
         style={{ backgroundColor: config.dot }}
       />
-      {uiStatus}
+      <span className="shrink-0 whitespace-nowrap">{uiStatus}</span>
     </span>
   );
 }

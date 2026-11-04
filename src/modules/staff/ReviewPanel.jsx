@@ -13,9 +13,10 @@ export default function ReviewPanel() {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: currentUser, isLoading } = useCurrentUser();
-  const [selectedSubmission, setSelectedSubmission] = useState(
-    location.state?.submission || null
-  );
+  const [selection, setSelection] = useState({ key: location.key, submission: location.state?.submission || null });
+  // The same mounted review page can receive another notification selection.
+  const selectedSubmission = selection.key === location.key ? selection.submission : location.state?.submission || null;
+  const setSelectedSubmission = submission => setSelection({ key: location.key, submission });
   const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {

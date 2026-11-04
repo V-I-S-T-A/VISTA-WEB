@@ -4,9 +4,10 @@ import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useReviewLogs } from "../../../../hooks/useReviewLogs";
 import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
 import ReviewReplyThread from "../../../shared/ReviewReplyThread";
+import ErrorNotice from "../../../../components/ErrorNotice";
 
-export default function DetailsStatusHistory({ submissionId }) {
-  const { data, isLoading } = useReviewLogs({ submissionId, pageSize: 100 });
+export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
+  const { data, isLoading, isError, error, refetch } = useReviewLogs({ submissionId, pageSize: 100 });
   const logs = data?.results || [];
 
   const formatStatus = (status) => {
@@ -30,6 +31,7 @@ export default function DetailsStatusHistory({ submissionId }) {
   };
 
   if (isLoading) return <PanelSkeleton kind="timeline" label="Loading status history" />;
+  if (isError && (!data || [403, 404].includes(error?.response?.status))) return <ErrorNotice message="Unable to load review history." onRetry={refetch} />;
 
   return (
     <section
@@ -163,10 +165,25 @@ export default function DetailsStatusHistory({ submissionId }) {
                     </div>
 
                     {log.remarks_text?.trim() && (
-                      <div className="mt-2 rounded-lg border border-[#dbe4f0] bg-[#f1f5fd] px-3 py-2.5">
-                        <p className="m-0 font-inter text-[13px] leading-6 text-[#142d55]">{log.remarks_text}</p>
-                        <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />
-                      </div>
+                      <>
+                        <div
+                          style={{
+                            marginTop: "10px",
+                            padding: "12px 16px",
+                            borderRadius: "10px",
+                            border: "1px solid #dbe4f0",
+                            background: "#f1f5fd",
+                          }}
+                        >
+                          <p className="m-0 font-inter font-semibold text-gray-600" style={{ fontSize: "12px" }}>
+                            Remarks &amp; feedback
+                          </p>
+                          <p className="m-0 font-inter text-[#142d55]" style={{ marginTop: "6px", fontSize: "13px", lineHeight: 1.5 }}>
+                            {log.remarks_text}
+                          </p>
+                        </div>
+                        <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} onAccessLost={onAccessLost} />
+                      </>
                     )}
                   </div>
                 </li>

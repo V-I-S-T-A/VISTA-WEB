@@ -22,8 +22,8 @@ export const authService = {
     return resp.data;
   },
 
-  async me() {
-    const resp = await apiClient.get(API_ENDPOINTS.AUTH.ME);
+  async me({ signal } = {}) {
+    const resp = await apiClient.get(API_ENDPOINTS.AUTH.ME, { signal });
     return resp.data;
   },
 
