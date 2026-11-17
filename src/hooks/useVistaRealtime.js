@@ -24,7 +24,7 @@ export default function useVistaRealtime() {
     if (!userId || !localStorage.getItem('access_token')) return;
     const isCurrent = () => String(tokenClaims(localStorage.getItem('access_token') || '').user_id) === String(userId);
     const toastScope = `notifications:${userId}`;
-    const personalToasts = user.role === 'student' ? createNotificationToasts({
+    const personalToasts = ['student', 'admin'].includes(user.role) ? createNotificationToasts({
       isCurrent,
       isVisible: () => !document.hidden,
       loadNotifications: ({ fresh = false } = {}) => queryClient.fetchQuery({
@@ -36,13 +36,16 @@ export default function useVistaRealtime() {
         actorName: item.actor_name,
         actorImageUrl: item.actor_image_url,
         submissionTitle: item.submission_title,
+        headline: item.type === 'review_reply_created' ? 'replied to your submission' : 'has a submission update',
+        detail: item.message,
+        actionLabel: item.type === 'review_reply_created' ? 'View conversation' : 'View submission',
         onClick: async () => {
           if (!isCurrent()) return;
           try { await notificationService.markAsRead(item.notification_id); } catch { /* Keep detail navigation available. */ }
           if (!isCurrent()) return;
           queryClient.invalidateQueries({ queryKey: ['notifications', userId] });
           clearToasts(toastScope);
-          navigateRef.current(`/student/review-tracker/${item.submission_id}`);
+          navigateRef.current(user.role === 'admin' ? '/admin/dashboard' : `/student/review-tracker/${item.submission_id}`);
         },
       }),
     }) : null;

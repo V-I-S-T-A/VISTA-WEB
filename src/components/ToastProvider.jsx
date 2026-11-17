@@ -53,7 +53,7 @@ export function ToastProvider({ children }) {
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <img src={vistaLogo} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
-              <span style={{ flex: 1, color: "#64748b", fontSize: 12, fontWeight: 700, letterSpacing: ".04em" }}>VISTA</span>
+              <span style={{ flex: 1, color: "#64748b", fontSize: 12, fontWeight: 700, letterSpacing: ".04em" }}>VISTA - USTP CDO</span>
               <button
                 type="button"
                 aria-label="Dismiss reply notification"
@@ -67,7 +67,7 @@ export function ToastProvider({ children }) {
               <button
                 type="button"
                 onClick={t.onClick}
-                aria-label={`Open reply from ${t.actorName || "a staff member"} on ${t.submissionTitle || "your submission"}`}
+                aria-label={`Open notification about ${t.submissionTitle || "your submission"}`}
                 style={{ display: "flex", width: "100%", minWidth: 0, alignItems: "flex-start", gap: 12, padding: 0, border: 0, background: "transparent", color: "inherit", textAlign: "left", cursor: "pointer" }}
               >
                 <img
@@ -78,12 +78,13 @@ export function ToastProvider({ children }) {
                 />
                 <span style={{ display: "flex", minWidth: 0, flexDirection: "column", gap: 3, paddingTop: 2 }}>
                   <span style={{ color: "#142d55", fontSize: 14, lineHeight: 1.4 }}>
-                    <strong>{t.actorName || "Staff member"}</strong> replied to your submission
+                    <strong>{t.actorName || "VISTA"}</strong> {t.headline || "updated your submission"}
                   </span>
                   <span style={{ overflow: "hidden", color: "#64748b", fontSize: 13, lineHeight: 1.4, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {t.submissionTitle || "Open your submission"}
                   </span>
-                  <span style={{ marginTop: 4, color: "#1f5cae", fontSize: 12, fontWeight: 700 }}>View conversation →</span>
+                  {t.detail && <span style={{ color: "#64748b", fontSize: 12, lineHeight: 1.4 }}>{t.detail}</span>}
+                  <span style={{ marginTop: 4, color: "#1f5cae", fontSize: 12, fontWeight: 700 }}>{t.actionLabel || "View notification"} →</span>
                 </span>
               </button>
             ) : (
