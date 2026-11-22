@@ -360,11 +360,11 @@ export default function AuditLogHeader({ onViewLog }) {
                       className="px-5 py-2.5 pl-6 whitespace-nowrap w-[180px] min-w-[180px]"
                       style={{ paddingRight: CONTENT_PADDING }}
                     >
-                      <button
+                      <button data-ui="secondary"
                         type="button"
                         onClick={() => onViewLog && onViewLog(log)}
-                        className="inline-flex items-center gap-1.5 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50"
-                        style={{ fontSize: "12px", padding: "6px 14px" }}
+                        className="inline-flex items-center gap-1.5 font-inter font-bold transition active:scale-95 border"
+                        style={{  }}
                       >
                         <Eye style={{ width: "13px", height: "13px" }} aria-hidden="true" />
                         VIEW DETAILS

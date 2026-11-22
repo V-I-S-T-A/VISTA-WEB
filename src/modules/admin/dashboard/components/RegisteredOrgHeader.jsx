@@ -28,7 +28,7 @@ export default function RegisteredOrgHeader() {
         title="Organization Management"
         subtitle="Manage registered student organizations, view details, and configure institution settings."
       >
-        <button
+        <button data-ui="navigation"
           type="button"
           onClick={() => navigate("/admin/dashboard")}
           className="inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white font-inter font-bold text-gray-700 transition-colors hover:bg-gray-50"
@@ -42,11 +42,11 @@ export default function RegisteredOrgHeader() {
           Dashboard
         </button>
 
-        <button
+        <button data-ui="primary"
           type="button"
           onClick={() => setShowAddOrgModal(true)}
-          className="inline-flex items-center gap-1.5 rounded border border-green-800 bg-[#22c55e] font-inter font-bold text-white transition-colors hover:bg-[#16a34a]"
-          style={{ fontSize: "12px", padding: "8px 14px", marginTop: "2px" }}
+          className="inline-flex items-center gap-1.5 border border-green-800 font-inter font-bold transition-colors"
+          style={{ marginTop: "2px" }}
         >
           <Building2
             style={{ width: "13px", height: "13px" }}

@@ -36,14 +36,14 @@ export default function ProfileAvatarUpload({ avatarUrl, onAvatarChange }) {
 
   return (
     <div
-      className="flex flex-col items-center flex-shrink-0"
+      className="profile-avatar-upload flex flex-col items-center flex-shrink-0"
       style={{ width: "150px" }}
     >
-      <div className="relative">
+      <div className="profile-avatar-frame relative">
         <img
           src={displayUrl}
           alt="Profile avatar"
-          className="rounded-full object-cover"
+          className="profile-avatar-image rounded-full object-cover"
           style={{
             width: "140px",
             height: "140px",
@@ -71,14 +71,14 @@ export default function ProfileAvatarUpload({ avatarUrl, onAvatarChange }) {
       </div>
 
       {displayUrl !== defaultAvatar && (
-        <button
+        <button data-ui="tertiary"
           type="button"
           onClick={() => {
             setPreviewUrl(null);
             onAvatarChange?.("REMOVE");
           }}
-          className="font-inter font-bold text-red-300 hover:text-red-200 transition-colors"
-          style={{ fontSize: "14px", marginTop: "12px" }}
+          className="profile-remove-avatar font-inter"
+          style={{ marginTop: "12px" }}
         >
           Remove Profile
         </button>

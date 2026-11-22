@@ -1,30 +1,99 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Public+Sans:wght@400;500;600;700&family=Hahmlet:wght@600&family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
+/* Same licensed font files as Mobile; no network dependency for the app type. */
+@font-face { font-family: "DM Sans"; src: url("./assets/fonts/DMSans_400Regular.ttf") format("truetype"); font-style: normal; font-weight: 400; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("./assets/fonts/DMSans_500Medium.ttf") format("truetype"); font-style: normal; font-weight: 500; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("./assets/fonts/DMSans_600SemiBold.ttf") format("truetype"); font-style: normal; font-weight: 600; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("./assets/fonts/DMSans_700Bold.ttf") format("truetype"); font-style: normal; font-weight: 700; font-display: swap; }
+@font-face { font-family: "DM Sans"; src: url("./assets/fonts/DMSans_800ExtraBold.ttf") format("truetype"); font-style: normal; font-weight: 800; font-display: swap; }
+
 @theme {
-  --font-hahmlet: "Hahmlet", serif;
-  --font-jakarta: "Plus Jakarta Sans", sans-serif;
-  --font-inter: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-hahmlet: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-jakarta: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-inter: "DM Sans", ui-sans-serif, system-ui, sans-serif;
   --font-display: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Public Sans", ui-sans-serif, system-ui, sans-serif;
-  --color-vista-blue: #1a56a3;
+  --font-body: "DM Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-vista-blue: #1a59a5;
   --color-vista-orange: #f7941d;
 }
 
 :root {
-  --primary-blue: #1a56a3;
-  --accent-orange: #f7941d;
-  --text-dark: #1a56a3;
-  --text-muted: #6b7280;
-  --text-light: #ffffff;
-  --bg-color: #e2eaf2;
-  --border-color: #1a56a3;
-  --input-border: #d1d5db;
+  /* Desktop counterparts of VISTA Mobile's existing presentation tokens. */
+  --ui-canvas: #f3f3f3;
+  --ui-surface: #ffffff;
+  --ui-field: #f7f9fc;
+  --ui-selected: #e8eff8;
+  --ui-blue: #1a59a5;
+  --ui-navy: #142b52;
+  --ui-yellow: #ffc342;
+  --ui-green: #52b764;
+  --ui-on-green: #103f20;
+  --ui-on-yellow: #513600;
+  --ui-text: #1e3a68;
+  --ui-muted: #64748b;
+  --ui-border: #e1e8f0;
+  --ui-control-border: #899bb1;
+  --ui-danger: #b91c1c;
+  --ui-success: #15803d;
+  --ui-warning: #875100;
+  --ui-on-brand: #ffffff;
+  --ui-blue-hover: #174e91;
+  --ui-blue-pressed: #142b52;
+  --ui-danger-hover: #991b1b;
+  --ui-disabled: #eef2f6;
+  --ui-success-surface: #dcfce7;
+  --ui-warning-surface: #fff4d5;
+  --ui-error-surface: #fee2e2;
+  --ui-ticket: #393a70;
+  --ui-ticket-text: #e8e7fa;
+  --ui-ticket-muted: #d6d5ee;
+  --radius-chip: 12px;
+  --radius-control: 12px;
+  --radius-field: 16px;
+  --radius-card: 20px;
+  --radius-dialog: 28px;
+  --radius-button: 24px;
+  --radius-compact: 10px;
+  --control-height: 42px;
+  --control-compact: 36px;
+  --type-title: 24px;
+  --type-heading: 16px;
+  --type-body: 14px;
+  --type-label: 13px;
+  --type-meta: 12px;
+  --line-body: 1.5;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --shadow-card: 0 2px 8px #142b520a;
+  --shadow-raised: 0 8px 24px #142b5214;
+  --shadow-dialog: 0 24px 72px #142b5238;
+  --motion-fast: 150ms;
+  --motion-contextual: 200ms;
+  --motion-dialog: 220ms;
+  --ease-ui: cubic-bezier(.2,.8,.2,1);
+  --layer-header: 30;
+  --layer-drawer: 50;
+  --layer-dialog: 150;
+  --layer-toast: 200;
+  --layer-popover: 10020;
+  --primary-blue: var(--ui-blue);
+  --accent-orange: var(--ui-yellow);
+  --text-dark: var(--ui-text);
+  --text-muted: var(--ui-muted);
+  --text-light: var(--ui-on-brand);
+  --bg-color: var(--ui-canvas);
+  --border-color: var(--ui-border);
+  --input-border: var(--ui-control-border);
   --public-gutter: clamp(20px, 5vw, 96px);
   --public-header-height: 80px;
-  --public-surface: #e2eaf2;
-  --public-surface-muted: #d3dfec;
-  --public-border: #b9cadc;
+  --public-surface: var(--ui-surface);
+  --public-surface-muted: var(--ui-field);
+  --public-border: var(--ui-border);
 }
 
 * {
@@ -34,7 +103,7 @@
 }
 
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--font-body);
   background-color: var(--bg-color);
   color: var(--text-dark);
   -webkit-font-smoothing: antialiased;
@@ -42,18 +111,16 @@ body {
 }
 
 html,body,#root { min-height:100%; }
-#root,.route-frame { min-height:100vh; background:#e2eaf2; }
-.route-frame[data-surface="app"] { background:#f0f2ef; }
-.route-frame[data-surface="legal"] { background:#cddde8; }
-.route-frame[data-surface="dashboard"] { background:#f7f9fc; }
+#root,.route-frame { min-height:100vh; background:var(--ui-canvas); }
+.route-frame[data-surface="app"],.route-frame[data-surface="legal"],.route-frame[data-surface="dashboard"] { background:var(--ui-canvas); }
 .public-layout { display:flex; min-height:100vh; flex-direction:column; }
 .public-layout>main { flex:1; }
-.page-error { position:relative; display:grid; place-items:center; flex:1; min-height:100vh; overflow:hidden; padding:clamp(32px,7vw,88px) 24px; color:#142d55; background:radial-gradient(circle at 12% 14%,#fff3bd66 0,transparent 25%),radial-gradient(circle at 88% 80%,#c0e5ef80 0,transparent 28%),linear-gradient(135deg,#eef5fb 0%,#e2eaf2 60%,#d8e5f1 100%); }
+.page-error { position:relative; display:grid; place-items:center; flex:1; min-height:100vh; overflow:hidden; padding:clamp(32px,7vw,88px) 24px; color:#142d55; background:var(--ui-canvas); }
 .page-error::before,.page-error::after { content:""; position:absolute; border:1px solid #fff8; border-radius:50%; pointer-events:none; }
 .page-error::before { width:min(68vw,720px); aspect-ratio:1; top:-45%; right:-18%; }
 .page-error::after { width:min(46vw,520px); aspect-ratio:1; bottom:-38%; left:-16%; border-color:#9dc9df66; }
 .page-error-card { position:relative; width:min(100%,620px); padding:clamp(28px,5vw,48px); border:1px solid #b9ccdf; border-radius:24px; background:#f7fbfeeb; box-shadow:0 22px 60px #1739671c,0 4px 16px #17396712; }
-.page-error-card::before { content:""; position:absolute; inset:0 0 auto; height:5px; border-radius:24px 24px 0 0; background:linear-gradient(90deg,#1f5cae,#2d83c5,#f4b72c); }
+.page-error-card::before { content:""; position:absolute; inset:0 0 auto; height:5px; border-radius:24px 24px 0 0; background:var(--ui-blue); }
 .page-error-heading { display:flex; align-items:center; gap:12px; }
 .page-error-mark { display:grid; place-items:center; width:42px; height:42px; border-radius:13px; color:#1f5cae; background:#dcebf6; }
 .page-error-logo { display:block; width:auto; height:34px; object-fit:contain; }
@@ -67,8 +134,7 @@ html,body,#root { min-height:100%; }
 .page-error-actions a:hover { color:#17477f; }
 @media (max-width:520px) { .page-error { min-height:100svh; padding:24px 16px; } .page-error-card { border-radius:18px; } .page-error-card::before { border-radius:18px 18px 0 0; } .page-error-actions { align-items:stretch; } .page-error-actions button,.page-error-actions a { width:100%; } }
 /* Available before lazy page CSS arrives, including during first navigation. */
-.public-layout.get-app-page { background:#f0f2ef; }
-.public-layout.legal-page { background:#cddde8; }
+.public-layout.get-app-page,.public-layout.legal-page { background:var(--ui-canvas); }
 .public-layout.get-app-page main .public-shell,
 .public-layout.get-app-page footer .public-shell { max-width:1240px; }
 .public-layout.legal-page main .public-shell,
@@ -118,12 +184,13 @@ html,body,#root { min-height:100%; }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 22px;
-  border-radius: 10px;
-  font-size: 0.95rem;
+  min-height: var(--control-height);
+  padding: 10px 20px;
+  border-radius: var(--radius-button);
+  font-size: var(--type-body);
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s, transform 0.15s, box-shadow 0.15s;
+  transition: background var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast);
   text-decoration: none;
   font-family: inherit;
 }
@@ -135,9 +202,9 @@ html,body,#root { min-height:100%; }
 }
 
 .btn-primary:hover {
-  background-color: #154682;
-  transform: translateY(-1px);
+  background-color: var(--ui-blue-hover);
 }
+.btn-primary:active { background-color: var(--ui-blue-pressed); }
 
 .btn-outline {
   background-color: white;
@@ -303,15 +370,15 @@ html,body,#root { min-height:100%; }
   width: 100%;
   margin: -0.65rem 0 1.25rem;
   padding: 12px 14px;
-  border: 1px solid #f4c3b9;
-  border-radius: 12px;
-  background: #fff3ef;
-  color: #9b382a;
-  font-size: 0.82rem;
+  border: 1px solid var(--ui-danger);
+  border-radius: var(--radius-field);
+  background: var(--ui-error-surface);
+  color: var(--ui-danger);
+  font-size: var(--type-label);
   line-height: 1.5;
 }
 
-.login-error svg { flex: 0 0 auto; margin-top: 1px; color: #d45a47; }
+.login-error svg { flex: 0 0 auto; margin-top: 1px; color: var(--ui-danger); }
 
 .login-field {
   width: 100%;
@@ -320,25 +387,25 @@ html,body,#root { min-height:100%; }
 
 .login-label {
   display: block;
-  font-size: 0.9rem;
+  font-size: var(--type-label);
   font-weight: 500;
-  color: #374151;
+  color: var(--ui-text);
   margin-bottom: 0.5rem;
 }
 
 .login-input {
   width: 100%;
   border: 1px solid var(--input-border);
-  border-radius: 10px;
+  border-radius: var(--radius-field);
   padding: 0.75rem 0.9rem;
-  font-size: 0.95rem;
-  color: #111827;
+  font-size: var(--type-body);
+  color: var(--ui-text);
   font-family: inherit;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .login-input::placeholder {
-  color: #9ca3af;
+  color: var(--ui-muted);
 }
 
 .login-input:focus {
@@ -629,35 +696,59 @@ html,body,#root { min-height:100%; }
 
 .app-download-dialog {
   position: relative;
-  width: min(100%, 360px);
+  width: min(100%, 460px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 14px;
-  padding: 28px 22px 24px;
-  border-radius: 16px;
-  background: #fff;
-  color: #334155;
+  padding: 28px;
+  border-radius: 24px;
+  background: #f7f6f2;
+  color: var(--ui-text);
   text-align: center;
-  box-shadow: 0 20px 60px rgb(15 23 42 / 25%);
+  box-shadow: var(--shadow-dialog);
 }
 
 .app-download-dialog h2 {
-  padding-right: 18px;
-  color: #1a51a5;
-  font-size: 1.25rem;
+  margin: 8px 0 0;
+  color: var(--ui-navy);
+  font-size: 24px;
+  font-weight: 700;
 }
+
+.app-download-brand { display:flex; align-items:center; align-self:stretch; gap:9px; min-height:42px; padding-right:46px; margin-bottom:10px; color:var(--ui-blue); font:700 22px var(--font-inter); }
+.app-download-brand img { width:34px; height:34px; object-fit:contain; }
+.app-download-qr-card { display:grid; place-items:center; width:min(100%,270px); aspect-ratio:1; margin-top:2px; padding:12px; border:1px solid #e4e7eb; border-radius:21px; background:#fff; box-shadow:0 10px 28px #102b490c; }
+.app-download-dialog>p { max-width:360px; margin:0; color:#626b76; font-size:15px; line-height:1.6; }
+.app-download-version { color:#626b76; font-size:12px; }
 
 .app-download-dialog > a {
-  color: #1a51a5;
-  font-weight: 700;
-  text-decoration: underline;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap:10px;
+  width:100%;
+  min-height:58px;
+  margin-top:8px;
+  padding:14px 18px;
+  border-radius:12px;
+  background: var(--ui-blue);
+  color: var(--ui-on-brand);
+  font-size: var(--type-body);
+  font-weight: 600;
+  text-decoration: none;
 }
+.app-download-dialog > a:hover { background: var(--ui-blue-hover); }
+.app-download-dialog > a:active { background: var(--ui-blue-pressed); }
 
 .app-download-qr {
-  width: 220px;
-  height: 220px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
   object-fit: contain;
+  image-rendering: pixelated;
 }
 
 .app-download-fallback {
@@ -667,17 +758,24 @@ html,body,#root { min-height:100%; }
 
 .app-download-close {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 24px;
+  right: 24px;
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   place-items: center;
   border: 0;
   border-radius: 50%;
-  background: transparent;
-  color: #64748b;
+  background: #e9e8e4;
+  color: var(--ui-navy);
   cursor: pointer;
+}
+.app-download-close:hover { background:#ddddd8; }
+@media(max-width:420px) {
+  .app-download-backdrop { padding:16px; }
+  .app-download-dialog { padding:22px; max-height:calc(100dvh - 32px); }
+  .app-download-close { top:22px; right:22px; }
+  .app-download-dialog h2 { font-size:22px; }
 }
 
 @media (max-width: 480px) {
@@ -776,7 +874,7 @@ html,body,#root { min-height:100%; }
   font-weight: 800;
   letter-spacing: .035em;
   line-height: 1;
-  color: #1f5cae;
+  color: var(--ui-blue);
   white-space: nowrap;
 }
 .public-header .header-left { flex: 0 0 auto; }
@@ -788,14 +886,14 @@ html,body,#root { min-height:100%; }
   font-size: 14px;
   font-weight: 600;
   white-space: nowrap;
-  border-radius: 10px;
+  border-radius: var(--radius-button);
 }
-.public-header .get-app-qr-button { width: 44px; height: 44px; border-radius: 10px; }
+.public-header .get-app-qr-button { width: 44px; height: 44px; border-radius: var(--radius-control); }
 .public-header .header-right > img { margin-left: 4px; }
 .app-label-short { display: none; }
 .public-header button:focus-visible,
 .public-header a:focus-visible {
-  outline: 3px solid #f7941d;
+  outline: 3px solid var(--ui-blue);
   outline-offset: 4px;
 }
 .footer-legal-links {
@@ -842,15 +940,15 @@ html,body,#root { min-height:100%; }
 }
 .login-hero { padding-inline: max(var(--public-gutter), calc((100% - 1600px) / 2)); }
 
-/* Muted public surfaces reduce the large areas of bright white. */
+/* Public pages share the product's neutral fields and white surfaces. */
 .public-header .btn-outline,
 .public-header .get-app-qr-button {
   background: var(--public-surface);
-  border-color: var(--public-border);
+  border-color: var(--ui-control-border);
 }
 .public-header .btn-outline:hover,
 .public-header .get-app-qr-button:hover {
   background: var(--public-surface-muted);
 }
 .login-card { background: var(--public-surface); }
-.login-input { background: #edf2f7; border-color: var(--public-border); }
+.login-input { background: var(--ui-field); border-color: var(--ui-control-border); }

@@ -1,18 +1,18 @@
+import AnchoredPopover from "../../../../components/AnchoredPopover";
 import VistaSelect from "../../../../components/VistaSelect";
 import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState } from "react";
 import {
-  Search,
   Filter,
   Download,
-  ImageIcon,
   ChevronLeft,
   ChevronRight,
   CheckCircle2,
 } from "lucide-react";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import defaultUser from "../../../../assets/shared/default_user.webp";
-import { ActionButton } from "../../../../components";
+import { ActionButton, SubmissionStatusLabel, TableSearchBar } from "../../../../components";
+import { getSubmissionPresentation } from "../../../../config/submissionPresentation";
 
 const PAGE_SIZE = 5;
 const CONTENT_PADDING = "24px";
@@ -34,30 +34,8 @@ const UI_STATUS_MAP = {
   resubmission_required: "Resubmission Required",
 };
 
-const STATUS_CONFIG = {
-  Reviewing: { dot: "#f59e0b", text: "#b45309" },
-  New: { dot: "#3b82f6", text: "#1d4ed8" },
-  Verified: { dot: "#22c55e", text: "#15803d" },
-  Flagged: { dot: "#ef4444", text: "#b91c1c" },
-  "Resubmission Required": { dot: "#7c3aed", text: "#6d28d9" },
-};
-
 function StatusDot({ status }) {
-  const uiStatus = UI_STATUS_MAP[status] || "New"; // Default fallback
-  const config = STATUS_CONFIG[uiStatus] ?? { dot: "#9ca3af", text: "#6b7280" };
-
-  return (
-    <span
-      className="inline-flex w-max items-center gap-2 whitespace-nowrap font-inter font-semibold"
-      style={{ color: config.text, fontSize: "13px" }}
-    >
-      <span
-        className="h-1.5 w-1.5 rounded-full flex-shrink-0"
-        style={{ backgroundColor: config.dot }}
-      />
-      <span className="shrink-0 whitespace-nowrap">{uiStatus}</span>
-    </span>
-  );
+  return <SubmissionStatusLabel status={status} />;
 }
 
 const STATUS_OPTIONS = [
@@ -133,7 +111,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
     status: apiStatus,
   });
 
-  const submissions = data?.results ?? [];
+  const submissions = useMemo(() => data?.results ?? [], [data?.results]);
   const totalCount = data?.count ?? 0;
   const totalPages = data?.total_pages ?? 1;
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -149,10 +127,10 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
   }
 
   return (
-    <section className="responsive-records w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+    <section className="vista-surface responsive-records w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Toolbar */}
       <div
-        className="review-panel-toolbar flex flex-wrap items-center justify-between gap-3 bg-[#1f5cae]"
+        className="vista-panel-heading review-panel-toolbar flex flex-wrap items-center justify-between gap-3"
         style={{
           paddingLeft: CONTENT_PADDING,
           paddingRight: CONTENT_PADDING,
@@ -168,14 +146,15 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
           <div
             style={{
               display: "flex",
-              background: "rgba(255,255,255,0.12)",
-              borderRadius: "8px",
+              background: "var(--ui-selected)",
+              borderRadius: "var(--radius-chip)",
               padding: "3px",
               gap: "4px",
             }}
           >
-            <button
+            <button data-ui="toggle"
               type="button"
+              aria-pressed={activeTab === "active"}
               onClick={() => {
                 setActiveTab("active");
                 setCurrentPage(1);
@@ -183,23 +162,24 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
               }}
               style={{
                 padding: "5px 14px",
-                borderRadius: "6px",
+                borderRadius: "var(--radius-control)",
                 border: "none",
                 cursor: "pointer",
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "12px",
                 fontWeight: "700",
                 backgroundColor:
-                  activeTab === "active" ? "#ffffff" : "transparent",
+                  activeTab === "active" ? "var(--ui-blue)" : "transparent",
                 color:
-                  activeTab === "active" ? "#1f5cae" : "rgba(255,255,255,0.8)",
-                transition: "all 0.15s ease",
+                  activeTab === "active" ? "var(--ui-on-brand)" : "var(--ui-text)",
+                transition: "background-color var(--motion-fast), color var(--motion-fast)",
               }}
             >
               Active
             </button>
-            <button
+            <button data-ui="toggle"
               type="button"
+              aria-pressed={activeTab === "completed"}
               onClick={() => {
                 setActiveTab("completed");
                 setCurrentPage(1);
@@ -207,63 +187,47 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
               }}
               style={{
                 padding: "5px 14px",
-                borderRadius: "6px",
+                borderRadius: "var(--radius-control)",
                 border: "none",
                 cursor: "pointer",
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "12px",
                 fontWeight: "700",
                 display: "flex",
                 alignItems: "center",
                 gap: "5px",
                 backgroundColor:
-                  activeTab === "completed" ? "#ffffff" : "transparent",
+                  activeTab === "completed" ? "var(--ui-blue)" : "transparent",
                 color:
                   activeTab === "completed"
-                    ? "#15803d"
-                    : "rgba(255,255,255,0.8)",
-                transition: "all 0.15s ease",
+                    ? "var(--ui-on-brand)"
+                    : "var(--ui-text)",
+                transition: "background-color var(--motion-fast), color var(--motion-fast)",
               }}
             >
-              <CheckCircle2 style={{ width: "13px", height: "13px" }} />
+              <CheckCircle2 style={{ width: "13px", height: "13px" }} aria-hidden="true" />
               Completed
             </button>
           </div>
         </div>
 
         <div className="review-panel-controls flex items-center gap-2">
-          <div className="relative">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setCurrentPage(1);
-              }}
-              placeholder="Search submissions..."
-              className="font-inter font-medium text-gray-700 placeholder-gray-400 outline-none rounded-md bg-white"
-              style={{
-                fontSize: "12.5px",
-                padding: "7px 12px 7px 30px",
-                width: "190px",
-              }}
-            />
-          </div>
+          <TableSearchBar
+            value={searchTerm}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setCurrentPage(1);
+            }}
+            placeholder="Search submissions..."
+            width="190px"
+          />
 
           <div className="relative">
-            <button
+            <button data-ui="primary" aria-expanded={filterOpen}
               type="button"
               onClick={() => setFilterOpen((p) => !p)}
-              className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
-              style={{
-                fontSize: "12.5px",
-                padding: "7px 14px",
-                backgroundColor: "#12345b",
-              }}
+              className="inline-flex items-center gap-1.5 font-inter font-bold transition hover:brightness-110 active:scale-95"
+              style={{  }}
             >
               <Filter
                 style={{ width: "13px", height: "13px" }}
@@ -273,14 +237,14 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
             </button>
 
             {filterOpen && (
-              <div
-                className="absolute right-0 top-full z-20"
+              <AnchoredPopover onDismiss={() => setFilterOpen(false)} aria-label="Submission filters"
+                className="vista-surface absolute right-0 top-full z-20"
                 style={{
                   marginTop: "8px",
                   width: "288px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--radius-chip)",
                   border: "1px solid #e2e6ee",
-                  backgroundColor: "#ffffff",
+                  backgroundColor: "var(--ui-surface)",
                   boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
                   padding: "16px",
                 }}
@@ -298,7 +262,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     }}
                     className="w-full font-inter outline-none"
                     style={{
-                      borderRadius: "8px",
+                      borderRadius: "var(--radius-field)",
                       border: "1px solid #d1d5db",
                       padding: "8px 10px",
                       fontSize: "14px",
@@ -306,7 +270,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   >
                     {STATUS_OPTIONS.map((o) => (
                       <option key={o} value={o}>
-                        {o}
+                        {API_STATUS_MAP[o] ? getSubmissionPresentation(API_STATUS_MAP[o]).label : o}
                       </option>
                     ))}
                   </VistaSelect>
@@ -325,7 +289,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     }}
                     className="w-full font-inter outline-none"
                     style={{
-                      borderRadius: "8px",
+                      borderRadius: "var(--radius-field)",
                       border: "1px solid #d1d5db",
                       padding: "8px 10px",
                       fontSize: "14px",
@@ -339,7 +303,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                   </VistaSelect>
                 </div>
 
-                <button
+                <button data-ui="secondary"
                   type="button"
                   onClick={() => {
                     setStatusFilter("All Status");
@@ -348,35 +312,21 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                     setCurrentPage(1);
                   }}
                   className="w-full font-inter font-bold transition-colors"
-                  style={{
-                    backgroundColor: "#f3f4f6",
-                    color: "#4b5563",
-                    padding: "8px 0",
-                    borderRadius: "8px",
-                    fontSize: "13px",
-                  }}
-                  onMouseEnter={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#e5e7eb")
-                  }
-                  onMouseLeave={(e) =>
-                    (e.currentTarget.style.backgroundColor = "#f3f4f6")
-                  }
+                  style={{  }}
+
+
                 >
                   Clear Filters
                 </button>
-              </div>
+              </AnchoredPopover>
             )}
           </div>
 
-          <button
+          <button data-ui="primary"
             type="button"
             onClick={() => downloadCsv(filteredSubmissions)}
-            className="inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95"
-            style={{
-              fontSize: "12.5px",
-              padding: "7px 14px",
-              backgroundColor: "#ffc700",
-            }}
+            className="inline-flex items-center gap-1.5 font-inter font-bold transition hover:brightness-105 active:scale-95"
+            style={{  }}
           >
             <Download
               style={{ width: "13px", height: "13px" }}
@@ -550,7 +500,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
           </p>
 
           <div className="table-pagination-row flex items-center gap-1.5">
-            <button
+            <button data-ui="navigation"
               type="button"
               onClick={() => goToPage(safeCurrentPage - 1)}
               disabled={safeCurrentPage === 1}
@@ -571,7 +521,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
                 (page >= safeCurrentPage - 1 && page <= safeCurrentPage + 1)
               ) {
                 return (
-                  <button
+                  <button data-ui="navigation"
                     key={page}
                     type="button"
                     onClick={() => goToPage(page)}
@@ -604,7 +554,7 @@ export default function SystemSubmissionsPanel({ onViewReview }) {
               return null;
             })}
 
-            <button
+            <button data-ui="navigation"
               type="button"
               onClick={() => goToPage(safeCurrentPage + 1)}
               disabled={safeCurrentPage >= totalPages}

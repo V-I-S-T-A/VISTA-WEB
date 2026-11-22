@@ -8,13 +8,13 @@ const CONTENT_PADDING = "30px";
  *
  * The standard white card wrapper used by every data table in the app.
  * Consists of:
- *  1. A blue top header bar  — table title + right-side controls slot
+ *  1. A shared panel header  — table title + right-side controls slot
  *  2. An optional error/alert banner slot
  *  3. The scrollable table body slot (children)
  *  4. A footer bar            — record count text + optional pagination
  *
  * Props:
- *  - title          {string}    — table title shown in the blue header
+ *  - title          {string}    — table title shown in the shared header
  *  - headerRight    {ReactNode} — search / filter / export controls
  *  - children       {ReactNode} — the <table> element
  *  - totalCount     {number}    — total records (shown in footer)
@@ -47,22 +47,22 @@ export default function TableContainer({
   return (
     <section
       style={{
-        borderRadius: "12px",
+        borderRadius: "var(--radius-card)",
         border: "1px solid #e2e6ee",
         boxShadow: "0 1px 3px rgba(15, 42, 74, 0.06)",
         marginBottom: "16px",
       }}
-      className={`bg-white ${className}`}
+      className={`vista-table bg-white ${className}`}
     >
-      {/* ── Blue header bar ── */}
+      {/* Shared panel header */}
       <div
         className="table-header-bar flex items-center justify-between px-4 py-3 flex-wrap"
         style={{
-          backgroundColor: "#1f5cae",
+          backgroundColor: "var(--ui-blue)",
           minHeight: "64px",
-          borderBottom: "1px solid #e2e6ee",
-          borderTopLeftRadius: "12px",
-          borderTopRightRadius: "12px",
+          borderBottom: "1px solid var(--ui-border)",
+          borderTopLeftRadius: "calc(var(--radius-card) - 1px)",
+          borderTopRightRadius: "calc(var(--radius-card) - 1px)",
         }}
       >
         <h3
@@ -85,6 +85,7 @@ export default function TableContainer({
       {/* ── Optional error/alert banner ── */}
       {errorMessage && (
         <div
+          role="alert"
           className="flex items-center gap-2 bg-red-50 border-b border-red-200 text-red-700 font-inter"
           style={{ padding: "10px 24px", fontSize: "13px" }}
         >

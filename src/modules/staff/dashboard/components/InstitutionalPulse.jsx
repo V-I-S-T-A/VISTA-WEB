@@ -52,8 +52,8 @@ export default function InstitutionalPulse() {
     total > 0 ? Math.round((resolved / total) * 100) : undefined;
 
   return (
-    <div 
-        className="institutional-pulse rounded-xl border border-gray-200 bg-white"
+    <div
+        className="vista-surface institutional-pulse rounded-xl border border-gray-200 bg-white"
         style={{ padding: "1rem", height: "130px" }}
     >
       <h3

@@ -2,8 +2,8 @@ export default function SecureIntegrationBanner() {
   return (
     <div className="drive-integration-banner"
       style={{
-        background: "linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%)",
-        borderRadius: "14px",
+        background: "var(--ui-yellow)",
+        borderRadius: "var(--radius-card)",
         padding: "18px 32px",
         textAlign: "center",
         cursor: "pointer",
@@ -23,10 +23,10 @@ export default function SecureIntegrationBanner() {
     >
       <h2
         style={{
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "var(--font-body)",
           fontSize: "20px",
           fontWeight: "800",
-          color: "#ffffff",
+          color: "var(--ui-surface)",
           letterSpacing: "0.08em",
           textTransform: "uppercase",
           margin: 0,

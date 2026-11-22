@@ -1,4 +1,5 @@
-import { ScanText, Loader2 } from "lucide-react";
+import GoogleDriveLogo from "../../../../components/GoogleDriveLogo";
+import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useStartDriveAuth } from "../../../../hooks/useDrive";
 
@@ -18,10 +19,10 @@ export default function GoogleSignInCard() {
   }
 
   return (
-    <div className="drive-connection-panel"
+    <div className="vista-surface drive-connection-panel"
       style={{
-        background: "#ffffff",
-        borderRadius: "16px",
+        background: "var(--ui-surface)",
+        borderRadius: "var(--radius-card)",
         padding: "36px 28px 28px",
         textAlign: "center",
         marginTop: "28px",
@@ -31,36 +32,11 @@ export default function GoogleSignInCard() {
         zIndex: 10,
       }}
     >
-      <div
-        style={{
-          width: "80px",
-          height: "80px",
-          borderRadius: "18px",
-          background: "#eff6ff",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          margin: "0 auto 16px",
-        }}
-      >
-        <div
-          style={{
-            width: "56px",
-            height: "56px",
-            borderRadius: "10px",
-            background: "#031c36",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <ScanText style={{ width: "26px", height: "26px", color: "#fff" }} />
-        </div>
-      </div>
+      <GoogleDriveLogo size={48} decorative={false} style={{ display: "block", margin: "0 auto 20px" }} />
 
       <h3
         style={{
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "var(--font-body)",
           fontSize: "16px",
           fontWeight: "700",
           color: "#031c36",
@@ -71,7 +47,7 @@ export default function GoogleSignInCard() {
       </h3>
       <p
         style={{
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "var(--font-body)",
           fontSize: "13px",
           color: "#4b5563",
           margin: "8px 0 24px",
@@ -83,45 +59,15 @@ export default function GoogleSignInCard() {
         access the VISTA scanning gateway.
       </p>
 
-      <button
+      <button aria-busy={Boolean(startAuth.isPending)} data-ui="secondary"
         type="button"
         onClick={handleSignIn}
         disabled={startAuth.isPending}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: "12px",
-          background: "#facc15",
-          border: "2px solid #3f2a00",
-          borderRadius: "4px",
-          padding: "4px 20px 4px 4px",
-          cursor: startAuth.isPending ? "wait" : "pointer",
-          fontFamily: "Inter, sans-serif",
-          fontSize: "14px",
-          fontWeight: "600",
-          color: "#031c36",
-          transition: "all 0.15s",
-          boxShadow: "0 2px 4px rgba(250, 204, 21, 0.3)",
-          opacity: startAuth.isPending ? 0.7 : 1,
-        }}
-        onMouseEnter={(e) => {
-          if (!startAuth.isPending)
-            e.currentTarget.style.background = "#eab308";
-        }}
-        onMouseLeave={(e) => {
-          e.currentTarget.style.background = "#facc15";
-        }}
+        style={{ display: "inline-flex", alignItems: "center", gap: "12px", cursor: startAuth.isPending ? "wait" : "pointer", opacity: startAuth.isPending ? 0.7 : 1 }}
+
+
       >
-        <div
-          style={{
-            background: "#ffffff",
-            padding: "6px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "2px",
-          }}
-        >
+        <span className="vista-plain-icon">
           {startAuth.isPending ? (
             <Loader2
               className="animate-spin"
@@ -147,7 +93,7 @@ export default function GoogleSignInCard() {
               />
             </svg>
           )}
-        </div>
+        </span>
         {startAuth.isPending ? "Redirecting…" : "Sign in with Google"}
       </button>
 
@@ -157,7 +103,7 @@ export default function GoogleSignInCard() {
             color: "#dc2626",
             fontSize: "12px",
             marginTop: "14px",
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "var(--font-body)",
           }}
         >
           {error}
@@ -184,7 +130,7 @@ export default function GoogleSignInCard() {
           />
           <p
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "11px",
               fontWeight: "600",
               color: "#9ca3af",
@@ -206,7 +152,7 @@ export default function GoogleSignInCard() {
         </div>
         <p
           style={{
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: "9px",
             color: "#9ca3af",
             lineHeight: "1.5",

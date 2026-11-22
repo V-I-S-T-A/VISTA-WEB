@@ -1,5 +1,6 @@
+import DialogLayer from "../../../../components/DialogLayer";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { AlertTriangle, Loader2, X, Trash2 } from "lucide-react";
 import api from "../../../../lib/axios";
 
@@ -14,15 +15,11 @@ export default function DeleteConfirmModal({
   const [error, setError] = useState("");
   const overlayRef = useRef(null);
 
-  useEffect(() => {
-    if (!isOpen) return;
-    setError("");
-    function onKey(e) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [isOpen, onClose]);
+  const [previousInputs, setPreviousInputs] = useState({ isOpen, onClose });
+  if (previousInputs.isOpen !== isOpen || previousInputs.onClose !== onClose) {
+    setPreviousInputs({ isOpen, onClose });
+    if (isOpen) setError("");
+  }
 
   if (!isOpen || !itemToDelete) return null;
 
@@ -60,7 +57,7 @@ export default function DeleteConfirmModal({
   };
 
   return (
-    <div
+    <DialogLayer label={"Confirm deletion"} onDismiss={onClose} dismissDisabled={isDeleting}
       ref={overlayRef}
       style={{
         position: "fixed",
@@ -73,24 +70,24 @@ export default function DeleteConfirmModal({
         padding: "16px",
       }}
     >
-      <div
+      <div className="vista-surface"
         style={{
-          background: "#fff",
-          borderRadius: "14px",
+          background: "var(--ui-surface)",
+          borderRadius: "var(--radius-dialog)",
           width: "100%",
           maxWidth: "450px",
           boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-        }}
-        role="dialog"
-        aria-modal="true"
+        maxHeight: "calc(100dvh - 32px)", overflowY: "auto",}}
+
+
       >
         {/* Header */}
-        <div
+        <div className="vista-modal-heading"
           style={{
-            background: "#dc2626", // Red background for danger
+            background: "var(--ui-surface)", // Red background for danger
             padding: "18px 24px",
             display: "flex",
             alignItems: "center",
@@ -99,28 +96,16 @@ export default function DeleteConfirmModal({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                background: "rgba(255,255,255,0.2)",
-                borderRadius: "8px",
-                width: "34px",
-                height: "34px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <AlertTriangle
-                style={{ width: "16px", height: "16px", color: "#fff" }}
-              />
-            </div>
+            <span className="vista-plain-icon"><AlertTriangle
+                style={{ width: "16px", height: "16px", color: "var(--ui-navy)" }}
+              /></span>
             <div>
               <h2
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "16px",
                   fontWeight: "700",
-                  color: "#fff",
+                  color: "var(--ui-navy)",
                   margin: 0,
                 }}
               >
@@ -128,9 +113,9 @@ export default function DeleteConfirmModal({
               </h2>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
-                  color: "rgba(255,255,255,0.8)",
+                  color: "var(--ui-muted)",
                   margin: 0,
                 }}
               >
@@ -138,21 +123,21 @@ export default function DeleteConfirmModal({
               </p>
             </div>
           </div>
-          <button
+          <button data-ui="icon"
             type="button"
             onClick={onClose}
             disabled={isDeleting}
             style={{
-              background: "rgba(255,255,255,0.15)",
+              background: "var(--ui-selected)",
               border: "none",
-              borderRadius: "7px",
+              borderRadius: "var(--radius-control)",
               width: "30px",
               height: "30px",
               cursor: isDeleting ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#fff",
+              color: "var(--ui-navy)",
               opacity: isDeleting ? 0.5 : 1,
             }}
           >
@@ -174,7 +159,7 @@ export default function DeleteConfirmModal({
               style={{
                 background: "#fee2e2",
                 border: "1px solid #fecaca",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-chip)",
                 padding: "12px",
                 fontSize: "13px",
                 color: "#991b1b",
@@ -187,7 +172,7 @@ export default function DeleteConfirmModal({
 
           <p
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "14px",
               color: "#374151",
               margin: 0,
@@ -202,9 +187,9 @@ export default function DeleteConfirmModal({
           </p>
           <p
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "12px",
-              color: "#6b7280",
+              color: "var(--ui-muted)",
               marginTop: "8px",
             }}
           >
@@ -225,45 +210,19 @@ export default function DeleteConfirmModal({
             background: "#f9fafb",
           }}
         >
-          <button
+          <button data-ui="secondary"
             type="button"
             onClick={onClose}
             disabled={isDeleting}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "600",
-              color: "#374151",
-              background: "#fff",
-              border: "1.5px solid #d1d5db",
-              borderRadius: "8px",
-              padding: "8px 18px",
-              cursor: isDeleting ? "not-allowed" : "pointer",
-              transition: "background 0.15s",
-              opacity: isDeleting ? 0.5 : 1,
-            }}
+            style={{ cursor: isDeleting ? "not-allowed" : "pointer", opacity: isDeleting ? 0.5 : 1 }}
           >
             Cancel
           </button>
-          <button
+          <button data-ui="destructive"
             type="button"
             onClick={handleDelete}
             disabled={isDeleting}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "700",
-              color: "#fff",
-              background: isDeleting ? "#b91c1c" : "#dc2626",
-              border: "1.5px solid #991b1b",
-              borderRadius: "8px",
-              padding: "8px 20px",
-              cursor: isDeleting ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "background 0.15s",
-            }}
+            style={{ cursor: isDeleting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "6px" }}
           >
             {isDeleting ? (
               <Loader2
@@ -280,6 +239,6 @@ export default function DeleteConfirmModal({
           </button>
         </div>
       </div>
-    </div>
+    </DialogLayer>
   );
 }

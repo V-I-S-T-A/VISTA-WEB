@@ -1,5 +1,5 @@
 import { Children, useEffect, useState } from "react";
-import { ArrowLeft, ArrowUpRight, CalendarDays, ChevronDown, Mail, ShieldCheck, FileText } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, CalendarDays, ChevronDown, Mail, ShieldCheck, FileText, List } from "lucide-react";
 import { Link } from "react-router-dom";
 import LegalMascots from "../components/LegalMascots";
 import "./LegalPages.css";
@@ -9,8 +9,8 @@ const CONTACT = "vista.ustp.edu.ph@gmail.com";
 
 function Section({ id, title, children }) {
   return (
-    <section id={id} className="legal-section">
-      <h2><span className="legal-section-number" aria-hidden="true">{title.split(".")[0].padStart(2, "0")}</span>{title.replace(/^\d+\.\s*/, "")}</h2>
+    <section id={id} className="legal-section" tabIndex={-1} aria-labelledby={`${id}-title`}>
+      <h2 id={`${id}-title`}><span className="legal-section-number" aria-hidden="true">{title.split(".")[0].padStart(2, "0")}</span>{title.replace(/^\d+\.\s*/, "")}</h2>
       <div className="legal-section-copy">{children}</div>
     </section>
   );
@@ -22,7 +22,8 @@ function Contact() {
 
 function SectionLinks({ sections, activeId }) {
   return sections.map((section, index) => (
-    <a key={section.props.id} href={`#${section.props.id}`} aria-current={section.props.id === activeId ? "location" : undefined}>
+    <a key={section.props.id} href={`#${section.props.id}`} aria-current={section.props.id === activeId ? "location" : undefined}
+      onClick={event => event.currentTarget.closest("details")?.removeAttribute("open")}>
       <span>{String(index + 1).padStart(2, "0")}</span>
       {section.props.title.replace(/^\d+\.\s*/, "")}
     </a>
@@ -46,65 +47,84 @@ function LegalLayout({ title, summary, children }) {
     let frame;
     const update = () => {
       const items = [...document.querySelectorAll(".legal-section")];
-      const threshold = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--public-header-height")) + 70;
-      const current = items.filter(item => item.getBoundingClientRect().top <= threshold).at(-1) || items[0];
+      const threshold = parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--public-header-height")) + 120;
+      const atEnd = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 4;
+      const reached = items.filter(item => item.getBoundingClientRect().top <= threshold);
+      const rowTop = reached.at(-1)?.getBoundingClientRect().top;
+      const row = reached.filter(item => Math.abs(item.getBoundingClientRect().top - rowTop) < 2);
+      const current = atEnd ? items.at(-1) : row.find(item => window.location.hash === `#${item.id}`) || row[0] || items[0];
       if (current) setActiveId(current.id);
     };
     const onScroll = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(update); };
+    const focusHash = () => {
+      let id;
+      try { id = decodeURIComponent(window.location.hash.slice(1)); } catch { return; }
+      const target = document.getElementById(id);
+      if (!target?.matches(".legal-section")) return;
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({ block: "start" });
+      onScroll();
+    };
     onScroll();
+    focusHash();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", onScroll); };
+    window.addEventListener("resize", onScroll);
+    window.addEventListener("hashchange", focusHash);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("hashchange", focusHash);
+    };
   }, [title]);
 
   return (
-      <main id="main-content" className="public-shell legal-main">
+      <main id="main-content" className="public-shell legal-main" tabIndex={-1}>
         <div className="legal-breadcrumb">
           <Link to="/" className="legal-back"><ArrowLeft size={16} aria-hidden="true" />Back to VISTA</Link>
           <span aria-hidden="true">/</span><span>{title}</span>
         </div>
         <section className="legal-hero" aria-labelledby="legal-title">
           <div className="legal-hero-inner">
-            <p className="legal-eyebrow"><span aria-hidden="true">✦</span> VISTA / Trust &amp; transparency</p>
+            <p className="legal-eyebrow"><DocumentIcon size={18} aria-hidden="true" /> VISTA / Trust &amp; transparency</p>
             <h1 id="legal-title">{title}</h1>
             <p className="legal-hero-description">{isPrivacy ? "Your information. Handled with care." : "Clear guidelines. Shared responsibilities."}</p>
-            <div className="legal-updated"><CalendarDays size={15} aria-hidden="true" /><span>Last updated <time dateTime={APP_UPDATED_AT}>{APP_UPDATED_LABEL}</time></span></div>
+            <p className="legal-summary">{summary}</p>
           </div>
-          <div className="legal-hero-art"><LegalMascots /></div>
+          <div className="legal-hero-art" aria-hidden="true"><span className="legal-art-caption">Clarity comes first.</span><LegalMascots /></div>
+          <div className="legal-updated"><CalendarDays size={22} aria-hidden="true" /><span>Last updated <time dateTime={APP_UPDATED_AT}>{APP_UPDATED_LABEL}</time></span></div>
+          <nav className="legal-doc-switch" aria-label="VISTA policies">
+            <Link to="/privacy-policy" aria-current={isPrivacy ? "page" : undefined}><ShieldCheck size={17} aria-hidden="true" />Privacy Policy<ArrowUpRight size={15} aria-hidden="true" /></Link>
+            <Link to="/terms-of-service" aria-current={!isPrivacy ? "page" : undefined}><FileText size={17} aria-hidden="true" />Terms of Service<ArrowUpRight size={15} aria-hidden="true" /></Link>
+          </nav>
         </section>
-        <nav className="legal-doc-tabs" aria-label="VISTA policies">
-          <Link to="/privacy-policy" aria-current={isPrivacy ? "page" : undefined}><ShieldCheck size={17} />Privacy Policy</Link>
-          <Link to="/terms-of-service" aria-current={!isPrivacy ? "page" : undefined}><FileText size={17} />Terms of Service</Link>
-          <span>Clarity comes first.</span>
-        </nav>
-        <div className="legal-workspace">
-          <aside className="legal-sidebar">
-            <nav aria-label="On this page" className="legal-toc">
-              <h2>On this page<span>{String(sections.length).padStart(2, "0")} sections</span></h2>
-              <div className="legal-toc-links"><SectionLinks sections={sections} activeId={currentId} /></div>
-              <div className="legal-reading"><span>Section {activeIndex + 1} of {sections.length}</span><div className="legal-reading-track" aria-hidden="true"><span style={{ width: `${(activeIndex + 1) / sections.length * 100}%` }} /></div></div>
-            </nav>
-            <details className="legal-mobile-contents" key={title}>
-              <summary>On this page<ChevronDown size={18} aria-hidden="true" /></summary>
-              <nav aria-label="Jump to a policy section" className="legal-toc-links"><SectionLinks sections={sections} activeId={currentId} /></nav>
-            </details>
-            <div className="legal-help">
-              <span className="legal-help-icon"><Mail size={22} aria-hidden="true" /></span>
-              <h2>Need assistance?</h2>
-              <p>Contact the VISTA project administrator for questions about this {isPrivacy ? "policy" : "document"}.</p>
-              <Contact />
-            </div>
-          </aside>
-          <article className="legal-document" aria-label={title}>
-            <div className="legal-intro">
-              <div className="legal-intro-header"><DocumentIcon size={20} aria-hidden="true" /><h2>{isPrivacy ? "Privacy at VISTA" : "Using VISTA responsibly"}</h2></div>
-              <p className="legal-summary">{summary}</p>
-              <div className="legal-quick-links" aria-label="Quick links">
-                {(isPrivacy ? [["information", "Your information"], ["google", "Connected services"], ["retention", "Your choices"]] : [["accounts", "Your account"], ["acceptable-use", "Responsible use"], ["integrations", "Connected services"]]).map(([id, label]) => <a key={id} href={`#${id}`}>{label}<ArrowUpRight size={15} aria-hidden="true" /></a>)}
-              </div>
-            </div>
-            {children}
-            <div className="legal-related"><div><span className="legal-nav-label">Related document</span><Link to={isPrivacy ? "/terms-of-service" : "/privacy-policy"}>{isPrivacy ? "Terms of Service" : "Privacy Policy"}<ArrowUpRight size={20} aria-hidden="true" /></Link></div><Link to="/" className="legal-home-link">Back to VISTA<ArrowUpRight size={16} aria-hidden="true" /></Link></div>
-          </article>
+        <div className="legal-reading-heading">
+          <h2>{isPrivacy ? "Privacy at VISTA" : "Using VISTA responsibly"}</h2>
+          <nav className="legal-quick-links" aria-label="Quick links">
+            {(isPrivacy ? [["information", "Your information"], ["google", "Connected services"], ["retention", "Your choices"]] : [["accounts", "Your account"], ["acceptable-use", "Responsible use"], ["integrations", "Connected services"]]).map(([id, label]) => <a key={id} href={`#${id}`}>{label}<ArrowUpRight size={15} aria-hidden="true" /></a>)}
+          </nav>
+        </div>
+        <details className="legal-contents" key={title}>
+          <summary><span className="legal-contents-label"><List size={20} aria-hidden="true" />On this page</span><span className="legal-current-section">{sections[activeIndex].props.title.replace(/^\d+\.\s*/, "")}</span><span className="legal-reading">{String(activeIndex + 1).padStart(2, "0")} / {String(sections.length).padStart(2, "0")}</span><ChevronDown size={18} aria-hidden="true" /></summary>
+          <nav aria-label="On this page" className="legal-toc-links"><SectionLinks sections={sections} activeId={currentId} /></nav>
+          <div className="legal-reading-track" aria-hidden="true"><span style={{ width: `${(activeIndex + 1) / sections.length * 100}%` }} /></div>
+        </details>
+        <article className={`legal-document ${isPrivacy ? "legal-document-privacy" : "legal-document-terms"}`} aria-label={title}>
+          <div className="legal-chapter legal-chapter-opening">{sections.slice(0, 2)}</div>
+          <div className="legal-chapter legal-chapter-detail">{sections.slice(2, 4)}</div>
+          <div className="legal-chapter legal-chapter-pair">{sections.slice(4, 6)}</div>
+          <div className="legal-chapter legal-chapter-closing">{sections.slice(6, 8)}</div>
+        </article>
+        <div className="legal-utilities">
+          <section className="legal-help" aria-labelledby="legal-help-title">
+            <h2 id="legal-help-title"><Mail size={20} aria-hidden="true" />Need assistance?</h2>
+            <p>Contact the VISTA project administrator for questions about this {isPrivacy ? "policy" : "document"}.</p>
+            <Contact />
+          </section>
+          <nav className="legal-related" aria-label="Related document">
+            <div><span className="legal-nav-label">Related document</span><Link to={isPrivacy ? "/terms-of-service" : "/privacy-policy"}>{isPrivacy ? "Terms of Service" : "Privacy Policy"}<ArrowUpRight size={20} aria-hidden="true" /></Link></div>
+            <Link to="/" className="legal-home-link">Back to VISTA<ArrowUpRight size={16} aria-hidden="true" /></Link>
+          </nav>
         </div>
       </main>
   );

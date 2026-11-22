@@ -7,8 +7,6 @@ import Sidebar from "../../components/Sidebar";
 import SubmissionSummaryCards from "./dashboard/components/UserSummaryCards";
 import AnalyticsVisualGraphs from "./dashboard/components/AnalyticsVisualGraphs";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
-import InstitutionalPulse from "./dashboard/components/InstitutionalPulse";
-import AuditLogWidget from "./dashboard/components/AuditLogWidget";
 import PrioritySubmissionsCard from "../../components/PrioritySubmissionsCard";
 import { useCurrentUser } from "../../hooks/useAuth";
 import { useSidebar } from "../../hooks/useSidebar";
@@ -79,14 +77,6 @@ export default function Dashboard() {
                 activeStatusFilter={selectedStatus}
                 onStatusChange={setSelectedStatus}
               />
-            </div>
-
-            <div
-              className="dashboard-section dashboard-bottom-grid grid grid-cols-2"
-              style={{ gap: "16px", marginTop: "20px" }}
-            >
-              <InstitutionalPulse />
-              <AuditLogWidget />
             </div>
 
             <SystemScopeBanner />

@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { Link2, MessageCircle, Plus, Send, ThumbsDown, ThumbsUp, X } from "lucide-react";
+import { CornerDownRight, Link2, MessageCircle, Plus, Reply as ReplyIcon, Send, X } from "lucide-react";
 import defaultAvatar from "../../assets/shared/default_user.webp";
 import { reviewLogService } from "../../services/reviewLogService";
 import { getApiErrorMessage } from "../../utils/apiErrorMessage";
@@ -22,22 +22,22 @@ function relativeTime(value) {
   return new Date(value).toLocaleDateString();
 }
 
-function ReplyRow({ reply, onReply }) {
+function ReplyRow({ reply, onReply, active, composerId, disabled, children }) {
   return (
-    <div className="flex items-start gap-3">
+    <div className={`reply-thread-item flex items-start gap-3${reply.parent_reply ? " reply-thread-item--nested" : ""}`}>
+      {reply.parent_reply && <CornerDownRight className="reply-thread-connector" size={16} aria-hidden="true" />}
       <img src={reply.author_image_url || defaultAvatar} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-inter text-[13px] font-bold text-[#1f5cae]">{reply.author_name || "Former user"}</span>
-          {reply.parent_reply && <span className="font-inter text-[11px] text-gray-500">↪ {reply.reply_to_name}</span>}
+          {reply.parent_reply && <span className="font-inter text-[12px] text-gray-500">Replying to {reply.reply_to_name || "a comment"}</span>}
           <span className="font-inter text-[11px] text-gray-400">{relativeTime(reply.created_at)}</span>
         </div>
         <p className="mb-0 mt-1 whitespace-pre-wrap break-words font-inter text-[13px] leading-6 text-gray-700"><ReplyMessage message={reply.message} /></p>
         <div className="mt-2 flex items-center gap-1.5">
-          <span title="Voting is not available" className="inline-flex items-center gap-1 rounded-md px-2 py-1 font-inter text-[11px] text-gray-500 opacity-70" aria-label="Approve reply, voting unavailable"><ThumbsUp size={15} /> 0</span>
-          <span title="Voting is not available" className="inline-flex items-center gap-1 rounded-md px-2 py-1 font-inter text-[11px] text-gray-500 opacity-70" aria-label="Disapprove reply, voting unavailable"><ThumbsDown size={15} /> 0</span>
-          {onReply && <button type="button" onClick={() => onReply(reply)} className="rounded-md px-2 py-1 font-inter text-[12px] font-semibold text-[#1f5cae] transition hover:bg-blue-50">Reply</button>}
+          {onReply && <button data-ui="tertiary" type="button" disabled={disabled} onClick={event => onReply(reply, event.currentTarget)} aria-label={`Reply to ${reply.author_name || "Former user"}`} aria-expanded={Boolean(active)} aria-controls={active ? composerId : undefined} className="reply-thread-action rounded-md px-2 py-1 font-inter text-[12px] font-semibold text-[#1f5cae] transition hover:bg-blue-50"><ReplyIcon size={14} aria-hidden="true" />Reply</button>}
         </div>
+        {children}
       </div>
     </div>
   );
@@ -53,6 +53,9 @@ function ThreadContent({ log, canReply, onCountChange, onAccessLost }) {
   const account = cache.getQueryData(["current_user"]);
   const accountId = account?.user_id;
   const linkId = useId();
+  const composerId = useId();
+  const textarea = useRef(null);
+  const returnFocus = useRef(null);
   const queryKey = ["review-replies", accountId, logId];
   const [expanded, setExpanded] = useState(false);
   const [sendError, setError] = useState("");
@@ -84,7 +87,7 @@ function ThreadContent({ log, canReply, onCountChange, onAccessLost }) {
   const replies = confirmedReply && !loaded.some(reply => reply.reply_id === confirmedReply.reply_id)
     ? [...loaded, confirmedReply] : loaded;
   const loading = repliesQuery.isFetching;
-  const error = sendError || (repliesQuery.isError ? getApiErrorMessage(repliesQuery.error, "Could not load replies. Please try again.") : "");
+  const error = repliesQuery.isError ? getApiErrorMessage(repliesQuery.error, "Could not load replies. Please try again.") : "";
   const accessDenied = denied || [403, 404].includes(repliesQuery.error?.response?.status);
   const allowed = canReply && log?.can_reply === true;
 
@@ -96,6 +99,23 @@ function ThreadContent({ log, canReply, onCountChange, onAccessLost }) {
   useEffect(() => {
     if (repliesQuery.data) onCountChange?.(logId, count);
   }, [repliesQuery.data, logId, count, onCountChange]);
+  useEffect(() => {
+    if (!replyTarget) return;
+    textarea.current?.focus({ preventScroll: true });
+    textarea.current?.scrollIntoView({ block: "nearest" });
+  }, [replyTarget]);
+
+  const selectReply = (reply, trigger) => {
+    if (pending.current) return;
+    returnFocus.current = trigger;
+    setReplyTarget(reply);
+    if (replyTarget?.reply_id === reply.reply_id) textarea.current?.focus();
+  };
+  const cancelReply = () => {
+    if (pending.current) return;
+    setReplyTarget(null);
+    requestAnimationFrame(() => returnFocus.current?.focus());
+  };
 
   const loadPage = async (_nextPage, append = false) => {
     setError("");
@@ -137,45 +157,47 @@ function ThreadContent({ log, canReply, onCountChange, onAccessLost }) {
     }
   };
   if (accessDenied) return <p role="alert" className="mt-3 text-sm text-red-700">This conversation is no longer accessible. Reload the submission.</p>;
+  const composer = allowed && (
+    <form id={composerId} onSubmit={submit} className={`reply-compose mt-4 flex flex-col gap-3 sm:flex-row sm:items-end${replyTarget ? " reply-compose--inline" : ""}`}>
+      <div className="reply-compose-field min-w-0 flex-1">
+        {replyTarget && <div className="reply-compose-context"><MessageCircle size={13} aria-hidden="true" /> Replying to {replyTarget.author_name}<button data-ui="tertiary" type="button" disabled={sending} onClick={cancelReply} className="font-semibold">Cancel</button></div>}
+        {sendError && <div className="mb-2"><ErrorNotice message={sendError} onRetry={() => loadPage(expanded ? page : 1, expanded && page > 1)} /></div>}
+        <textarea ref={textarea} aria-label="Write a reply" disabled={sending} value={draft} onChange={(event) => setDraft(event.target.value)} rows={2} placeholder="Write a reply…" className="reply-compose-textarea block min-h-[72px] w-full resize-y rounded-lg border border-gray-200 bg-[#f5f8fc] px-3 py-2.5 font-inter text-[13px] leading-5 text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-[#1f5cae] focus:ring-2 focus:ring-blue-100" />
+        {linkVisible && <div className="reply-link-row mt-2 flex min-w-0 items-center gap-2">
+          <label htmlFor={linkId} className="sr-only">Optional reply link</label>
+          <input id={linkId} type="url" inputMode="url" value={link} onChange={event => setLink(event.target.value)} placeholder="https://example.com" disabled={sending} aria-invalid={Boolean(link.trim() && content.error)} className="reply-link-input min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-[#1f5cae]" />
+          <button aria-busy={Boolean(sending)} data-ui="icon" type="button" disabled={sending} onClick={() => { setLink(""); setLinkVisible(false); }} aria-label="Remove link" className="reply-link-remove shrink-0 rounded-md p-2 text-gray-500 hover:bg-blue-50"><X size={16} /></button>
+        </div>}
+        {content.error && <p role="alert" className="mt-1 text-xs text-red-700">{content.error}</p>}
+      </div>
+      <div className="reply-compose-actions flex shrink-0 items-center gap-2">
+        {account?.role === "student" && <button aria-busy={Boolean(sending)} data-ui="icon" type="button" disabled={sending} onClick={() => setLinkVisible(true)} aria-label="Add link" aria-expanded={linkVisible} aria-controls={linkVisible ? linkId : undefined} title="Add link" className="reply-link-add inline-flex items-center justify-center rounded-lg border border-[#dbe4f0] p-2 text-[#1f5cae] transition hover:bg-blue-50 disabled:opacity-50"><Link2 size={16} /></button>}
+        <button aria-busy={Boolean(sending)} data-ui="primary" type="submit" disabled={sending || !content.canSend} className="reply-send-button inline-flex shrink-0 items-center justify-center gap-2 px-4 py-2 font-inter text-[12px] font-bold transition active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"><Send size={14} />{sending ? "Sending…" : "Reply"}</button>
+      </div>
+    </form>
+  );
   const remaining = Math.max(0, count - replies.length);
   return (
     <div className="review-reply-thread mt-4 font-inter">
       {error && <div className="mb-2"><ErrorNotice message={error} onRetry={() => loadPage(expanded ? page : 1, expanded && page > 1)} /></div>}
       {expanded && replies.length > 0 && (
         <div className="reply-thread-list ml-1 space-y-4 border-l-2 border-[#dbe4f0] py-2 pl-4 sm:pl-5">
-          {replies.map((reply) => <ReplyRow key={reply.reply_id} reply={reply} onReply={allowed ? setReplyTarget : null} />)}
+          {replies.map(reply => <ReplyRow key={reply.reply_id} reply={reply} onReply={allowed ? selectReply : null} active={replyTarget?.reply_id === reply.reply_id} composerId={composerId} disabled={sending}>{replyTarget?.reply_id === reply.reply_id ? composer : null}</ReplyRow>)}
         </div>
       )}
       {expanded && page < totalPages && (
-        <button type="button" disabled={loading} onClick={() => loadPage(page + 1, true)} className="ml-4 mt-2 inline-flex items-center gap-2 rounded-md px-2 py-1 font-inter text-[12px] font-semibold text-[#1f5cae] transition hover:bg-blue-50 disabled:opacity-60">
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#1f5cae]"><Plus size={13} /></span>
+        <button data-ui="tertiary" type="button" disabled={loading} onClick={() => loadPage(page + 1, true)} className="ml-4 mt-2 inline-flex items-center gap-2 rounded-md px-2 py-1 font-inter text-[12px] font-semibold text-[#1f5cae] transition hover:bg-blue-50 disabled:opacity-60">
+          <span className="vista-plain-icon"><Plus size={13} /></span>
           {loading ? "Loading…" : `${remaining} more repl${remaining === 1 ? "y" : "ies"}`}
         </button>
       )}
       {!expanded && count > 0 && (
-        <button type="button" disabled={loading} onClick={() => loadPage(1)} className="ml-4 inline-flex items-center gap-2 rounded-md px-2 py-1 font-inter text-[12px] font-semibold text-[#1f5cae] transition hover:bg-blue-50 disabled:opacity-60">
-          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-[#1f5cae]"><Plus size={13} /></span>
+        <button data-ui="toggle" type="button" disabled={loading} onClick={() => loadPage(1)} className="ml-4 inline-flex items-center gap-2 rounded-md px-2 py-1 font-inter text-[12px] font-semibold text-[#1f5cae] transition hover:bg-blue-50 disabled:opacity-60">
+          <span className="vista-plain-icon"><Plus size={13} /></span>
           {loading ? "Loading…" : `${count} ${count === 1 ? "reply" : "replies"}`}
         </button>
       )}
-      {allowed && (
-        <form onSubmit={submit} className="reply-compose mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
-          <div className="reply-compose-field min-w-0 flex-1">
-            {replyTarget && <div className="mb-1 flex items-center gap-2 text-[11px] text-gray-500"><MessageCircle size={13} /> Replying to {replyTarget.author_name}<button type="button" onClick={() => setReplyTarget(null)} className="font-semibold text-[#1f5cae]">Cancel</button></div>}
-            <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={2} placeholder="Write a reply…" className="reply-compose-textarea block min-h-[72px] w-full resize-y rounded-lg border border-gray-200 bg-[#f5f8fc] px-3 py-2.5 font-inter text-[13px] leading-5 text-gray-700 outline-none transition placeholder:text-gray-400 focus:border-[#1f5cae] focus:ring-2 focus:ring-blue-100" />
-            {linkVisible && <div className="reply-link-row mt-2 flex min-w-0 items-center gap-2">
-              <label htmlFor={linkId} className="sr-only">Optional reply link</label>
-              <input id={linkId} type="url" inputMode="url" value={link} onChange={event => setLink(event.target.value)} placeholder="https://example.com" disabled={sending} aria-invalid={Boolean(link.trim() && content.error)} className="reply-link-input min-w-0 flex-1 rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] outline-[#1f5cae]" />
-              <button type="button" disabled={sending} onClick={() => { setLink(""); setLinkVisible(false); }} aria-label="Remove link" className="reply-link-remove shrink-0 rounded-md p-2 text-gray-500 hover:bg-blue-50"><X size={16} /></button>
-            </div>}
-            {content.error && <p role="alert" className="mt-1 text-xs text-red-700">{content.error}</p>}
-          </div>
-          <div className="reply-compose-actions flex shrink-0 items-center gap-2">
-            {account?.role === "student" && <button type="button" disabled={sending} onClick={() => setLinkVisible(true)} aria-label="Add link" aria-expanded={linkVisible} aria-controls={linkVisible ? linkId : undefined} title="Add link" className="reply-link-add inline-flex items-center justify-center rounded-lg border border-[#dbe4f0] p-2 text-[#1f5cae] transition hover:bg-blue-50 disabled:opacity-50"><Link2 size={16} /></button>}
-            <button type="submit" disabled={sending || !content.canSend} className="reply-send-button inline-flex shrink-0 items-center justify-center gap-2 rounded-lg bg-[#1f5cae] px-4 py-2 font-inter text-[12px] font-bold text-white transition hover:bg-[#174b90] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"><Send size={14} />{sending ? "Sending…" : "Reply"}</button>
-          </div>
-        </form>
-      )}
+      {!replyTarget && composer}
     </div>
   );
 }

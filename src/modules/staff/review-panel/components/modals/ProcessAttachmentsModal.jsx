@@ -2,6 +2,7 @@ import { useRef, useState } from "react";
 import { FileText, Loader2 } from "lucide-react";
 import { convertImageToWebP } from "../../../../../utils/fileOptimizer";
 import { StatusModal } from "../../../../../components";
+import AttachmentImagePreview from "../../../../../components/AttachmentImagePreview";
 import "./ProcessAttachmentsModal.css";
 
 const CLOUD_NAME = "djtdar2ex";
@@ -96,7 +97,15 @@ export default function ProcessAttachmentsModal({ isOpen, onClose, onConfirm, su
             {documents.map((doc) => (
               <li key={doc.document_id} className="flex min-w-0 items-center gap-2 font-inter text-xs text-gray-700">
                 <FileText size={14} className="shrink-0 text-[#1f5cae]" />
-                <span className="truncate">{doc.file_name}</span>
+                {doc.file_url ? (
+                  <AttachmentImagePreview
+                    fileUrl={doc.file_url}
+                    fileName={doc.file_name}
+                    mimeType={doc.mime_type}
+                    triggerLabel={doc.file_name}
+                    triggerClassName="process-attachment-current-preview"
+                  />
+                ) : <span className="min-w-0 break-words">{doc.file_name}</span>}
               </li>
             ))}
           </ul>

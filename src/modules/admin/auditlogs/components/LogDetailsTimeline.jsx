@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
 
-export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
+export default function LogDetailsTimeline({ log, titleDisplay }) {
   // Mock previous event to match design timeline
   const previousEventTime = new Date(
     new Date(log.performed_at).getTime() - 133000,
@@ -9,7 +9,7 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
   return (
     <div
       style={{
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--ui-surface)",
         borderRadius: "4px",
         border: "1px solid #e2e6ee",
         overflow: "hidden",
@@ -26,7 +26,7 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
       >
         <h4
           className="font-inter font-bold uppercase tracking-wider"
-          style={{ fontSize: "13px", color: "#142d55" }}
+          style={{ fontSize: "13px", color: "var(--ui-text)" }}
         >
           Context Timeline
         </h4>
@@ -57,7 +57,7 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
                 style={{
                   width: "12px",
                   height: "12px",
-                  color: "#142d55",
+                  color: "var(--ui-text)",
                   strokeWidth: 3,
                 }}
               />
@@ -66,7 +66,7 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
               style={{
                 width: "2px",
                 flex: 1,
-                backgroundColor: "#e2e6ee",
+                backgroundColor: "var(--ui-border)",
                 marginTop: "4px",
                 marginBottom: "4px",
               }}
@@ -96,7 +96,7 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
               style={{
                 marginTop: "10px",
                 backgroundColor: "#1A59A5",
-                color: "#ffffff",
+                color: "var(--ui-surface)",
                 padding: "4px 8px",
                 borderRadius: "4px",
                 fontSize: "10px",
@@ -119,7 +119,7 @@ export default function LogDetailsTimeline({ log, titleDisplay, formatDate }) {
                 width: "16px",
                 height: "16px",
                 borderRadius: "9999px",
-                backgroundColor: "#f7f9fc",
+                backgroundColor: "var(--ui-field)",
                 border: "2px solid #e2e6ee",
                 marginTop: "4px",
                 flexShrink: 0,

@@ -49,7 +49,7 @@ export const submissionService = {
   async getPrioritySubmissions() {
     const prioritized = [];
     let page = 1;
-    let totalPages = 1;
+    let totalPages;
     do {
       const result = await submissionService.getSubmissions({ page, pageSize: 100, priorityEscalation: true });
       prioritized.push(...(result.results ?? []).filter((item) => item.priority_escalation === true));

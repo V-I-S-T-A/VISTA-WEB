@@ -1,5 +1,5 @@
 .get-app-loading-page .public-shell { max-width:1240px; }
-.get-app-skeleton { padding-block:48px 70px; overflow:clip; background:#f0f2ef; }
+.get-app-skeleton { padding-block:48px 70px; overflow:clip; background:var(--ui-canvas); }
 .get-app-skeleton .vista-skeleton { background:#cbdce6; }
 .get-app-skeleton-hero { display:grid; grid-template-columns:1fr 1fr; align-items:center; gap:24px; padding-bottom:36px; }
 .get-app-skeleton-title { display:grid; gap:14px; margin:26px 0 28px; }
@@ -9,15 +9,23 @@
 .get-app-skeleton-ring { position:absolute; width:77%; aspect-ratio:1; left:7%; top:18%; border:40px solid #e5d4a2; border-left-color:#b9d9c2; border-radius:50%; }
 .get-app-skeleton-art>.get-app-skeleton-phone { position:absolute; top:10%; left:27%; border:7px solid #9bb7cb; border-radius:30px; transform:rotate(-9deg); }
 .get-app-skeleton-art>.get-app-skeleton-note { position:absolute; left:2%; bottom:15%; border-radius:14px; transform:rotate(-5deg); }
-.get-app-skeleton-band { border-radius:16px; background:#9db8ce !important; }
+.get-app-skeleton-band { border-radius:var(--radius-card); background:#9db8ce !important; }
+.get-app-skeleton-promo { display:grid; gap:18px; padding-top:90px; }
+.get-app-skeleton-promo .get-app-skeleton-video { width:100%; height:auto; aspect-ratio:16/9; border-radius:var(--radius-card); }
 .get-app-skeleton-tags { position:relative; display:grid; grid-template-columns:repeat(4,1fr); gap:22px; margin:-14px 32px 0; }
-.get-app-skeleton-tags .vista-skeleton { border-radius:10px; }
+.get-app-skeleton-tags .vista-skeleton { border-radius:var(--radius-field); }
 .get-app-skeleton-heading { display:grid; justify-items:center; gap:12px; margin:100px 0 45px; }
 .get-app-skeleton-features { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:36px; max-width:1000px; margin:auto; }
 .get-app-skeleton-features>div { display:flex; flex-direction:column; align-items:center; gap:24px; padding:36px 24px; min-height:274px; background:#e3ebed; border-radius:120px; }
 .get-app-skeleton-features .skeleton-lines { width:100%; }
-.get-app-skeleton-tour { display:grid; grid-template-columns:1fr 1fr; align-items:center; justify-items:center; gap:8%; margin-top:100px; }
-.get-app-skeleton-tour>div { display:grid; gap:24px; width:100%; }
+.get-app-skeleton-role-tabs { display:flex; justify-content:center; gap:10px; margin-bottom:24px; }
+.get-app-skeleton-role-tabs>.vista-skeleton { border-radius:var(--radius-button); flex-shrink:1; }
+.get-app-skeleton-manual { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); align-items:center; gap:8%; max-width:1040px; margin:auto; }
+.get-app-skeleton-manual-copy { display:grid; gap:20px; min-width:0; padding-top:20px; }
+.get-app-skeleton-manual-copy .skeleton-lines { margin-top:0; }
+.get-app-skeleton-manual-actions { display:flex; gap:12px; }
+.get-app-skeleton-manual-actions>.vista-skeleton { flex:1; min-width:0; }
+.get-app-skeleton-manual-phone { width:100%; max-width:300px; justify-self:center; }
 @media(max-width:760px) {
  .get-app-skeleton { padding-top:40px; }
  .get-app-skeleton-hero { grid-template-columns:minmax(0,1fr); gap:20px; }
@@ -27,5 +35,5 @@
  .get-app-skeleton-heading { margin-top:70px; }
  .get-app-skeleton-features { grid-template-columns:repeat(2,minmax(0,1fr)); max-width:460px; gap:20px; }
  .get-app-skeleton-features>div { min-height:250px; padding-inline:18px; }
- .get-app-skeleton-tour { grid-template-columns:minmax(0,1fr); gap:30px; margin-top:60px; }
+ .get-app-skeleton-manual { grid-template-columns:minmax(0,1fr); gap:30px; }
 }

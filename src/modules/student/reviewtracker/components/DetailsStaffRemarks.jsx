@@ -33,10 +33,10 @@ export default function DetailsStaffRemarks({ submissionId }) {
   if (isLoading) return <PanelSkeleton kind="remarks" label="Loading staff remarks" />;
 
   return (
-    <div className="submission-remarks-panel"
+    <div className="vista-surface submission-remarks-panel"
       style={{
-        backgroundColor: "#ffffff",
-        borderRadius: "12px",
+        backgroundColor: "var(--ui-surface)",
+        borderRadius: "var(--radius-card)",
         border: "1px solid #e2e6ee",
         overflow: "hidden",
         marginBottom: "20px",
@@ -61,7 +61,7 @@ export default function DetailsStaffRemarks({ submissionId }) {
           style={{
             fontSize: "11px",
             padding: "3px 10px",
-            borderRadius: "6px",
+            borderRadius: "var(--radius-chip)",
             backgroundColor: "#FFE452",
           }}
         >
@@ -123,7 +123,7 @@ export default function DetailsStaffRemarks({ submissionId }) {
               <div
                 style={{
                   backgroundColor: "#edf2fb",
-                  borderRadius: "8px",
+                  borderRadius: "var(--radius-chip)",
                   border: "1px solid #dbe4f0",
                   padding: "16px 20px",
                   marginLeft: "48px",

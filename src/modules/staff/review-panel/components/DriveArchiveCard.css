@@ -15,11 +15,16 @@
   flex-direction: column;
   gap: 16px;
   margin-top: 20px;
-  padding: 16px 20px;
+  padding: 0;
+  background: transparent;
+  border: 0;
 }
 
 .drive-archive-card__archive {
   padding: 16px 20px;
+  border-color: var(--ui-border);
+  border-radius: var(--radius-field);
+  background: var(--ui-field);
 }
 
 .drive-archive-card__tree {
@@ -48,11 +53,19 @@
   gap: 12px;
   margin-top: 20px;
   padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  border-color: var(--ui-border);
+  border-radius: var(--radius-field);
 }
 
 .drive-archive-card__file-info {
   gap: 10px;
+  flex: 1;
+  min-width: 0;
 }
+.drive-archive-card__file-info p { overflow-wrap: anywhere; }
 
 .drive-archive-card__file-label {
   margin-top: 4px;
@@ -61,14 +74,20 @@
 .drive-archive-card__drive-link {
   gap: 8px;
   padding: 8px 14px;
+  min-height: var(--control-compact);
+  align-self: flex-start;
+  border-color: var(--ui-control-border);
+  border-radius: var(--radius-compact);
+  background: var(--ui-surface);
+  color: var(--ui-blue);
 }
+.drive-archive-card__drive-link:hover { background: var(--ui-selected); }
 
 .drive-archive-card__footer {
   margin-top: 16px;
 }
 
 @media (max-width: 639px) {
-  .drive-archive-card__paths,
   .drive-archive-card__archive {
     padding: 14px;
   }

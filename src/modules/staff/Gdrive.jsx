@@ -59,6 +59,7 @@ export default function Gdrive() {
                 <InstitutionalEfficiency />
                 <div style={{ position: "relative" }}>
                   <div
+                    aria-hidden="true"
                     className="drive-ambient-glow hidden md:block"
                     style={{
                       position: "absolute",

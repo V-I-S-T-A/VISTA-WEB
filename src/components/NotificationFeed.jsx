@@ -12,7 +12,7 @@ export default function NotificationFeed({ notifications, onClick }) {
         <NotificationListItem key={item.notification_id} notification={item} onClick={onClick} />
       )}</ul>
     </section>)}
-    {notifications.length > limit && <button type="button" className="student-notification-all-link student-notification-previous" onClick={() => setLimit(count => count + 5)}>
+    {notifications.length > limit && <button data-ui="tertiary" type="button" className="student-notification-all-link student-notification-previous" onClick={() => setLimit(count => count + 5)}>
       See previous notifications
     </button>}
   </>;

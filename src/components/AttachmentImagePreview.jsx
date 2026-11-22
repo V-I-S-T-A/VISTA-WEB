@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
+import { registerDialog } from '../utils/dialogFocus';
 import { ZoomIn, ZoomOut, RotateCcw, AlertCircle, FileText } from 'lucide-react';
 
 function createObjectUrlStore(file, fileUrl) {
@@ -36,42 +37,12 @@ export default function AttachmentImagePreview({
 
   useEffect(() => {
     if (!open) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const returnFocus = focusTarget;
-
-    // Focus trap and Escape handler
-    const handleKeyDown = (event) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setOpen(false);
-        return;
-      }
-
-      if (event.key === 'Tab' && dialogRef.current) {
-        const focusableElements = [...dialogRef.current.querySelectorAll(
-          'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
-        )].filter(element => element.getClientRects().length > 0);
-        if (!focusableElements.length) return;
-
-        const first = focusableElements[0];
-        const last = focusableElements[focusableElements.length - 1];
-
-        if (event.shiftKey && (document.activeElement === first || !dialogRef.current.contains(document.activeElement))) {
-          event.preventDefault();
-          last.focus();
-        } else if (!event.shiftKey && (document.activeElement === last || !dialogRef.current.contains(document.activeElement))) {
-          event.preventDefault();
-          first.focus();
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
+    const unregister = registerDialog(dialogRef.current, { onDismiss: () => setOpen(false) });
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      if (returnFocus?.isConnected) returnFocus.focus();
+      unregister();
+      // The portal's autofocus runs before this effect. Restore the actual
+      // attachment opener captured before mounting the preview.
+      if (focusTarget?.isConnected) focusTarget.focus({ preventScroll: true });
     };
   }, [open, focusTarget]);
 
@@ -117,13 +88,13 @@ export default function AttachmentImagePreview({
       {typeof children === 'function' ? (
         children({ openPreview, canPreview: Boolean(url) })
       ) : (
-        <button
+        <button data-ui="tertiary"
           type="button"
           onClick={openPreview}
           className={triggerClassName}
           title={`Preview ${displayName}`}
           style={{
-            color: '#1f5cae',
+            color: "var(--ui-blue)",
             padding: '6px 10px',
             fontWeight: 600,
             fontSize: '13px',
@@ -143,6 +114,7 @@ export default function AttachmentImagePreview({
           role="dialog"
           aria-modal="true"
           aria-label={`Preview: ${displayName}`}
+          tabIndex={-1}
           onClick={handleClose}
           style={{
             position: 'fixed',
@@ -167,29 +139,18 @@ export default function AttachmentImagePreview({
               width: '100%',
             }}
           >
-            <button
+            <button data-ui="secondary"
               autoFocus
               type="button"
               onClick={handleClose}
-              style={{
-                padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px)',
-                background: 'white',
-                borderRadius: 24,
-                color: '#142d55',
-                fontWeight: 600,
-                fontSize: 'clamp(12px, 2.5vw, 13px)',
-                cursor: 'pointer',
-                border: 'none',
-                boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
-                whiteSpace: 'nowrap',
-              }}
+              style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
               Close preview
             </button>
             <a href={url} target="_blank" rel="noopener noreferrer" download={displayName}
               style={{ color: 'white', fontWeight: 600, textDecoration: 'underline' }}>Open or download file</a>
             {!isPdf && !loadError && (
-              <div
+              <div className="vista-surface"
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -200,7 +161,7 @@ export default function AttachmentImagePreview({
                   boxShadow: '0 4px 14px rgba(0,0,0,0.25)',
                 }}
               >
-                <button
+                <button data-ui="icon"
                   type="button"
                   aria-label="Zoom out"
                   disabled={zoom <= 0.5}
@@ -224,15 +185,15 @@ export default function AttachmentImagePreview({
                   style={{
                     minWidth: 'clamp(40px, 9vw, 48px)',
                     textAlign: 'center',
-                    fontFamily: 'Inter, sans-serif',
+                    fontFamily: "var(--font-body)",
                     fontSize: 'clamp(11.5px, 2.5vw, 12.5px)',
                     fontWeight: 700,
-                    color: '#142d55',
+                    color: "var(--ui-text)",
                   }}
                 >
                   {Math.round(zoom * 100)}%
                 </span>
-                <button
+                <button data-ui="icon"
                   type="button"
                   aria-label="Zoom in"
                   disabled={zoom >= 3}
@@ -253,7 +214,7 @@ export default function AttachmentImagePreview({
                   <ZoomIn size={16} aria-hidden="true" />
                 </button>
                 {zoom !== 1 && (
-                  <button
+                  <button data-ui="icon"
                     type="button"
                     aria-label="Reset zoom"
                     title="Reset zoom"
@@ -267,7 +228,7 @@ export default function AttachmentImagePreview({
                       borderRadius: '50%',
                       border: 'none',
                       background: '#eef2fa',
-                      color: '#1f5cae',
+                      color: "var(--ui-blue)",
                       cursor: 'pointer',
                     }}
                   >
@@ -308,17 +269,17 @@ export default function AttachmentImagePreview({
                     padding: '32px 24px',
                     textAlign: 'center',
                     backgroundColor: 'white',
-                    borderRadius: '8px',
+                    borderRadius: "var(--radius-chip)",
                     margin: 'auto',
                     maxWidth: '450px',
                     boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                   }}
                 >
                   <FileText size={36} color="#1f5cae" style={{ margin: '0 auto 12px' }} />
-                  <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#142d55', fontSize: '15px' }}>
+                  <p style={{ margin: '0 0 8px', fontWeight: 600, color: "var(--ui-text)", fontSize: '15px' }}>
                     Inline PDF Preview Unavailable
                   </p>
-                  <p style={{ margin: '0 0 16px', color: '#6b7280', fontSize: '13px' }}>
+                  <p style={{ margin: '0 0 16px', color: "var(--ui-muted)", fontSize: '13px' }}>
                     This browser could not render the PDF directly inside the modal.
                   </p>
                   <a
@@ -329,9 +290,9 @@ export default function AttachmentImagePreview({
                     style={{
                       display: 'inline-block',
                       padding: '9px 18px',
-                      backgroundColor: '#1f5cae',
+                      backgroundColor: "var(--ui-blue)",
                       color: 'white',
-                      borderRadius: '6px',
+                      borderRadius: "var(--radius-chip)",
                       fontWeight: 600,
                       fontSize: '13px',
                       textDecoration: 'none',
@@ -348,17 +309,17 @@ export default function AttachmentImagePreview({
                   padding: '32px 24px',
                   textAlign: 'center',
                   backgroundColor: 'white',
-                  borderRadius: '8px',
+                  borderRadius: "var(--radius-chip)",
                   margin: 'auto',
                   maxWidth: '450px',
                   boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
                 }}
               >
                 <AlertCircle size={36} color="#dc2626" style={{ margin: '0 auto 12px' }} />
-                <p style={{ margin: '0 0 8px', fontWeight: 600, color: '#142d55', fontSize: '15px' }}>
+                <p style={{ margin: '0 0 8px', fontWeight: 600, color: "var(--ui-text)", fontSize: '15px' }}>
                   Preview Unavailable
                 </p>
-                <p style={{ margin: '0 0 16px', color: '#6b7280', fontSize: '13px' }}>
+                <p style={{ margin: '0 0 16px', color: "var(--ui-muted)", fontSize: '13px' }}>
                   The image could not be loaded for display.
                 </p>
                 <a
@@ -369,9 +330,9 @@ export default function AttachmentImagePreview({
                   style={{
                     display: 'inline-block',
                     padding: '9px 18px',
-                    backgroundColor: '#1f5cae',
+                    backgroundColor: "var(--ui-blue)",
                     color: 'white',
-                    borderRadius: '6px',
+                    borderRadius: "var(--radius-chip)",
                     fontWeight: 600,
                     fontSize: '13px',
                     textDecoration: 'none',

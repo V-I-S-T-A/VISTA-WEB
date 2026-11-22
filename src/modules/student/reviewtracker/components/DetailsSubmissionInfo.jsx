@@ -1,139 +1,44 @@
-import { FolderOpen, Mail, ClipboardList } from "lucide-react";
+import { FileText } from "lucide-react";
+import SubmissionPass from "../../../../components/SubmissionPass";
+import { getSubmissionPresentation } from "../../../../config/submissionPresentation";
 
-export default function DetailsSubmissionInfo({ submission, isOwner = true }) {
+export default function DetailsSubmissionInfo({ submission, isOwner = true, avatarUrl }) {
   if (!submission) return null;
 
-  const formatDate = (dateString) => {
-    if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
+  const submittedDate = submission.submitted_at
+    ? new Date(submission.submitted_at).toLocaleDateString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
+    }) : "N/A";
+  const submitterName = submission.submitted_by_name || "Original submitter";
+  const contact = submission.submitted_by_email
+    ? `${submitterName} (${submission.submitted_by_email})` : submitterName;
 
   return (
-    <div className="submission-info-panel"
-      style={{
-        backgroundColor: "#ffffff",
-        borderRadius: "12px",
-        border: "1px solid #e2e6ee",
-        padding: "24px 28px",
-        marginBottom: "20px",
-      }}
-    >
-      {/* ---- Top row: title + ID/date ---- */}
-      <div className="flex items-start justify-between mb-1">
-        <p
-          className="font-inter font-bold uppercase tracking-wider"
-          style={{ fontSize: "11px", color: "#1A59A5" }}
-        >
-          {isOwner ? "My Submission" : "Organization Submission · View only"}
-        </p>
-        <div className="text-right">
-          <span
-            className="inline-flex items-center font-inter font-bold"
-            style={{
-              fontSize: "11px",
-              padding: "4px 12px",
-              borderRadius: "6px",
-              backgroundColor: "#edf2fb",
-              border: "1px solid #b0c4de",
-              color: "#1A59A5",
-            }}
-          >
-            ID: #{submission.submission_id?.slice(0, 8).toUpperCase() || "N/A"}
-          </span>
-        </div>
-      </div>
-
-      <h3
-        className="font-inter font-bold text-[#142d55]"
-        style={{ fontSize: "18px", marginBottom: "4px" }}
-      >
-        {submission.title || "Untitled Document"}
-      </h3>
-
-      <p
-        className="submission-info-date font-inter text-gray-500 text-right"
-        style={{ fontSize: "12px", marginTop: "-20px", marginBottom: "8px" }}
-      >
-        Submitted: {formatDate(submission.submitted_at)}
-      </p>
-
-      <div className="flex items-center gap-2 mb-5">
-        <FolderOpen
-          style={{ width: "15px", height: "15px", color: "#6b7280" }}
-        />
-        <span
-          className="font-inter font-medium text-gray-600"
-          style={{ fontSize: "14px" }}
-        >
-          {submission.org_name || "Organization Pending"}
-        </span>
-      </div>
-
-      {!isOwner && <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">This organization submission is read-only. Actions remain limited to the original submitter and authorized staff.</p>}
-
-      {/* ---- Divider ---- */}
-      <div
-        style={{
-          height: "1px",
-          backgroundColor: "#e2e6ee",
+    <section className="submission-pass student-submission-pass" aria-labelledby="student-submission-title">
+      <SubmissionPass
+        submission={{
+          id: submission.submission_id?.toUpperCase() || "N/A",
+          title: submission.title || "Untitled Document",
+          site: submission.org_name || "Organization Pending",
+          submittedDate,
+          documentType: submission.doc_type_name || "N/A",
+          contactEmail: contact,
         }}
-      />
-
-      {/* ---- Submitter contact / mode ---- */}
-      <div
-        className="submission-info-footer flex flex-wrap gap-12"
-        style={{
-          backgroundColor: "#f0f4fb",
-          margin: "0 -28px -24px -28px",
-          padding: "16px 28px 20px 28px",
-          borderRadius: "0 0 12px 12px",
-        }}
+        avatarUrl={avatarUrl}
+        organizationAvatarUrl={submission.org_image_url}
+        submitterName={submitterName}
+        submitterEmail={submission.submitted_by_email}
+        status={submission.status}
+        statusLabel={getSubmissionPresentation(submission.status).label}
+        category={submission.category_name || "N/A"}
+        eyebrow={isOwner ? "My Submission" : "Organization Submission · View only"}
+        titleId="student-submission-title"
       >
-        <div>
-          <p
-            className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "11px", marginBottom: "6px", color: "#1A59A5" }}
-          >
-            Submitter Contact
-          </p>
-          <p className="mb-1 font-inter text-[13px] font-semibold text-[#142d55]">{submission.submitted_by_name || "Original submitter"}</p>
-          <div className="flex items-center gap-2">
-            <Mail style={{ width: "14px", height: "14px", color: "#6b7280" }} />
-            <span
-              className="font-inter font-medium text-gray-700"
-              style={{ fontSize: "13px" }}
-            >
-              {submission.submitted_by_email ||
-                submission.submitted_by_name ||
-                "N/A"}
-            </span>
-          </div>
+        <div className="submission-pass__attachments">
+          <p className="submission-pass__empty"><FileText size={18} aria-hidden="true" /><span>Physical submission · Digital documents are restricted to OSA staff.</span></p>
         </div>
-
-        <div>
-          <p
-            className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "11px", marginBottom: "6px", color: "#1A59A5" }}
-          >
-            Category
-          </p>
-          <div className="flex items-center gap-2">
-            <ClipboardList
-              style={{ width: "14px", height: "14px", color: "#6b7280" }}
-            />
-            <span
-              className="font-inter font-medium text-gray-700"
-              style={{ fontSize: "13px" }}
-            >
-              {submission.category_name || "N/A"}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
+      </SubmissionPass>
+      {!isOwner && <p className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900">This organization submission is read-only. Actions remain limited to the original submitter and authorized staff.</p>}
+    </section>
   );
 }

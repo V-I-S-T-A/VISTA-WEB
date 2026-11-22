@@ -25,3 +25,7 @@ dist-ssr
 
 .env
 .crash-lint.json
+
+# Local reports and captured test screenshots are not source files.
+artifacts/
+output/

@@ -21,14 +21,14 @@ export default function TablePagination({
   return (
     <div className="table-pagination-row flex items-center gap-1.5">
       {/* Previous */}
-      <button
+      <button data-ui="navigation"
         type="button"
         onClick={() => onGoToPage(currentPage - 1)}
         disabled={currentPage === 1}
         className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition disabled:opacity-50"
         style={{
           borderColor: "#d1d5db",
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--ui-surface)",
           color: currentPage === 1 ? "#c1c5cc" : "#374151",
           cursor: currentPage === 1 ? "not-allowed" : "pointer",
         }}
@@ -39,7 +39,7 @@ export default function TablePagination({
 
       {/* Page numbers */}
       {pageNumbers.map((page) => (
-        <button
+        <button data-ui="navigation"
           key={page}
           type="button"
           onClick={() => onGoToPage(page)}
@@ -56,14 +56,14 @@ export default function TablePagination({
       ))}
 
       {/* Next */}
-      <button
+      <button data-ui="navigation"
         type="button"
         onClick={() => onGoToPage(currentPage + 1)}
         disabled={currentPage >= totalPages}
         className="flex h-7 w-7 items-center justify-center rounded-full border font-inter transition disabled:opacity-50"
         style={{
           borderColor: "#d1d5db",
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--ui-surface)",
           color: currentPage >= totalPages ? "#c1c5cc" : "#374151",
           cursor: currentPage >= totalPages ? "not-allowed" : "pointer",
         }}

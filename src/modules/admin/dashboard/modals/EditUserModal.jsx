@@ -1,3 +1,5 @@
+import FormField from "../../../../components/FormField";
+import DialogLayer from "../../../../components/DialogLayer";
 import VistaSelect from "../../../../components/VistaSelect";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
@@ -10,7 +12,7 @@ const ROLES = ["staff", "student"];
 const FIELD_STYLES = {
   label: {
     display: "block",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     fontSize: "12px",
     fontWeight: "600",
     color: "#374151",
@@ -19,12 +21,12 @@ const FIELD_STYLES = {
   input: {
     width: "100%",
     border: "1.5px solid #d1d5db",
-    borderRadius: "8px",
+    borderRadius: "var(--radius-field)",
     padding: "9px 13px",
     fontSize: "13px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     color: "#111827",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--ui-field)",
     outline: "none",
     boxSizing: "border-box",
     transition: "border-color 0.15s",
@@ -35,12 +37,12 @@ const FIELD_STYLES = {
   select: {
     width: "100%",
     border: "1.5px solid #d1d5db",
-    borderRadius: "8px",
+    borderRadius: "var(--radius-field)",
     padding: "9px 13px",
     fontSize: "13px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     color: "#111827",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--ui-field)",
     outline: "none",
     boxSizing: "border-box",
     appearance: "none",
@@ -50,18 +52,12 @@ const FIELD_STYLES = {
     fontSize: "11px",
     color: "#dc2626",
     marginTop: "3px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
   },
 };
 
 function Field({ label, error, children, htmlFor }) {
-  return (
-    <div>
-      <label htmlFor={htmlFor} style={FIELD_STYLES.label}>{label}</label>
-      {children}
-      {error && <p style={FIELD_STYLES.error}>{error}</p>}
-    </div>
-  );
+  return <FormField label={label} error={error} htmlFor={htmlFor} labelStyle={FIELD_STYLES.label} errorStyle={FIELD_STYLES.error}>{children}</FormField>;
 }
 
 function FocusInput({ style, onBlur, ...props }) {
@@ -126,11 +122,6 @@ function EditUserForm({
 
   useEffect(() => {
     if (!isOpen) return;
-    function onKey(e) {
-      if (e.key === "Escape" && !e.defaultPrevented && !saving && !isLoading) onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, onClose, saving, isLoading]);
 
   function set(field, value) {
@@ -175,7 +166,7 @@ function EditUserForm({
   const statusColor = form.isActive ? "#16a34a" : "#6b7280";
 
   return (
-    <div
+    <DialogLayer aria-labelledby="edit-user-title" label={"Edit user"} onDismiss={onClose} dismissDisabled={saving || isLoading}
       ref={overlayRef}
       style={{
         position: "fixed",
@@ -188,26 +179,27 @@ function EditUserForm({
         padding: "16px",
       }}
     >
-      <div
+      <div className="vista-surface"
         style={{
-          background: "#fff",
-          borderRadius: "14px",
+          background: "var(--ui-surface)",
+          borderRadius: "var(--radius-dialog)",
           width: "100%",
           maxWidth: "520px",
           boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          maxHeight: "90vh",
+          maxHeight: "min(90vh, calc(100dvh - 32px))",
+          overflowY: "auto",
         }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="edit-user-title"
+
+
+
       >
         {/* Header */}
-        <div
+        <div className="vista-modal-heading"
           style={{
-            background: "#142d55",
+            background: "var(--ui-surface)",
             padding: "18px 24px",
             display: "flex",
             alignItems: "center",
@@ -216,29 +208,17 @@ function EditUserForm({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                background: "rgba(255,255,255,0.15)",
-                borderRadius: "8px",
-                width: "34px",
-                height: "34px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <SquarePen
-                style={{ width: "16px", height: "16px", color: "#fff" }}
-              />
-            </div>
+            <span className="vista-plain-icon"><SquarePen
+                style={{ width: "16px", height: "16px", color: "var(--ui-navy)" }}
+              /></span>
             <div>
               <h2
                 id="edit-user-title"
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "16px",
                   fontWeight: "700",
-                  color: "#fff",
+                  color: "var(--ui-navy)",
                   margin: 0,
                 }}
               >
@@ -246,7 +226,7 @@ function EditUserForm({
               </h2>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
                   color: "rgba(255,255,255,0.65)",
                   margin: 0,
@@ -258,21 +238,21 @@ function EditUserForm({
               </p>
             </div>
           </div>
-          <button
+          <button aria-busy={Boolean(saving || isLoading)} data-ui="icon"
             type="button"
             onClick={onClose}
             disabled={saving || isLoading}
             style={{
-              background: "rgba(255,255,255,0.12)",
+              background: "var(--ui-selected)",
               border: "none",
-              borderRadius: "7px",
+              borderRadius: "var(--radius-control)",
               width: "30px",
               height: "30px",
               cursor: saving || isLoading ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#fff",
+              color: "var(--ui-navy)",
               opacity: saving || isLoading ? 0.5 : 1,
             }}
             aria-label="Close modal"
@@ -302,10 +282,10 @@ function EditUserForm({
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontWeight: "700",
               fontSize: "15px",
-              color: "#1f5cae",
+              color: "var(--ui-blue)",
               flexShrink: 0,
             }}
           >
@@ -316,7 +296,7 @@ function EditUserForm({
           <div style={{ minWidth: 0 }}>
             <p
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "13px",
                 fontWeight: "700",
                 color: "#111827",
@@ -328,9 +308,9 @@ function EditUserForm({
             </p>
             <p
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "11px",
-                color: "#6b7280",
+                color: "var(--ui-muted)",
                 margin: "1px 0 0",
                 overflow: "hidden",
                 textOverflow: "ellipsis",
@@ -343,7 +323,7 @@ function EditUserForm({
           <span
             style={{
               marginLeft: "auto",
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "11px",
               fontWeight: "700",
               color: statusColor,
@@ -422,14 +402,14 @@ function EditUserForm({
               justifyContent: "space-between",
               background: "#f8f9fc",
               border: "1.5px solid #e5e7eb",
-              borderRadius: "8px",
+              borderRadius: "var(--radius-chip)",
               padding: "12px 14px",
             }}
           >
             <div>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "13px",
                   fontWeight: "600",
                   color: "#374151",
@@ -440,9 +420,9 @@ function EditUserForm({
               </p>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "11px",
-                  color: "#6b7280",
+                  color: "var(--ui-muted)",
                   margin: "2px 0 0",
                 }}
               >
@@ -451,7 +431,7 @@ function EditUserForm({
                   : "Account is inactive — user cannot log in."}
               </p>
             </div>
-            <button
+            <button aria-label="Account status" aria-busy={Boolean(saving || isLoading)} data-ui="toggle"
               type="button"
               role="switch"
               aria-checked={form.isActive}
@@ -478,7 +458,7 @@ function EditUserForm({
                   width: "18px",
                   height: "18px",
                   borderRadius: "50%",
-                  background: "#fff",
+                  background: "var(--ui-surface)",
                   transition: "left 0.2s",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
                 }}
@@ -500,47 +480,24 @@ function EditUserForm({
             flexWrap: "wrap",
           }}
         >
-          <button
+          <button aria-busy={Boolean(saving || isLoading)} data-ui="secondary"
             type="button"
             onClick={onClose}
             disabled={saving || isLoading}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "12px",
-              fontWeight: "600",
-              color: "#374151",
-              background: "#fff",
-              border: "1.5px solid #d1d5db",
-              borderRadius: "7px",
-              padding: "7px 16px",
-              cursor: saving || isLoading ? "not-allowed" : "pointer",
-              transition: "all 0.15s",
-            }}
+            style={{ cursor: saving || isLoading ? "not-allowed" : "pointer" }}
           >
             Cancel
           </button>
-          <button
+          <button aria-busy={Boolean(saving || isLoading)} data-ui="primary"
             type="button"
             onClick={handleSave}
             disabled={saving || isLoading}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "12px",
-              fontWeight: "600",
-              color: "#fff",
-              background: "#1f5cae",
-              border: "none",
-              borderRadius: "7px",
-              padding: "7px 24px",
-              cursor: saving || isLoading ? "not-allowed" : "pointer",
-              transition: "all 0.15s",
-              opacity: saving || isLoading ? 0.7 : 1,
-            }}
+            style={{ cursor: saving || isLoading ? "not-allowed" : "pointer", opacity: saving || isLoading ? 0.7 : 1 }}
           >
             {saving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
-    </div>
+    </DialogLayer>
   );
 }

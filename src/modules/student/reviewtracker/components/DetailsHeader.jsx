@@ -1,20 +1,20 @@
 import { useNavigate } from "react-router-dom";
 import { BackButton } from "../../../../components";
 
-export default function DetailsHeader({ submission }) {
+export default function DetailsHeader() {
   const navigate = useNavigate();
 
   return (
     <div style={{ marginBottom: "20px" }}>
       <h2
         className="font-inter font-bold text-[#0a1e3f]"
-        style={{ fontSize: "28px", lineHeight: 1.15 }}
+        style={{ fontSize: "var(--type-title)", lineHeight: 1.2 }}
       >
         Review Tracker Details
       </h2>
       <p
         className="font-inter text-[#0a1e3f] mt-1"
-        style={{ fontSize: "16px" }}
+        style={{ fontSize: "var(--type-body)" }}
       >
         Reviewing of processing status.
       </p>

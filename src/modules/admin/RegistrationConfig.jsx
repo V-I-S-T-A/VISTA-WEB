@@ -76,15 +76,11 @@ export default function RegistrationConfig() {
               title="Registration Configuration"
               subtitle="Manage dynamic dropdown options for document entry forms."
             >
-              <button
+              <button data-ui="primary"
                 type="button"
                 onClick={handleAddNew}
-                className="inline-flex items-center gap-1.5 rounded border border-gray-800 bg-[#ffe100] font-inter font-bold text-black transition-colors hover:bg-[#e6c900]"
-                style={{
-                  fontSize: "12px",
-                  padding: "8px 14px",
-                  marginTop: "2px",
-                }}
+                className="inline-flex items-center gap-1.5 border font-inter font-bold transition-colors"
+                style={{ marginTop: "2px" }}
               >
                 <Plus
                   style={{ width: "13px", height: "13px" }}
@@ -104,7 +100,7 @@ export default function RegistrationConfig() {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 return (
-                  <button
+                  <button data-ui="toggle"
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
                     className={`font-inter font-bold uppercase tracking-wider transition-colors flex items-center gap-2 ${

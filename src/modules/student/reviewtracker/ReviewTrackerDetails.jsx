@@ -63,7 +63,7 @@ export default function ReviewTrackerDetails() {
 
   if (currentUser && currentUser.role !== "student") {
     const home = currentUser.role === "admin" ? "/admin/dashboard" : "/staff/dashboard";
-    return <div className="flex min-h-screen items-center justify-center bg-white p-6"><div className="max-w-lg rounded-xl border border-amber-200 bg-amber-50 p-8 text-center"><h2 className="mb-2 text-xl font-bold text-amber-900">Student account required</h2><p role="alert" className="text-gray-700">This submission link is available to its student owner after sign in.</p><button onClick={() => navigate(home, { replace: true })} className="mt-5 rounded-full bg-[#1f5cae] px-6 py-2 font-bold text-white">Continue</button></div></div>;
+    return <div className="flex min-h-screen items-center justify-center bg-white p-6"><div className="max-w-lg rounded-xl border border-amber-200 bg-amber-50 p-8 text-center"><h2 className="mb-2 text-xl font-bold text-amber-900">Student account required</h2><p role="alert" className="text-gray-700">This submission link is available to its student owner after sign in.</p><button data-ui="primary" onClick={() => navigate(home, { replace: true })} className="mt-5 px-6 py-2 font-bold">Continue</button></div></div>;
   }
 
   if (!currentUser) return <PageSkeleton />;
@@ -79,9 +79,9 @@ export default function ReviewTrackerDetails() {
             {getApiErrorMessage(error, "We could not load this submission. Please return to the tracker and try again.")}
           </p>
 
-          <button
+          <button data-ui="secondary"
             onClick={() => navigate("/student/review-tracker")}
-            className="px-6 py-2 bg-[#1f5cae] text-white font-bold rounded-full hover:bg-[#164385] transition"
+            className="px-6 py-2 font-bold transition"
           >
             Return to Tracker
           </button>
@@ -108,7 +108,7 @@ export default function ReviewTrackerDetails() {
           <div className="page-content-stack w-full">
             <DetailsHeader submission={submission} />
             <DetailsNotice status={submission.status} />
-            <DetailsSubmissionInfo submission={submission} isOwner={String(submission.submitted_by) === String(currentUser.user_id)} />
+            <DetailsSubmissionInfo submission={submission} isOwner={String(submission.submitted_by) === String(currentUser.user_id)} avatarUrl={String(submission.submitted_by) === String(currentUser.user_id) ? currentUser.image_url : undefined} />
             <DetailsStatusHistory key={submission.submission_id} submissionId={submission.submission_id} onAccessLost={handleAccessLost} />
             <SystemScopeBanner />
           </div>

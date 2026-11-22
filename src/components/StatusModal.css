@@ -1,0 +1,6 @@
+.vista-status-modal { font-family: var(--font-body); color: var(--ui-text); }
+.vista-status-modal__header { gap: var(--space-4); }
+.vista-status-modal__header h3 { line-height: 1.4; letter-spacing: -.015em; }
+.vista-status-modal :where(button,input,textarea,select) { font-family: var(--font-body); }
+.vista-status-modal :where(input:not([type="radio"]):not([type="checkbox"]):not([type="file"]),textarea,select) { min-height: 40px; border: 1px solid var(--ui-control-border); border-radius: var(--radius-field); background: var(--ui-field); color: var(--ui-text); }
+.vista-status-modal input[type="file"]::file-selector-button { padding: 8px 12px; margin-right: 10px; border: 1px solid var(--ui-border); border-radius: var(--radius-chip); background: var(--ui-selected); color: var(--ui-blue); font: 600 12px var(--font-body); cursor: pointer; }

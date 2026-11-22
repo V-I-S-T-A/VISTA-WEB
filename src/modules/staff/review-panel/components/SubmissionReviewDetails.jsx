@@ -1,18 +1,19 @@
+import "./SubmissionReviewDetails.css";
+import SubmissionPass from "../../../../components/SubmissionPass";
 import VistaSelect from "../../../../components/VistaSelect";
-import { PanelSkeleton } from "../../../../components/loading/Skeleton";
+import { PanelSkeleton, Skeleton } from "../../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useEffect, useRef } from "react";
 import {
-  Building2,
-  Mail,
   FileText,
   CheckCircle2,
   Loader2,
   Trash2,
   History,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { userService } from "../../../../services/userService";
 import { submissionService } from "../../../../services/submissionService";
 import { reviewLogService } from "../../../../services/reviewLogService";
 import {
@@ -29,6 +30,7 @@ import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
 import ReviewReplyThread from "../../../shared/ReviewReplyThread";
 import { isPdfUrl } from "../../../../utils/fileOptimizer";
 import { REALTIME_UPDATE } from "../../../../services/realtimeQueries";
+import { getSubmissionPresentation } from "../../../../config/submissionPresentation";
 
 const STATUS_ACTIONS = [
   "Select Action...",
@@ -68,6 +70,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
   const [submissionDetails, setSubmissionDetails] = useState(null);
   const [detailsError, setDetailsError] = useState("");
+  const [detailsAccessDenied, setDetailsAccessDenied] = useState(false);
   const [logsError, setLogsError] = useState("");
   const [detailsRetry, setDetailsRetry] = useState(0);
   const [logsRetry, setLogsRetry] = useState(0);
@@ -78,6 +81,41 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   const loadedLogsFor = useRef(null);
   const [liveRevision, setLiveRevision] = useState(0);
   const submissionId = submission?.id;
+  const submitterId = submissionDetails?.submitted_by;
+  const submitterEmail = submissionDetails?.submitted_by_email;
+  const { data: submitter, isLoading: isLoadingSubmitter } = useQuery({
+    queryKey: ["users", "submission-submitter", submitterId, submitterEmail],
+    enabled: Boolean(submitterId && submitterEmail),
+    queryFn: async ({ signal }) => {
+      const page = await userService.getUsers({ search: submitterEmail, pageSize: 50, signal });
+      return page.results.find(user => String(user.user_id) === String(submitterId)) ?? null;
+    },
+    staleTime: 30_000,
+    retry: false,
+  });
+  const savedStatus = submissionDetails?.status;
+  const displaySubmission = submissionDetails ? {
+    ...submission,
+    id: submissionDetails.submission_id,
+    title: submissionDetails.title || "Untitled Document",
+    site: submissionDetails.org_name || submission?.site || "Unknown organization",
+    documentType: submissionDetails.doc_type_name || submission?.documentType || "N/A",
+    contactEmail: submissionDetails.submitted_by_email
+      ? `${submissionDetails.submitted_by_name || ""} (${submissionDetails.submitted_by_email})`.trim()
+      : submissionDetails.submitted_by_name || submission?.contactEmail || "N/A",
+    submittedDate: submissionDetails.submitted_at
+      ? new Date(submissionDetails.submitted_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : submission?.submittedDate || "N/A",
+  } : submission;
+  // The API exposes persisted DriveArchive records only after a successful upload
+  // with a Drive file identity. Approval or a temporary URL is not confirmation.
+  const hasConfirmedArchive = submissionDetails?.drive_archives?.some(
+    archive => archive.archive_id && archive.drive_file_id && archive.archived_at,
+  );
+  const showAttachmentPanel = isLoadingDetails || Boolean(detailsError)
+    || Boolean(submissionDetails?.documents?.length) || !hasConfirmedArchive;
+  const statusLabel = savedStatus ? getSubmissionPresentation(savedStatus).label
+    : (isLoadingDetails ? "Loading status…" : "Status unavailable");
 
   useEffect(() => {
     const refresh = ({ detail }) => {
@@ -145,6 +183,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
         const data = await submissionService.getSubmissionById(submissionId);
         if (cancelled) return;
         setSubmissionDetails(data);
+        setDetailsAccessDenied(false);
         if (!draftEdits.current.priority) setPriorityEscalation(Boolean(data?.priority_escalation));
         if (!draftEdits.current.status) {
           setStatusAction(Object.keys(ACTION_TO_STATUS_MAP).find(action => ACTION_TO_STATUS_MAP[action] === data.status) || STATUS_ACTIONS[0]);
@@ -152,6 +191,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
       } catch (error) {
         if (cancelled) return;
         console.error("Failed to fetch full submission details:", error);
+        if ([401, 403, 404].includes(error?.response?.status)) setDetailsAccessDenied(true);
         setDetailsError("Could not load the submission files. Please try again.");
       } finally {
         if (!cancelled) setIsLoadingDetails(false);
@@ -233,6 +273,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
   }, [submission?.id]);
 
   if (!submission) return null;
+  if (detailsAccessDenied) return <div className="space-y-4"><ErrorNotice message="This submission is unavailable or you no longer have access." /><button data-ui="secondary" type="button" onClick={onBack}>Return to Review Panel</button></div>;
 
   function handleOpenConfirmModal() {
     if (statusAction === STATUS_ACTIONS[0]) {
@@ -394,7 +435,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     <div className="w-full">
       <div className="flex w-full flex-wrap items-center justify-between gap-3" style={{ paddingBottom: "20px" }}>
         <div className="flex items-center gap-3">
-          <button
+          <button data-ui="navigation"
             type="button"
             onClick={onBack}
             className="inline-flex items-center rounded-full transition hover:brightness-105 active:scale-95"
@@ -427,299 +468,362 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
             Review panel details.
           </span>
         </div>
-        <ActionButton
+        {isLoadingDetails ? <Skeleton width={120} height={42} /> : <ActionButton aria-busy={Boolean(isSubmitting)} variant="destructive"
           onClick={() => setShowDeleteModal(true)}
           label="Delete Entry"
           icon={<Trash2 size={13} aria-hidden="true" />}
           disabled={isSubmitting}
           className="disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ fontSize: "13px", padding: "8px 14px", borderRadius: "8px", cursor: isSubmitting ? "not-allowed" : "pointer" }}
-        />
+          style={{ fontSize: "13px", padding: "8px 14px", borderRadius: "var(--radius-chip)", cursor: isSubmitting ? "not-allowed" : "pointer" }}
+        />}
       </div>
 
-      <div
-        className="submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
-        style={{ padding: "24px", marginBottom: "20px" }}
-      >
-        <div className="submission-detail-heading flex items-start justify-between gap-4">
-          <div>
+      <div className="submission-review-bento">
+        <div className="submission-review-column submission-review-column--details">
+          <section className="submission-pass" aria-labelledby="submission-pass-title">
+            <SubmissionPass
+              submission={displaySubmission}
+              avatarUrl={submitter?.image_url}
+              organizationAvatarUrl={submissionDetails?.org_image_url}
+              submitterLoading={isLoadingSubmitter}
+              loading={isLoadingDetails}
+              submitterName={submissionDetails?.submitted_by_name}
+              submitterEmail={submissionDetails?.submitted_by_email}
+              status={savedStatus}
+              statusLabel={statusLabel}
+              titleId="submission-pass-title"
+            >
+              {showAttachmentPanel && <div className="submission-pass__attachments">
+                <p
+                  className="submission-pass__attachment-label"
+                  style={{ fontSize: "11px", marginBottom: "10px" }}
+                >
+                  Attached Files
+                </p>
+
+                {detailsError ? (
+                  <ErrorNotice message={detailsError} onRetry={() => setDetailsRetry(c => c + 1)} />
+                ) : submissionDetails?.documents?.length > 0 ? (
+                  <div className="flex flex-col gap-2">
+                    {submissionDetails.documents.map((doc, idx) => (
+                      <div
+                        key={doc.document_id || doc.id || idx}
+                        className="submission-pass__file-row flex items-center justify-between gap-3 rounded-lg border p-3"
+                      >
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="vista-plain-icon submission-pass__file-icon"><FileText className="h-4 w-4" /></span>
+                          {doc.file_url ? (
+                            <AttachmentImagePreview
+                              fileUrl={doc.file_url}
+                              fileName={doc.file_name || `Document ${idx + 1}`}
+                              mimeType={doc.mime_type}
+                              triggerLabel={doc.file_name || `Document ${idx + 1}`}
+                              triggerClassName="submission-pass__attachment-preview min-w-0 text-left font-inter"
+                            />
+                          ) : (
+                            <span className="submission-pass__file-unavailable font-inter text-[13.5px]">{doc.file_name || `Document ${idx + 1}`} — file link unavailable</span>
+                          )}
+                        </div>
+                        {/* FIXED: Uses doc.file_url with WebP CDN acceleration & PDF archive link */}
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {isPdfUrl(doc.file_url, doc.file_name) && (
+                            <a
+                              href={doc.file_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              download={doc.file_name || "document.pdf"}
+                              onClick={(e) => e.stopPropagation()}
+                              title="Download original uncompressed PDF document"
+                              className="submission-pass__download inline-flex items-center gap-1 rounded px-2 py-1.5 font-inter text-[11px] font-semibold border transition active:scale-95 flex-shrink-0"
+                            >
+                              PDF
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="submission-pass__empty">
+                    <FileText size={20} aria-hidden="true" />
+                    <span className="font-inter text-[13px] italic">
+                      No files attached to this submission.
+                    </span>
+                  </div>
+                )}
+              </div>}
+            </SubmissionPass>
+          </section>      <div
+            className="submission-review-history vista-surface w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
+          >
+            <div
+              className="vista-panel-heading flex flex-wrap items-center justify-between gap-3"
+              style={{ padding: "16px 20px" }}
+            >
+              <div className="flex items-center gap-3">
+                <History size={16} color="#ffffff" aria-hidden="true" />
+                <h4
+                  className="m-0 font-inter font-extrabold text-white"
+                  style={{ fontSize: "var(--type-heading)", letterSpacing: "-0.01em" }}
+                >
+                  Status History
+                </h4>
+              </div>
+              {isLoadingLogs ? <Skeleton width={70} height={22} /> : <span
+                className="rounded-full font-inter font-extrabold text-gray-900"
+                style={{ background: "var(--ui-yellow)", padding: "3px 10px", fontSize: "10px" }}
+              >
+                {reviewLogs.length} {reviewLogs.length === 1 ? "update" : "updates"}
+              </span>}
+            </div>
+
+            <div style={{ padding: "18px 24px" }}>
+              {isLoadingLogs ? (
+                <PanelSkeleton kind="timeline" framed={false} rows={3} label="Loading review history" />
+              ) : logsError && reviewLogs.length === 0 ? (
+                <ErrorNotice message={logsError} onRetry={() => setLogsRetry(c => c + 1)} />
+              ) : reviewLogs.length === 0 ? (
+                <p className="font-inter text-[13px] italic text-gray-400">
+                  No status changes recorded yet.
+                </p>
+              ) : (
+                <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
+                  {reviewLogs.map((log, idx) => {
+                    const isLatest = idx === 0;
+                    const oldStatus = getSubmissionPresentation(log.old_status).label;
+                    const newStatus = getSubmissionPresentation(log.new_status).label;
+                    const author = log.changed_by_name || "Unknown Staff";
+                    const initials = author
+                      .split(" ")
+                      .map((part) => part[0])
+                      .join("")
+                      .slice(0, 2)
+                      .toUpperCase();
+
+                    return (
+                      <li
+                        key={log.log_id}
+                        className="flex gap-5"
+                        style={{ position: "relative", paddingBottom: idx < reviewLogs.length - 1 ? "20px" : 0 }}
+                      >
+                        <div aria-hidden="true" style={{ width: "18px", flex: "0 0 18px", position: "relative" }}>
+                          {idx < reviewLogs.length - 1 && (
+                            <span
+                              style={{ position: "absolute", top: "16px", bottom: "-20px", left: "7px", width: "2px", background: "var(--ui-border)" }}
+                            />
+                          )}
+                          <span
+                            style={{
+                              position: "relative",
+                              zIndex: 1,
+                              display: "block",
+                              width: "16px",
+                              height: "16px",
+                              marginTop: "3px",
+                              borderRadius: "50%",
+                              background: isLatest ? "var(--ui-blue)" : "var(--ui-muted)",
+                              border: "3px solid var(--ui-selected)",
+                              boxShadow: isLatest ? "0 0 0 1px var(--ui-blue)" : "none",
+                            }}
+                          />
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h5
+                              className="m-0 font-inter font-bold text-[#142d55]"
+                              style={{ fontSize: "15px", lineHeight: 1.3 }}
+                            >
+                              {newStatus}
+                            </h5>
+                            {isLatest && (
+                              <span
+                                className="rounded-full bg-[var(--ui-yellow)] font-inter font-bold text-gray-900"
+                                style={{ padding: "3px 9px", fontSize: "10px" }}
+                              >
+                                Latest
+                              </span>
+                            )}
+                          </div>
+                          <p className="m-0 font-inter text-gray-500" style={{ marginTop: "4px", fontSize: "12px" }}>
+                            {new Date(log.changed_at).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year: "numeric",
+                              hour: "numeric",
+                              minute: "2-digit",
+                              hour12: true,
+                            })}
+                          </p>
+                          {log.old_status !== log.new_status && (
+                            <p className="m-0 font-inter text-gray-600" style={{ marginTop: "6px", fontSize: "13px" }}>
+                              {oldStatus} <span aria-hidden="true">→</span> {newStatus}
+                            </p>
+                          )}
+
+                          <AttachmentChangeNote change={log.attachment_change} currentDocuments={submissionDetails?.documents ?? []} />
+
+                          <div className="flex items-center gap-3" style={{ marginTop: "10px" }}>
+                            <div
+                              className="flex-shrink-0 flex items-center justify-center overflow-hidden rounded-lg bg-[#eef1f9] font-inter font-bold text-[#1f5cae]"
+                              style={{ width: "36px", height: "36px", fontSize: "12px" }}
+                            >
+                              {log.changed_by_image_url ? (
+                                <img
+                                  src={log.changed_by_image_url}
+                                  alt=""
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : initials}
+                            </div>
+                            <div>
+                              <p className="m-0 font-inter text-gray-500" style={{ fontSize: "11px" }}>Updated by</p>
+                              <p className="m-0 font-inter font-bold text-[#142d55]" style={{ fontSize: "13px" }}>
+                                {author}
+                              </p>
+                            </div>
+                          </div>
+
+                          {log.remarks_text?.trim() && (
+                            <div
+                              style={{
+                                marginTop: "10px",
+                                padding: "9px 12px",
+                                borderRadius: "var(--radius-field)",
+                                border: "1px solid var(--ui-border)",
+                                background: "var(--ui-field)",
+                              }}
+                            >
+                              <p className="m-0 font-inter font-semibold text-gray-600" style={{ fontSize: "12px" }}>
+                                Remarks &amp; feedback
+                              </p>
+                              <p className="m-0 font-inter text-[#142d55]" style={{ marginTop: "4px", fontSize: "13px", lineHeight: 1.45 }}>
+                                {log.remarks_text}
+                              </p>
+                            </div>
+                          )}
+                          {log.remarks_text?.trim() && <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />}
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ol>
+              )}
+            </div>
+          </div>
+        </div>
+        <div className="submission-review-column submission-review-column--actions">
+          <div
+            className="submission-review-decision vista-surface submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
+            style={{ padding: "24px" }}
+          >
+            {isLoadingDetails || isLoadingLogs ? <PanelSkeleton kind="decision" framed={false} label="Loading decision panel" /> : <>
+            <h3
+              className="font-inter font-bold text-gray-900"
+              style={{ fontSize: "17px" }}
+            >
+              Decision Panel
+            </h3>
             <p
-              className="font-inter font-bold uppercase tracking-wider text-gray-400"
+              className="font-inter font-medium text-gray-500"
+              style={{ fontSize: "13px", paddingTop: "2px", paddingBottom: "18px" }}
+            >
+              Record your final institutional assessment.
+            </p>
+
+            <label
+              className="font-inter font-bold uppercase tracking-wider text-gray-500"
               style={{ fontSize: "11.5px" }}
             >
-              Submission Details
-            </p>
-            <h2
-              className="font-inter font-bold text-gray-900"
-              style={{ fontSize: "18px", paddingTop: "4px" }}
-            >
-              {submission.title}
-            </h2>
+              Status Selection
+            </label>
             <div
-              className="flex items-center gap-1.5"
-              style={{ paddingTop: "8px" }}
+              className="relative"
+              style={{ marginTop: "6px", marginBottom: "18px", marginRight: "4px" }}
             >
-              <Building2
-                style={{ width: "14px", height: "14px" }}
-                className="text-gray-400 flex-shrink-0"
-                aria-hidden="true"
+              <VistaSelect
+                aria-label="Status selection"
+                value={statusAction}
+                onChange={(e) => { draftEdits.current.status = true; setStatusAction(e.target.value); }}
+                disabled={isSubmitting || isLoadingDetails}
+                className="w-full appearance-none rounded-lg bg-[#eef1f9] font-inter font-bold text-gray-800 outline-none cursor-pointer disabled:opacity-70"
+                style={{ fontSize: "14px", padding: "12px 40px 12px 14px" }}
+              >
+                {STATUS_ACTIONS.map((action) => (
+                  <option key={action} value={action}>
+                    {action}
+                  </option>
+                ))}
+              </VistaSelect>
+            </div>
+
+            <label
+              className="font-inter font-bold uppercase tracking-wider text-gray-500"
+              style={{ fontSize: "11.5px" }}
+            >
+              Reviewer Remarks
+            </label>
+            <textarea
+              value={remarks}
+              onChange={(e) => { draftEdits.current.remarks = true; setRemarks(e.target.value); }}
+              disabled={isSubmitting || isLoadingLogs}
+              placeholder="Provide detailed justification for your decision..."
+              rows={4}
+              className="w-full resize-none rounded-lg bg-[#eef1f9] font-inter font-medium text-gray-700 placeholder-gray-400 outline-none disabled:opacity-70"
+              style={{
+                fontSize: "13.5px",
+                padding: "12px 14px",
+                marginTop: "6px",
+                marginBottom: "16px",
+              }}
+            />
+
+            <label
+              className="inline-flex items-center gap-2 cursor-pointer"
+              style={{ marginBottom: "20px" }}
+            >
+              <input
+                type="checkbox"
+                checked={priorityEscalation}
+                onChange={(e) => { draftEdits.current.priority = true; setPriorityEscalation(e.target.checked); }}
+                disabled={isSubmitting}
+                className="h-4 w-4 rounded border-gray-300 text-[#1f5cae] focus:ring-[#1f5cae] disabled:opacity-70"
               />
               <span
-                className="font-inter font-medium text-gray-600"
+                className="font-inter font-semibold text-gray-700"
                 style={{ fontSize: "13px" }}
               >
-                {submission.site}
+                Mark as Priority Escalation
               </span>
-            </div>
-          </div>
+            </label>
 
-          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-            <span
-              className="inline-flex items-center rounded font-inter font-bold text-[#1d4ed8] bg-[#eaf1ff]"
-              style={{ fontSize: "12px", padding: "4px 10px" }}
-            >
-              ID: #{submission.id?.slice(0, 8)}
-            </span>
-            <span
-              className="font-inter font-medium text-gray-400"
-              style={{ fontSize: "12px" }}
-            >
-              Submitted: {submission.submittedDate}
-            </span>
-          </div>
-        </div>
-
-        <div
-          className="border-t border-gray-100"
-          style={{ marginTop: "18px", marginBottom: "18px" }}
-        />
-
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <div>
-            <p
-              className="font-inter font-bold uppercase tracking-wider text-gray-400"
-              style={{ fontSize: "11px" }}
-            >
-              Submitter Contact
-            </p>
-            <div
-              className="flex items-center gap-1.5"
-              style={{ paddingTop: "6px" }}
-            >
-              <Mail
-                style={{ width: "14px", height: "14px" }}
-                className="text-[#1f5cae] flex-shrink-0"
-                aria-hidden="true"
-              />
-              <span
-                className="font-inter font-semibold text-gray-800"
-                style={{ fontSize: "13.5px" }}
+            <div className="flex justify-center">
+              <button aria-busy={Boolean(isSubmitting)} data-ui="primary"
+                type="button"
+                onClick={handleOpenConfirmModal}
+                disabled={isSubmitting || isLoadingDetails || isLoadingLogs || Boolean(detailsError || logsError)}
+                className="inline-flex w-full items-center justify-center gap-2 font-inter font-bold transition hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{  }}
               >
-                {submission.contactEmail}
-              </span>
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <CheckCircle2
+                    style={{ width: "16px", height: "16px" }}
+                    aria-hidden="true"
+                  />
+                )}
+                {isSubmitting ? "SUBMITTING..." : "SUBMIT OFFICIAL DECISION"}
+              </button>
             </div>
+            </>}
           </div>
 
-          <div>
-            <p
-              className="font-inter font-bold uppercase tracking-wider text-gray-400"
-              style={{ fontSize: "11px" }}
-            >
-              Document Type
-            </p>
-            <div
-              className="flex items-center gap-1.5"
-              style={{ paddingTop: "6px" }}
-            >
-              <FileText
-                style={{ width: "14px", height: "14px" }}
-                className="text-[#1f5cae] flex-shrink-0"
-                aria-hidden="true"
-              />
-              <span
-                className="font-inter font-semibold text-gray-800"
-                style={{ fontSize: "13.5px" }}
-              >
-                {submission.documentType}
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <div style={{ marginTop: "24px" }}>
-          <p
-            className="font-inter font-bold uppercase tracking-wider text-gray-400"
-            style={{ fontSize: "11px", marginBottom: "10px" }}
-          >
-            Attached Files
-          </p>
-
-          {isLoadingDetails ? (
-            <PanelSkeleton kind="documents" framed={false} rows={3} label="Loading attached documents" />
-          ) : detailsError ? (
-            <ErrorNotice message={detailsError} onRetry={() => setDetailsRetry(c => c + 1)} />
-          ) : submissionDetails?.documents?.length > 0 ? (
-            <div className="flex flex-col gap-2">
-              {submissionDetails.documents.map((doc, idx) => (
-                <div
-                  key={doc.document_id || doc.id || idx}
-                  className="flex items-center justify-between gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded bg-[#eaf1ff]">
-                      <FileText className="h-4 w-4 text-[#1d4ed8]" />
-                    </div>
-                    {doc.file_url ? (
-                      <AttachmentImagePreview
-                        fileUrl={doc.file_url}
-                        fileName={doc.file_name || `Document ${idx + 1}`}
-                        mimeType={doc.mime_type}
-                        triggerLabel={doc.file_name || `Document ${idx + 1}`}
-                        triggerClassName="min-w-0 truncate text-left font-inter"
-                      />
-                    ) : (
-                      <span className="font-inter text-[13.5px] text-gray-600">{doc.file_name || `Document ${idx + 1}`} — file link unavailable</span>
-                    )}
-                  </div>
-                  {/* FIXED: Uses doc.file_url with WebP CDN acceleration & PDF archive link */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {isPdfUrl(doc.file_url, doc.file_name) && (
-                      <a
-                        href={doc.file_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download={doc.file_name || "document.pdf"}
-                        onClick={(e) => e.stopPropagation()}
-                        title="Download original uncompressed PDF document"
-                        className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1.5 font-inter text-[11px] font-semibold text-gray-600 border border-gray-200 transition hover:bg-gray-200 active:scale-95 flex-shrink-0"
-                      >
-                        PDF
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="rounded-lg border border-dashed border-gray-300 p-4 text-center">
-              <span className="font-inter text-[13px] text-gray-500 italic">
-                No files attached to this submission.
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <DriveArchiveCard
-        archives={submissionDetails?.drive_archives ?? []}
-        handledBy={reviewLogs.find((log) => log.new_status === "approved")}
-      />
-
-      <div
-        className="submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
-        style={{ padding: "24px" }}
-      >
-        <h3
-          className="font-inter font-bold text-gray-900"
-          style={{ fontSize: "17px" }}
-        >
-          Decision Panel
-        </h3>
-        <p
-          className="font-inter font-medium text-gray-500"
-          style={{ fontSize: "13px", paddingTop: "2px", paddingBottom: "18px" }}
-        >
-          Record your final institutional assessment.
-        </p>
-
-        <label
-          className="font-inter font-bold uppercase tracking-wider text-gray-500"
-          style={{ fontSize: "11.5px" }}
-        >
-          Status Selection
-        </label>
-        <div
-          className="relative"
-          style={{ marginTop: "6px", marginBottom: "18px", marginRight: "4px" }}
-        >
-          <VistaSelect
-            aria-label="Status selection"
-            value={statusAction}
-            onChange={(e) => { draftEdits.current.status = true; setStatusAction(e.target.value); }}
-            disabled={isSubmitting || isLoadingDetails}
-            className="w-full appearance-none rounded-lg bg-[#eef1f9] font-inter font-bold text-gray-800 outline-none cursor-pointer disabled:opacity-70"
-            style={{ fontSize: "14px", padding: "12px 40px 12px 14px" }}
-          >
-            {STATUS_ACTIONS.map((action) => (
-              <option key={action} value={action}>
-                {action}
-              </option>
-            ))}
-          </VistaSelect>
-        </div>
-
-        <label
-          className="font-inter font-bold uppercase tracking-wider text-gray-500"
-          style={{ fontSize: "11.5px" }}
-        >
-          Reviewer Remarks
-        </label>
-        <textarea
-          value={remarks}
-          onChange={(e) => { draftEdits.current.remarks = true; setRemarks(e.target.value); }}
-          disabled={isSubmitting || isLoadingLogs}
-          placeholder="Provide detailed justification for your decision..."
-          rows={4}
-          className="w-full resize-none rounded-lg bg-[#eef1f9] font-inter font-medium text-gray-700 placeholder-gray-400 outline-none disabled:opacity-70"
-          style={{
-            fontSize: "13.5px",
-            padding: "12px 14px",
-            marginTop: "6px",
-            marginBottom: "16px",
-          }}
-        />
-
-        <label
-          className="inline-flex items-center gap-2 cursor-pointer"
-          style={{ marginBottom: "20px" }}
-        >
-          <input
-            type="checkbox"
-            checked={priorityEscalation}
-            onChange={(e) => { draftEdits.current.priority = true; setPriorityEscalation(e.target.checked); }}
-            disabled={isSubmitting}
-            className="h-4 w-4 rounded border-gray-300 text-[#1f5cae] focus:ring-[#1f5cae] disabled:opacity-70"
+          <DriveArchiveCard
+            archives={submissionDetails?.drive_archives ?? []}
+            handledBy={reviewLogs.find((log) => log.new_status === "approved")}
           />
-          <span
-            className="font-inter font-semibold text-gray-700"
-            style={{ fontSize: "13px" }}
-          >
-            Mark as Priority Escalation
-          </span>
-        </label>
 
-        <div className="flex justify-center">
-          <button
-            type="button"
-            onClick={handleOpenConfirmModal}
-            disabled={isSubmitting || isLoadingDetails || isLoadingLogs || Boolean(detailsError || logsError)}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              fontSize: "13.5px",
-              padding: "13px 20px",
-              backgroundColor: "#ffc700",
-            }}
-          >
-            {isSubmitting ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <CheckCircle2
-                style={{ width: "16px", height: "16px" }}
-                aria-hidden="true"
-              />
-            )}
-            {isSubmitting ? "SUBMITTING..." : "SUBMIT OFFICIAL DECISION"}
-          </button>
         </div>
       </div>
 
@@ -777,22 +881,22 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
             style={{
               padding: "14px 16px",
               border: "1px solid #dbe5ef",
-              borderRadius: "10px",
+              borderRadius: "var(--radius-chip)",
               background: "#f7faff",
             }}
           >
-            <p style={{ margin: 0, color: "#6b7280", fontFamily: "Inter, sans-serif", fontSize: "11px", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>
+            <p style={{ margin: 0, color: "var(--ui-muted)", fontFamily: "var(--font-body)", fontSize: "11px", fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>
               Submission
             </p>
-            <p style={{ margin: "5px 0 0", color: "#142d55", fontFamily: "Inter, sans-serif", fontSize: "13px", fontWeight: 700 }}>
+            <p style={{ margin: "5px 0 0", color: "var(--ui-text)", fontFamily: "var(--font-body)", fontSize: "13px", fontWeight: 700 }}>
               {submission.title || "Untitled submission"}
             </p>
-            <p style={{ margin: "5px 0 0", color: "#6b7280", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "11px", overflowWrap: "anywhere" }}>
+            <p style={{ margin: "5px 0 0", color: "var(--ui-muted)", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "11px", overflowWrap: "anywhere" }}>
               Reference ID: {submission.id || "Unavailable"}
             </p>
           </div>
           <div>
-            <label htmlFor="return-submission-confirmation" style={{ display: "block", marginBottom: "6px", color: "#374151", fontFamily: "Inter, sans-serif", fontSize: "12px", fontWeight: 600 }}>
+            <label htmlFor="return-submission-confirmation" style={{ display: "block", marginBottom: "6px", color: "#374151", fontFamily: "var(--font-body)", fontSize: "12px", fontWeight: 600 }}>
               Type RETURNED to confirm <span style={{ color: "#b4232f" }}>*</span>
             </label>
             <input
@@ -802,179 +906,12 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               onChange={(event) => setReturnConfirmation(event.target.value)}
               autoComplete="off"
               disabled={isSubmitting}
-              style={{ display: "block", boxSizing: "border-box", width: "100%", padding: "9px 11px", border: "1px solid #cbd5e1", borderRadius: "8px", backgroundColor: "#ffffff", color: "#1f2937", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "13px", outlineColor: "#1f5cae" }}
+              style={{ display: "block", boxSizing: "border-box", width: "100%", padding: "9px 11px", border: "1px solid #cbd5e1", borderRadius: "var(--radius-field)", backgroundColor: "var(--ui-surface)", color: "#1f2937", fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: "13px", outlineColor: "#1f5cae" }}
             />
           </div>
         </div>
       </StatusModal>
 
-      {/* ── STATUS HISTORY & FEEDBACK ─────────────────────────────── */}
-      <div
-        className="w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
-        style={{ marginTop: "20px" }}
-      >
-        <div
-          className="flex flex-wrap items-center justify-between gap-3"
-          style={{ background: "#1f5cae", padding: "11px 20px" }}
-        >
-          <div className="flex items-center gap-3">
-            <History size={16} color="#ffffff" aria-hidden="true" />
-            <h4
-              className="m-0 font-inter font-extrabold text-white"
-              style={{ fontSize: "12px", letterSpacing: "0.08em", textTransform: "uppercase" }}
-            >
-              Status History
-            </h4>
-          </div>
-          <span
-            className="rounded-full font-inter font-extrabold text-gray-900"
-            style={{ background: "#ffc700", padding: "3px 10px", fontSize: "10px" }}
-          >
-            {reviewLogs.length} {reviewLogs.length === 1 ? "update" : "updates"}
-          </span>
-        </div>
-
-        <div style={{ padding: "18px 24px" }}>
-          {isLoadingLogs ? (
-            <PanelSkeleton kind="timeline" framed={false} rows={3} label="Loading review history" />
-          ) : logsError && reviewLogs.length === 0 ? (
-            <ErrorNotice message={logsError} onRetry={() => setLogsRetry(c => c + 1)} />
-          ) : reviewLogs.length === 0 ? (
-            <p className="font-inter text-[13px] italic text-gray-400">
-              No status changes recorded yet.
-            </p>
-          ) : (
-            <ol style={{ listStyle: "none", margin: 0, padding: 0 }}>
-              {reviewLogs.map((log, idx) => {
-                const isLatest = idx === 0;
-                const labelMap = {
-                  pending: "New / Pending",
-                  under_review: "Under Review",
-                  approved: "Verified / Approved",
-                  rejected: "Flagged / Rejected",
-                  resubmission_required: "Resubmission Required",
-                };
-                const oldStatus = labelMap[log.old_status] || log.old_status || "Unknown";
-                const newStatus = labelMap[log.new_status] || log.new_status || "Unknown";
-                const author = log.changed_by_name || "Unknown Staff";
-                const initials = author
-                  .split(" ")
-                  .map((part) => part[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase();
-
-                return (
-                  <li
-                    key={log.log_id}
-                    className="flex gap-5"
-                    style={{ position: "relative", paddingBottom: idx < reviewLogs.length - 1 ? "20px" : 0 }}
-                  >
-                    <div aria-hidden="true" style={{ width: "18px", flex: "0 0 18px", position: "relative" }}>
-                      {idx < reviewLogs.length - 1 && (
-                        <span
-                          style={{ position: "absolute", top: "16px", bottom: "-20px", left: "7px", width: "2px", background: "#d1d5db" }}
-                        />
-                      )}
-                      <span
-                        style={{
-                          position: "relative",
-                          zIndex: 1,
-                          display: "block",
-                          width: "16px",
-                          height: "16px",
-                          marginTop: "3px",
-                          borderRadius: "50%",
-                          background: isLatest ? "#1a59a5" : "#9ca3af",
-                          border: "3px solid #eff6ff",
-                          boxShadow: isLatest ? "0 0 0 1px #bfdbfe" : "none",
-                        }}
-                      />
-                    </div>
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h5
-                          className="m-0 font-inter font-bold text-[#142d55]"
-                          style={{ fontSize: "15px", lineHeight: 1.3 }}
-                        >
-                          {newStatus}
-                        </h5>
-                        {isLatest && (
-                          <span
-                            className="rounded-full bg-[#ffc700] font-inter font-bold text-gray-900"
-                            style={{ padding: "3px 9px", fontSize: "10px" }}
-                          >
-                            Latest
-                          </span>
-                        )}
-                      </div>
-                      <p className="m-0 font-inter text-gray-500" style={{ marginTop: "4px", fontSize: "12px" }}>
-                        {new Date(log.changed_at).toLocaleString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                          hour: "numeric",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </p>
-                      {log.old_status !== log.new_status && (
-                        <p className="m-0 font-inter text-gray-600" style={{ marginTop: "6px", fontSize: "13px" }}>
-                          {oldStatus} <span aria-hidden="true">→</span> {newStatus}
-                        </p>
-                      )}
-
-                      <AttachmentChangeNote change={log.attachment_change} />
-
-                      <div className="flex items-center gap-3" style={{ marginTop: "10px" }}>
-                        <div
-                          className="flex-shrink-0 flex items-center justify-center overflow-hidden rounded-lg bg-[#eef1f9] font-inter font-bold text-[#1f5cae]"
-                          style={{ width: "36px", height: "36px", fontSize: "12px" }}
-                        >
-                          {log.changed_by_image_url ? (
-                            <img
-                              src={log.changed_by_image_url}
-                              alt=""
-                              className="h-full w-full object-cover"
-                            />
-                          ) : initials}
-                        </div>
-                        <div>
-                          <p className="m-0 font-inter text-gray-500" style={{ fontSize: "11px" }}>Updated by</p>
-                          <p className="m-0 font-inter font-bold text-[#142d55]" style={{ fontSize: "13px" }}>
-                            {author}
-                          </p>
-                        </div>
-                      </div>
-
-                      {log.remarks_text?.trim() && (
-                        <div
-                          style={{
-                            marginTop: "10px",
-                            padding: "9px 12px",
-                            borderRadius: "10px",
-                            border: "1px solid #dbe4f0",
-                            background: "#f1f5fd",
-                          }}
-                        >
-                          <p className="m-0 font-inter font-semibold text-gray-600" style={{ fontSize: "12px" }}>
-                            Remarks &amp; feedback
-                          </p>
-                          <p className="m-0 font-inter text-[#142d55]" style={{ marginTop: "4px", fontSize: "13px", lineHeight: 1.45 }}>
-                            {log.remarks_text}
-                          </p>
-                        </div>
-                      )}
-                      {log.remarks_text?.trim() && <ReviewReplyThread log={log} canReply={Boolean(log.can_reply)} />}
-                    </div>
-                  </li>
-                );
-              })}
-            </ol>
-          )}
-        </div>
-      </div>
       {/* Notification / Alert Modal (Table palette styled) */}
       <StatusModal
         isOpen={modalConfig.isOpen}

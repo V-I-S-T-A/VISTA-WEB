@@ -10,9 +10,15 @@ export default function GetAppSkeleton() {
       </div>
       <Skeleton height={100} className="get-app-skeleton-band" />
       <div className="get-app-skeleton-tags">{[0,1,2,3].map(i => <Skeleton key={i} height={42} />)}</div>
+      <div className="get-app-skeleton-promo"><Skeleton height="auto" className="get-app-skeleton-video" /></div>
       <div className="get-app-skeleton-heading"><Skeleton width="45%" height={32} /><Skeleton width="35%" height={32} /></div>
       <div className="get-app-skeleton-features">{[0,1,2,3].map(i => <div key={i}><Skeleton circle width={70} height={70} /><Skeleton width="65%" height={18} /><SkeletonLines count={2} /></div>)}</div>
-      <div className="get-app-skeleton-tour"><Skeleton width="65%" height={380} style={{ borderRadius: 28 }} /><div><Skeleton width="80%" height={32} /><SkeletonLines count={3} /><Skeleton width={180} height={44} /></div></div>
+      <div className="get-app-skeleton-heading"><Skeleton width="60%" height={32} /><Skeleton width="42%" height={14} /></div>
+      <div className="get-app-skeleton-role-tabs"><Skeleton width={148} height={46} /><Skeleton width={148} height={46} /></div>
+      <div className="get-app-skeleton-manual">
+        <Skeleton height={600} className="get-app-skeleton-manual-phone" style={{ borderRadius: 30 }} />
+        <div className="get-app-skeleton-manual-copy"><Skeleton width="65%" height={11} /><Skeleton width="90%" height={32} /><SkeletonLines count={3} /><SkeletonLines count={3} /><Skeleton height={95} /><div className="get-app-skeleton-manual-actions"><Skeleton height={44} /><Skeleton height={44} /></div></div>
+      </div>
     </div>
   </LoadingRegion>;
 }

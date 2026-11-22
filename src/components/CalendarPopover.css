@@ -1,0 +1,29 @@
+.vista-calendar-popover { padding: 14px; border: 1px solid var(--ui-border); border-radius: var(--radius-card); background: var(--ui-surface); box-shadow: var(--shadow-raised); color: var(--ui-text); font-family: var(--font-body); }
+.vista-calendar-title { margin: 0 0 12px; color: var(--ui-muted); font-size: 11px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
+.vista-calendar-heading { display: grid; grid-template-columns: 28px minmax(0, 1fr) 76px 28px; align-items: center; gap: 6px; margin-bottom: 12px; }
+.vista-calendar-heading > button:not(.vista-select-trigger) { display: flex; align-items: center; justify-content: center; width: 28px; height: 36px; border: 0; border-radius: var(--radius-chip); background: var(--ui-field); color: var(--ui-blue); cursor: pointer; }
+.vista-calendar-heading .vista-select-trigger { min-height: 36px; padding: 7px; gap: 4px; font-size: 12px; border-radius: var(--radius-chip); }
+.vista-calendar-weekdays,.vista-calendar-days { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 3px; text-align: center; }
+.vista-calendar-weekdays { margin-bottom: 6px; color: var(--ui-muted); font-size: 11px; font-weight: 600; }
+.vista-calendar-weekdays span { padding-block: 5px; }
+.vista-calendar-days > :is(button,span) { min-width: 0; height: 34px; }
+.vista-calendar-days button { border: 1px solid transparent; border-radius: var(--radius-chip); background: transparent; color: var(--ui-text); font: 500 13px var(--font-body); cursor: pointer; }
+.vista-calendar-days button:hover:not(:disabled) { background: var(--ui-selected); }
+.vista-calendar-days button[aria-current="date"] { border-color: var(--ui-blue); color: var(--ui-blue); }
+.vista-calendar-days button[aria-pressed="true"] { background: var(--ui-blue); border-color: var(--ui-blue); color: #fff; font-weight: 700; }
+.vista-calendar-days button:disabled { color: #a6b0bf; cursor: not-allowed; }
+.vista-calendar-footer { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--ui-border); }
+.vista-calendar-footer button { min-height: 32px; padding: 6px 10px; border: 0; border-radius: var(--radius-chip); color: var(--ui-blue); background: var(--ui-field); font: 600 12px var(--font-body); cursor: pointer; }
+.vista-calendar-footer button:first-child { margin-right: auto; }
+.vista-calendar-footer button:last-child { color: #fff; background: var(--ui-blue); }
+.vista-calendar-footer button:disabled { opacity: .5; cursor: not-allowed; }
+.vista-date-field { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 42px; width: 100%; padding: 0 6px 0 12px; border: 1px solid var(--ui-control-border); border-radius: var(--radius-field); background: var(--ui-field); color: var(--ui-text); }
+.vista-date-field > input { width: 100%; min-width: 0; min-height: 40px; padding: 0; border: 0; border-radius: 0; background: transparent; color: inherit; font: 500 14px var(--font-body); outline: 0; }
+.vista-date-field > input::-webkit-calendar-picker-indicator { display: none; }
+.vista-date-field > button { display: flex; align-items: center; justify-content: center; flex: 0 0 32px; width: 32px; height: 32px; border: 0; border-radius: var(--radius-chip); color: var(--ui-blue); background: var(--ui-selected); cursor: pointer; }
+.vista-date-field:focus-within { outline: 2px solid var(--ui-blue); outline-offset: 2px; }
+.vista-date-field > input:focus-visible { outline: none !important; }
+.vista-birth-date { width: 100%; border-radius: var(--radius-field); }
+.vista-filter-popover { font-family: var(--font-body); }
+.vista-filter-popover label { margin-bottom: 6px; }
+.vista-filter-popover > .vista-filter-footer { margin-top: 16px; }

@@ -1,9 +1,11 @@
+import StatusModal from "../../../../components/StatusModal";
 import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import { useCurrentUser } from "../../../../hooks/useAuth";
 import defaultUser from "../../../../assets/shared/default_user.webp";
+import { getSubmissionPresentation } from "../../../../config/submissionPresentation";
 import {
   TableContainer,
   TableSearchBar,
@@ -39,6 +41,7 @@ const STATUS_MAP = {
 };
 
 export default function ReviewTrackerTable() {
+  const [exportFeedback, setExportFeedback] = useState(null);
   const navigate = useNavigate();
   const { data: currentUser } = useCurrentUser();
   const [searchInput, setSearchInput] = useState("");
@@ -101,7 +104,7 @@ export default function ReviewTrackerTable() {
   // Frontend CSV Exporter
   const handleExportCSV = () => {
     if (!submissions || submissions.length === 0) {
-      alert("No submissions to export.");
+      setExportFeedback({ type: "info", message: "No submissions to export." });
       return;
     }
 
@@ -146,7 +149,9 @@ export default function ReviewTrackerTable() {
   };
 
   return (
-    <TableContainer
+    <>
+      <StatusModal isOpen={Boolean(exportFeedback)} onClose={() => setExportFeedback(null)} title={exportFeedback?.type === "error" ? "Export failed" : "Nothing to export"} message={exportFeedback?.message || ""} type={exportFeedback?.type || "info"} />
+      <TableContainer
       className="responsive-records"
       title="Recent Submissions"
       headerRight={
@@ -186,7 +191,7 @@ export default function ReviewTrackerTable() {
                   >
                     {STATUS_OPTIONS.map((opt) => (
                       <option key={opt} value={opt}>
-                        {opt}
+                        {STATUS_MAP[opt] ? getSubmissionPresentation(STATUS_MAP[opt]).label : opt}
                       </option>
                     ))}
                   </FilterSelect>
@@ -357,6 +362,6 @@ export default function ReviewTrackerTable() {
           )}
         </tbody>
       </table>
-    </TableContainer>
+    </TableContainer></>
   );
 }

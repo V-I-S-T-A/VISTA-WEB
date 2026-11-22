@@ -2,13 +2,27 @@
 
 All bitmap assets in `vista-web/src/assets` and `src/modules/assets` are WebP. SVG icons remain scalable vectors.
 
+## Manual screenshot sample identities
+
+Only `manual/staff-dashboard.webp`, `manual/staff-submissions.webp`,
+`manual/student-review-tracker.webp`, and `manual/student-notifications.webp`
+use fictional sample names and original colorful illustrated avatars/club badges.
+These four supplied screens were edited with precise text/avatar overlays; the AI
+redraw previews were rejected and are not used by the page. The files remain
+1356 x 2708 lossless WebP, with original transparency and all pixels outside the
+identity edit areas preserved.
+
+The other eight manual/hero images remain unchanged, including the Staff
+confirmation ticket and Student Track Details ticket with the developer's name.
+The existing guide layout, image imports, and enlarge previews remain in use.
+
 | Asset | Dimensions | Source |
 | --- | --- | --- |
 | vista-campus.webp | 1672 × 941 | Built-in imagegen; recreated from the supplied campus contact sheet's upper-left panel |
 | campus-students.webp | 1254 × 1254, transparent | Built-in imagegen; separate foreground for the responsive campus banner |
 | vista-hand-phone.webp | 1024 × 1536, transparent | Built-in imagegen; HTML supplies the phone's actual app preview |
 | ../legal/waving-students.webp | 1536 × 1024, transparent | Built-in imagegen; identity reference was privacy-students.webp |
-| android-download-qr.webp | 360 × 360, lossless | Generated locally with ReportLab's QR encoder from ANDROID_APK_URL |
+| vista_v1.0.8.webp | 540 x 540, lossless | ReportLab QR encoder; verified Expo production APK 1.0.8 (29), build c4ec8f7c-c120-448e-991c-2b3790db9e0e |
 | ../shared/vista_logo.webp | 163 × 163, lossless | Existing higher-resolution VISTA-MOBILE/src/assets/logo.png |
 
 The image generator returned the campus asset below native 4K despite a 3840 × 2160 request and one resolution-enhancement attempt. The stored image is not advertised as native 4K or artificially enlarged. A native high-resolution source can replace it later.

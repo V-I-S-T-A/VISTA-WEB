@@ -108,14 +108,14 @@ export default function ReviewReplyThread({ log, onAccessLost }) {
   return (
     <div className="review-reply-thread font-inter">
       <div className="flex flex-wrap gap-4">
-        {canReply && <button type="button" className="font-semibold text-[#1f5cae] underline" onClick={startReply}>Reply</button>}
-        {(count > 0 || expanded) && <button type="button" className="font-semibold text-[#1f5cae]" aria-expanded={expanded} aria-controls={regionId} onClick={() => setExpanded(value => !value)}>
+        {canReply && <button data-ui="tertiary" type="button" className="font-semibold text-[#1f5cae] underline" onClick={startReply}>Reply</button>}
+        {(count > 0 || expanded) && <button data-ui="toggle" type="button" className="font-semibold text-[#1f5cae]" aria-expanded={expanded} aria-controls={regionId} onClick={() => setExpanded(value => !value)}>
           {expanded ? "Hide replies" : `View ${count} ${count === 1 ? "reply" : "replies"}`}
         </button>}
       </div>
       {expanded && <div id={regionId} className="reply-conversation border-l-2 border-blue-100">
         {replies.isPending && <p role="status">Loading replies…</p>}
-        {replies.isError && <p role="alert">{getApiErrorMessage(replies.error)} <button type="button" onClick={() => replies.refetch()} className="underline">Try again</button></p>}
+        {replies.isError && <p role="alert">{getApiErrorMessage(replies.error)} <button data-ui="tertiary" type="button" onClick={() => replies.refetch()} className="underline">Try again</button></p>}
         <ol className="reply-list">
           {rows.map(reply => <li key={reply.reply_id} className="min-w-0 rounded-lg border border-[#dbe4f0] bg-[#f7f9fc] p-3">
             <div className="flex items-center gap-2">
@@ -126,10 +126,10 @@ export default function ReviewReplyThread({ log, onAccessLost }) {
             </div>
             <p className="reply-context break-words text-xs text-gray-500">Replying to {reply.reply_to_name}</p>
             <p className="reply-message whitespace-pre-wrap break-words [overflow-wrap:anywhere]"><ReplyMessage message={reply.message} /></p>
-            {canReply && <button type="button" className="mt-2 font-semibold text-[#1f5cae] underline" onClick={event => startReply(event, reply)}>Reply to {reply.author_name}</button>}
+            {canReply && <button data-ui="tertiary" type="button" className="mt-2 font-semibold text-[#1f5cae] underline" onClick={event => startReply(event, reply)}>Reply to {reply.author_name}</button>}
           </li>)}
         </ol>
-        {replies.hasNextPage && <button type="button" disabled={replies.isFetchingNextPage} onClick={() => replies.fetchNextPage()} className="mt-3 font-semibold text-[#1f5cae] disabled:opacity-50">{replies.isFetchingNextPage ? "Loading…" : "Load more replies"}</button>}
+        {replies.hasNextPage && <button data-ui="tertiary" type="button" disabled={replies.isFetchingNextPage} onClick={() => replies.fetchNextPage()} className="mt-3 font-semibold text-[#1f5cae] disabled:opacity-50">{replies.isFetchingNextPage ? "Loading…" : "Load more replies"}</button>}
       </div>}
       {canReply && target && <form onSubmit={send} className="reply-compose rounded-lg border border-blue-200 bg-blue-50">
         <label htmlFor={`${regionId}-message`} className="mb-2 block font-semibold">Replying to {target.name}</label>
@@ -138,14 +138,14 @@ export default function ReviewReplyThread({ log, onAccessLost }) {
         {linkVisible && <div className="mt-2 flex min-w-0 items-center gap-2">
           <label htmlFor={`${regionId}-link`} className="sr-only">Optional reply link</label>
           <input id={`${regionId}-link`} type="url" inputMode="url" value={link} onChange={event => setLink(event.target.value)} placeholder="https://example.com" disabled={sending} aria-invalid={Boolean(link.trim() && content.error)} className="min-w-0 flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 outline-blue-600" />
-          <button type="button" disabled={sending} aria-label="Remove link" onClick={() => { setLink(""); setLinkVisible(false); }} className="shrink-0 rounded-md p-2 text-gray-500"><X size={16} /></button>
+          <button aria-busy={Boolean(sending)} data-ui="icon" type="button" disabled={sending} aria-label="Remove link" onClick={() => { setLink(""); setLinkVisible(false); }} className="shrink-0 rounded-md p-2 text-gray-500"><X size={16} /></button>
         </div>}
         {content.error && <p role="alert" className="reply-error text-red-700">{content.error}</p>}
         {sendError && <p role="alert" className="reply-error text-red-700">{sendError}</p>}
         <div className="reply-actions flex flex-wrap gap-3">
-          {isStudent && <button type="button" disabled={sending} aria-label="Add link" aria-expanded={linkVisible} aria-controls={linkVisible ? `${regionId}-link` : undefined} onClick={() => setLinkVisible(true)} title="Add link" className="inline-flex items-center rounded-lg text-[#1f5cae]"><Link2 size={16} /></button>}
-          <button type="submit" disabled={sending || !content.canSend} className="rounded-lg bg-[#ffc700] px-4 py-2 font-bold disabled:opacity-50">{sending ? "Sending…" : "Send reply"}</button>
-          <button type="button" disabled={sending} onClick={closeComposer} className="rounded-lg px-3 py-2 font-semibold">Cancel</button>
+          {isStudent && <button aria-busy={Boolean(sending)} data-ui="icon" type="button" disabled={sending} aria-label="Add link" aria-expanded={linkVisible} aria-controls={linkVisible ? `${regionId}-link` : undefined} onClick={() => setLinkVisible(true)} title="Add link" className="inline-flex items-center rounded-lg text-[#1f5cae]"><Link2 size={16} /></button>}
+          <button aria-busy={Boolean(sending)} data-ui="primary" type="submit" disabled={sending || !content.canSend} className="px-4 py-2 font-bold disabled:opacity-50">{sending ? "Sending…" : "Send reply"}</button>
+          <button aria-busy={Boolean(sending)} data-ui="secondary" type="button" disabled={sending} onClick={closeComposer} className="px-3 py-2 font-semibold">Cancel</button>
         </div>
       </form>}
     </div>

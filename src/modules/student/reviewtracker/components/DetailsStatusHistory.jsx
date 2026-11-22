@@ -5,17 +5,14 @@ import { useReviewLogs } from "../../../../hooks/useReviewLogs";
 import AttachmentChangeNote from "../../../../components/AttachmentChangeNote";
 import ReviewReplyThread from "../../../shared/ReviewReplyThread";
 import ErrorNotice from "../../../../components/ErrorNotice";
+import { getSubmissionPresentation } from "../../../../config/submissionPresentation";
 
 export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
   const { data, isLoading, isError, error, refetch } = useReviewLogs({ submissionId, pageSize: 100 });
   const logs = data?.results || [];
 
   const formatStatus = (status) => {
-    if (!status) return "Unknown Status";
-    return status
-      .split("_")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
+    return getSubmissionPresentation(status).label;
   };
 
   const formatDate = (dateString) => {
@@ -35,10 +32,10 @@ export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
 
   return (
     <section
-      className="submission-history-panel"
+      className="vista-surface submission-history-panel"
       style={{
-        backgroundColor: "#ffffff",
-        borderRadius: "12px",
+        backgroundColor: "var(--ui-surface)",
+        borderRadius: "var(--radius-card)",
         border: "1px solid #e2e6ee",
         overflow: "hidden",
         marginBottom: "20px",
@@ -47,22 +44,22 @@ export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
       aria-labelledby="submission-status-history-heading"
     >
       <div
-        className="detail-panel-heading flex flex-wrap items-center justify-between gap-3"
-        style={{ backgroundColor: "#1f5cae", padding: "11px 20px" }}
+        className="vista-panel-heading detail-panel-heading flex flex-wrap items-center justify-between gap-3"
+        style={{ padding: "16px 20px" }}
       >
         <div className="flex items-center gap-3">
           <History size={16} color="#ffffff" aria-hidden="true" />
           <h4
             id="submission-status-history-heading"
             className="font-inter font-bold text-white"
-            style={{ fontSize: "12px", letterSpacing: "0.08em", textTransform: "uppercase" }}
+            style={{ fontSize: "var(--type-heading)", letterSpacing: "-0.01em" }}
           >
             Status history
           </h4>
         </div>
         <span
           className="rounded-full font-inter font-extrabold text-gray-900"
-          style={{ backgroundColor: "#ffc700", padding: "3px 10px", fontSize: "10px" }}
+          style={{ backgroundColor: "var(--ui-yellow)", padding: "3px 10px", fontSize: "10px" }}
         >
           {logs.length} {logs.length === 1 ? "update" : "updates"}
         </span>
@@ -154,7 +151,7 @@ export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
                       <img
                         src={log.changed_by_image_url || defaultAvatar}
                         alt=""
-                        style={{ width: "36px", height: "36px", borderRadius: "8px", objectFit: "cover", flexShrink: 0 }}
+                        style={{ width: "36px", height: "36px", borderRadius: "var(--radius-chip)", objectFit: "cover", flexShrink: 0 }}
                       />
                       <div>
                         <p className="m-0 font-inter text-gray-500" style={{ fontSize: "11px" }}>Updated by</p>
@@ -170,7 +167,7 @@ export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
                           style={{
                             marginTop: "10px",
                             padding: "12px 16px",
-                            borderRadius: "10px",
+                            borderRadius: "var(--radius-chip)",
                             border: "1px solid #dbe4f0",
                             background: "#f1f5fd",
                           }}

@@ -1,3 +1,5 @@
+import DialogLayer from "./DialogLayer";
+import "./StatusModal.css";
 import {
   X,
   CheckCircle2,
@@ -9,9 +11,8 @@ import {
 /**
  * StatusModal
  *
- * Replaces native browser alert/confirm popups with a modal that matches
- * the VISTA table palette (#1f5cae header, #ffc700 yellow action button,
- * Inter font, and themed status icons).
+ * Shared VISTA feedback and confirmation dialog using the workspace font,
+ * neutral surfaces, semantic feedback icons and the existing action handlers.
  */
 export default function StatusModal({
   isOpen,
@@ -75,7 +76,7 @@ export default function StatusModal({
   const IconComponent = typeConfig.icon;
 
   return (
-    <div
+    <DialogLayer label={title} onDismiss={onClose} dismissDisabled={closeDisabled}
       style={{
         position: "fixed",
         inset: 0,
@@ -87,13 +88,15 @@ export default function StatusModal({
         backdropFilter: "blur(4px)",
         padding: "16px",
       }}
-      role="dialog"
-      aria-modal="true"
+
+
     >
-      <div
+      <div className="vista-surface vista-status-modal"
         style={{
-          background: "#ffffff",
-          borderRadius: "14px",
+          fontFamily: "var(--font-body)",
+          color: "var(--ui-text)",
+          background: "var(--ui-surface)",
+          borderRadius: "var(--radius-dialog)",
           width: "100%",
           maxWidth,
           maxHeight: "calc(100vh - 32px)",
@@ -104,10 +107,11 @@ export default function StatusModal({
           animation: "modalFadeIn 0.18s ease-out",
         }}
       >
-        {/* Header - Matching Table Header (#1f5cae) */}
-        <div
+        {/* Header */}
+        <div className="vista-status-modal__header"
           style={{
-            background: "#1f5cae",
+            background: "var(--ui-surface)",
+            borderBottom: "1px solid var(--ui-border)",
             padding: "14px 20px",
             display: "flex",
             alignItems: "center",
@@ -118,10 +122,10 @@ export default function StatusModal({
           <div style={{ minWidth: 0, flex: 1 }}>
             <h3
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "15px",
                 fontWeight: "700",
-                color: "#ffffff",
+                color: "var(--ui-navy)",
                 margin: 0,
               }}
             >
@@ -131,9 +135,9 @@ export default function StatusModal({
             {subtitle && (
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
-                  color: "rgba(255, 255, 255, 0.8)",
+                  color: "var(--ui-muted)",
                   margin: "2px 0 0",
                 }}
               >
@@ -142,21 +146,21 @@ export default function StatusModal({
             )}
           </div>
 
-          <button
+          <button data-ui="icon"
             type="button"
             onClick={onClose}
             disabled={closeDisabled}
             style={{
-              background: "rgba(255, 255, 255, 0.2)",
+              background: "var(--ui-field)",
               border: "none",
-              borderRadius: "6px",
+              borderRadius: "var(--radius-control)",
               width: "28px",
               height: "28px",
               cursor: closeDisabled ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#ffffff",
+              color: "var(--ui-muted)",
               transition: "background-color 0.15s ease",
               opacity: closeDisabled ? 0.5 : 1,
             }}
@@ -180,25 +184,12 @@ export default function StatusModal({
           >
             {message && (
               <div style={{ display: "flex", alignItems: "flex-start", gap: "12px" }}>
-                <div
-                  style={{
-                    width: "36px",
-                    height: "36px",
-                    borderRadius: "50%",
-                    backgroundColor: typeConfig.iconBg,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <IconComponent style={{ width: "19px", height: "19px", color: typeConfig.iconColor }} />
-                </div>
+                <span className="vista-plain-icon"><IconComponent style={{ width: "19px", height: "19px", color: typeConfig.iconColor }} /></span>
                 <p
                   style={{
                     flex: 1,
                     minWidth: 0,
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "13.5px",
                     lineHeight: "1.5",
                     color: "#374151",
@@ -221,31 +212,18 @@ export default function StatusModal({
               gap: "16px",
             }}
           >
-            <div
-              style={{
-                width: "44px",
-                height: "44px",
-                borderRadius: "50%",
-                backgroundColor: typeConfig.iconBg,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <IconComponent
+            <span className="vista-plain-icon"><IconComponent
                 style={{
                   width: "24px",
                   height: "24px",
                   color: typeConfig.iconColor,
                 }}
-              />
-            </div>
+              /></span>
 
             <div style={{ flex: 1, minWidth: 0 }}>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "13.5px",
                   lineHeight: "1.5",
                   color: "#374151",
@@ -264,7 +242,7 @@ export default function StatusModal({
           style={{
             padding: "12px 20px",
             borderTop: "1px solid #e5e7eb",
-            backgroundColor: "#f9fafb",
+            backgroundColor: "var(--ui-field)",
             display: "flex",
             justifyContent: "flex-end",
             alignItems: "center",
@@ -272,49 +250,26 @@ export default function StatusModal({
           }}
         >
           {cancelText && (
-            <button
+            <button data-ui="secondary"
               type="button"
               onClick={onCancel || onClose}
               disabled={closeDisabled}
-              style={{
-                fontFamily: "Inter, sans-serif",
-                fontSize: "13px",
-                fontWeight: "600",
-                color: "#374151",
-                backgroundColor: "#ffffff",
-                border: "1px solid #d1d5db",
-                borderRadius: "8px",
-                padding: "8px 18px",
-                cursor: closeDisabled ? "not-allowed" : "pointer",
-                opacity: closeDisabled ? 0.5 : 1,
-              }}
+              style={{ cursor: closeDisabled ? "not-allowed" : "pointer", opacity: closeDisabled ? 0.5 : 1 }}
             >
               {cancelText}
             </button>
           )}
-          <button
+          <button data-ui={confirmVariant === "danger" ? "destructive" : "primary"}
             type="button"
             onClick={handleConfirm}
             disabled={confirmDisabled}
             className="transition hover:brightness-105 active:scale-95 cursor-pointer"
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "700",
-              color: confirmVariant === "danger" ? "#ffffff" : "#031c36",
-              backgroundColor: confirmVariant === "danger" ? "#b4232f" : "#ffc700",
-              border: confirmVariant === "danger" ? "1px solid #9f1d28" : "none",
-              borderRadius: "8px",
-              padding: "8px 22px",
-              boxShadow: "0 1px 2px rgba(0, 0, 0, 0.08)",
-              opacity: confirmDisabled ? 0.5 : 1,
-              cursor: confirmDisabled ? "not-allowed" : "pointer",
-            }}
+            style={{ opacity: confirmDisabled ? 0.5 : 1, cursor: confirmDisabled ? "not-allowed" : "pointer" }}
           >
             {confirmText}
           </button>
         </div>
       </div>
-    </div>
+    </DialogLayer>
   );
 }

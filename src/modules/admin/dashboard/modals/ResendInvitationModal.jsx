@@ -2,6 +2,7 @@ import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { Mail, X, Loader } from "lucide-react";
 import ErrorNotice from "../../../../components/ErrorNotice";
+import { registerDialog } from "../../../../utils/dialogFocus";
 import "./ResendInvitationModal.css";
 
 export default function ResendInvitationModal({ user, isSending, error, onClose, onConfirm }) {
@@ -9,9 +10,14 @@ export default function ResendInvitationModal({ user, isSending, error, onClose,
 
   useEffect(() => {
     const dialog = dialogRef.current;
+    if (!user) return;
+    // Capture the opener before showModal moves focus. Native dialog removal can
+    // happen before passive cleanup, so explicitly restore it and the scroll lock.
+    const unregister = registerDialog(dialog, {});
     if (user && !dialog.open) dialog.showModal();
     return () => {
       if (dialog.open) dialog.close();
+      unregister();
     };
   }, [user]);
 
@@ -29,8 +35,8 @@ export default function ResendInvitationModal({ user, isSending, error, onClose,
     >
       <div className="resend-invitation-content">
         <div className="resend-invitation-heading">
-          <span className="resend-invitation-icon"><Mail size={24} aria-hidden="true" /></span>
-          <button type="button" className="resend-invitation-close" aria-label="Close invitation confirmation" onClick={onClose} disabled={isSending}>
+          <span className="vista-plain-icon"><Mail size={24} aria-hidden="true" /></span>
+          <button aria-busy={Boolean(isSending)} data-ui="icon" type="button" className="resend-invitation-close" aria-label="Close invitation confirmation" onClick={onClose} disabled={isSending}>
             <X size={20} aria-hidden="true" />
           </button>
         </div>
@@ -43,8 +49,8 @@ export default function ResendInvitationModal({ user, isSending, error, onClose,
         <p className="resend-invitation-note">If sending succeeds, a new temporary password will replace the previous one. Ask the user to use the newest invitation.</p>
         <ErrorNotice message={error} />
         <div className="resend-invitation-buttons">
-          <button type="button" className="resend-invitation-cancel" onClick={onClose} disabled={isSending} autoFocus>Cancel</button>
-          <button type="button" className="resend-invitation-confirm" onClick={onConfirm} disabled={isSending}>
+          <button aria-busy={Boolean(isSending)} data-ui="secondary" type="button" className="resend-invitation-cancel" onClick={onClose} disabled={isSending} autoFocus>Cancel</button>
+          <button aria-busy={Boolean(isSending)} data-ui="primary" type="button" className="resend-invitation-confirm" onClick={onConfirm} disabled={isSending}>
             {isSending ? <Loader size={16} className="animate-spin" aria-hidden="true" /> : <Mail size={16} aria-hidden="true" />}
             {isSending ? "Sending..." : "Send invitation"}
           </button>

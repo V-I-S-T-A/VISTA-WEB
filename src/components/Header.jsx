@@ -1,14 +1,16 @@
+import DialogLayer from "./DialogLayer";
 import { useState, useRef, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, Download, Menu, QrCode, X } from "lucide-react";
 import vistaLogo from "../assets/shared/vista_logo.webp";
-import downloadQr from "../assets/public/android-download-qr.webp";
+import downloadQr from "../assets/public/vista_v1.0.8.webp";
 import { getHeaderConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
 import { Skeleton } from "./loading/Skeleton";
 
-import { ANDROID_APK_URL, APP_ONBOARDING_PATH } from "../config/appDownload";
+import { ANDROID_APK_URL, ANDROID_VERSION_LABEL, APP_ONBOARDING_PATH } from "../config/appDownload";
 import NotificationCenter from "./NotificationCenter";
+import AnchoredPopover from "./AnchoredPopover";
 
 export default function Header({ layout = "public", profilePath, onMenuToggle }) {
   const navigate = useNavigate();
@@ -26,10 +28,11 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
   const [isAppQrOpen, setIsAppQrOpen] = useState(false);
   const [isQrUnavailable, setIsQrUnavailable] = useState(false);
   const dropdownRef = useRef(null);
+  const dropdownPanelRef = useRef(null);
 
   useEffect(() => {
     function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target) && !dropdownPanelRef.current?.contains(event.target)) {
         setIsDropdownOpen(false);
       }
     }
@@ -59,7 +62,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
       >
         <div className="flex items-center">
           {/* Hamburger — visible only on mobile via CSS */}
-          <button
+          <button data-ui="navigation"
             type="button"
             className="hamburger-btn"
             onClick={onMenuToggle}
@@ -77,11 +80,12 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
           <div className="flex items-center gap-3">
             {currentUser?.user_id && <NotificationCenter />}
           <div className="relative" ref={dropdownRef}>
-            <button
+            <button data-ui="navigation"
               type="button"
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex-shrink-0 rounded-full transition hover:opacity-80 focus:outline-none"
+              className="vista-profile-trigger flex-shrink-0 rounded-full transition hover:opacity-80"
               aria-label="Toggle profile menu"
+              aria-expanded={isDropdownOpen}
             >
               {isLoading ? <Skeleton circle width={40} height={40} /> : <img
                 src={currentUser?.image_url ?? config.avatar}
@@ -91,19 +95,22 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
             </button>
 
             {isDropdownOpen && (
-              <div
-                className="absolute right-0 top-full z-20"
+              <AnchoredPopover
+                ref={dropdownPanelRef}
+                onDismiss={() => setIsDropdownOpen(false)}
+                aria-label="Profile actions"
+                className="vista-profile-menu absolute right-0 top-full z-20"
                 style={{
                   marginTop: "8px",
                   width: "180px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--radius-chip)",
                   border: "1px solid #b8cbe0",
                   backgroundColor: "#f7faff",
                   boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
                   padding: "8px",
                 }}
               >
-                <button
+                <button data-ui="navigation"
                   type="button"
                   onClick={() => {
                     setIsDropdownOpen(false);
@@ -113,25 +120,25 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
                   style={{
                     padding: "10px 14px",
                     fontSize: "13px",
-                    borderRadius: "6px",
+                    borderRadius: "var(--radius-control)",
                   }}
                 >
                   Profile
                 </button>
-                <button
+                <button data-ui="navigation"
                   type="button"
                   onClick={handleLogout}
                   className="block w-full text-left font-inter font-semibold text-red-600 hover:bg-red-50 transition-colors"
                   style={{
                     padding: "10px 14px",
                     fontSize: "13px",
-                    borderRadius: "6px",
+                    borderRadius: "var(--radius-control)",
                     marginTop: "4px",
                   }}
                 >
                   Logout
                 </button>
-              </div>
+              </AnchoredPopover>
             )}
           </div>
           </div>
@@ -150,7 +157,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
     <header className="public-header">
       <div className="public-shell public-header-inner">
       <div className="header-left">
-        <button
+        <button data-ui="navigation"
           type="button"
           onClick={() => navigate("/")}
           className="header-brand-link cursor-pointer border-none bg-transparent p-0"
@@ -160,7 +167,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
       </div>
 
       <nav className="header-right" aria-label="Public navigation">
-        <button
+        <button data-ui="navigation"
           type="button"
           onClick={() => navigate("/login")}
           className="btn btn-primary"
@@ -177,7 +184,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
           <span className="app-label-full">Get the app</span><span className="app-label-short">Get app</span>
           <Download className="btn-icon" aria-hidden="true" />
         </Link>
-        <button
+        <button data-ui="navigation"
           type="button"
           className="get-app-qr-button"
           onClick={() => {
@@ -199,19 +206,15 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
       </nav>
       </div>
       {isAppQrOpen && (
-        <div
+        <DialogLayer aria-labelledby="app-download-title" label={"Get VISTA for Android"} onDismiss={() => setIsAppQrOpen(false)} dismissDisabled={false}
           className="app-download-backdrop"
           onMouseDown={(event) => {
             if (event.target === event.currentTarget) setIsAppQrOpen(false);
           }}
         >
-          <section
-            className="app-download-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="app-download-title"
-          >
-            <button
+          <section className="app-download-dialog">
+            <div className="app-download-brand"><img src={vistaLogo} alt="" /><span>VISTA</span></div>
+            <button data-ui="navigation"
               type="button"
               className="app-download-close"
               onClick={() => setIsAppQrOpen(false)}
@@ -219,12 +222,14 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
             >
               <X size={20} />
             </button>
-            <h2 id="app-download-title">Get VISTA for Android</h2>
+            <div className="app-download-qr-card">
             {!isQrUnavailable ? (
               <img
                 className="app-download-qr"
                 src={downloadQr}
-                alt="QR code linking directly to the VISTA Android APK download"
+                alt="Scan to open the VISTA Android build on Expo"
+                width="540"
+                height="540"
                 onError={() => setIsQrUnavailable(true)}
               />
             ) : (
@@ -232,12 +237,15 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
                 QR code is unavailable. Open this page on your phone or use the download link below.
               </p>
             )}
-            <p>Scan with your phone camera to download the APK.</p>
-            <a href={ANDROID_APK_URL} download="vista-mobile.apk">
-              Download vista-mobile.apk
+            </div>
+            <h2 id="app-download-title">Scan to Get VISTA</h2>
+            <span className="app-download-version">Version {ANDROID_VERSION_LABEL}</span>
+            <p>Open your Android phone’s camera and scan this QR code to download the VISTA APK.</p>
+            <a href={ANDROID_APK_URL}>
+              <Download size={19} aria-hidden="true" />Download APK Directly
             </a>
           </section>
-        </div>
+        </DialogLayer>
       )}
     </header>
   );

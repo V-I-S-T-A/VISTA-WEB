@@ -1,31 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import MobileAppPreview from "./MobileAppPreview";
+import { useState } from "react";
 import hand from "../../assets/public/vista-hand-phone.webp";
+import ticket from "../../assets/public/manual/submission-ticket-screen.webp";
 import { useImageReady } from "../../hooks/useImageReady";
 import { Skeleton } from "../loading/Skeleton";
 
-// The real HTML preview stays sharp as the photographic handset changes size.
+// Display the supplied submission ticket without recreating its contents.
 export default function PhoneInHand() {
-  const screenRef = useRef(null);
   const ready = useImageReady(hand);
+  const ticketReady = useImageReady(ticket);
   const [unavailable, setUnavailable] = useState(false);
+  const [ticketUnavailable, setTicketUnavailable] = useState(false);
 
-  useEffect(() => {
-    const screen = screenRef.current;
-    if (!screen) return;
-    const resize = () => {
-      screen.style.setProperty("--screen-x", screen.clientWidth / 260);
-      screen.style.setProperty("--screen-y", screen.clientHeight / 566);
-    };
-    resize();
-    const observer = new ResizeObserver(resize);
-    observer.observe(screen);
-    return () => observer.disconnect();
-  }, []);
-
-  return <div className={`ga-hand${ready ? " is-ready" : ""}${unavailable ? " is-unavailable" : ""}`} aria-hidden="true">
-    {!ready && <div className="ga-hand-loading"><Skeleton height="100%" style={{ borderRadius: 36 }} /></div>}
+  return <div className={`ga-hand${ready && ticketReady ? " is-ready" : ""}${unavailable ? " is-unavailable" : ""}`} aria-hidden="true">
+    {(!ready || !ticketReady) && <div className="ga-hand-loading"><Skeleton height="100%" style={{ borderRadius: 36 }} /></div>}
     <img className="ga-hand-photo" src={hand} alt="" width="1024" height="1536" fetchPriority="high" onError={() => setUnavailable(true)} />
-    <div ref={screenRef} className="ga-hand-screen"><MobileAppPreview screen="history" /></div>
+    <div className="ga-hand-screen">{ticketUnavailable ? <div className="ga-hand-screen-fallback">Submission details<br />Preview unavailable</div> : <img className="ga-hand-ticket" src={ticket} alt="" width="1184" height="2540" fetchPriority="high" onError={() => setTicketUnavailable(true)} />}</div>
   </div>;
 }

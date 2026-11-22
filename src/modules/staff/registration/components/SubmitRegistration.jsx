@@ -41,6 +41,15 @@ export default function SubmitRegistration({
 
       {!file ? (
         <div
+          role="button"
+          tabIndex={0}
+          aria-label="Choose a document to upload"
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              fileInputRef.current.click();
+            }
+          }}
           onDragOver={(e) => {
             e.preventDefault();
             setIsDragging(true);
@@ -51,7 +60,7 @@ export default function SubmitRegistration({
           style={{
             border: `2px dashed ${isDragging ? "#1f5cae" : "#d1d5db"}`,
             backgroundColor: isDragging ? "#f7f9ff" : "transparent",
-            borderRadius: "12px",
+            borderRadius: "var(--radius-card)",
             padding: "32px 24px",
             textAlign: "center",
             marginBottom: "28px",
@@ -94,7 +103,7 @@ export default function SubmitRegistration({
               style={{
                 border: "1.5px solid #1f5cae",
                 backgroundColor: "#f7f9ff",
-                borderRadius: "12px",
+                borderRadius: "var(--radius-card)",
                 padding: "16px 20px",
                 display: "flex",
                 alignItems: "center",
@@ -102,7 +111,7 @@ export default function SubmitRegistration({
                 marginBottom: "28px",
               }}
             >
-              <button
+              <button data-ui="toggle"
                 type="button"
                 onClick={canPreview ? openPreview : undefined}
                 disabled={!canPreview}
@@ -122,19 +131,10 @@ export default function SubmitRegistration({
                   minWidth: 0,
                 }}
               >
-                <div
-                  style={{
-                    padding: "8px",
-                    backgroundColor: "#eef2fa",
-                    borderRadius: "8px",
-                    flexShrink: 0,
-                  }}
-                >
-                  <FileText
-                    style={{ width: "24px", height: "24px", color: "#1f5cae" }}
+                <span className="vista-plain-icon"><FileText
+                    style={{ width: "24px", height: "24px", color: "var(--ui-blue)" }}
                     aria-hidden="true"
-                  />
-                </div>
+                  /></span>
                 <div style={{ minWidth: 0 }}>
                   <p
                     className="font-inter font-semibold text-gray-900 truncate"
@@ -150,29 +150,14 @@ export default function SubmitRegistration({
                   </p>
                 </div>
               </button>
-              <button
+              <button data-ui="destructive"
                 type="button"
                 onClick={() => setFile(null)}
                 aria-label="Remove uploaded file"
                 title="Remove file"
-                style={{
-                  padding: "6px",
-                  color: "#9ca3af",
-                  borderRadius: "6px",
-                  border: "none",
-                  background: "transparent",
-                  cursor: "pointer",
-                  transition: "all 0.2s",
-                  flexShrink: 0,
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = "#e5e7eb";
-                  e.currentTarget.style.color = "#ef4444";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#9ca3af";
-                }}
+                style={{ cursor: "pointer", flexShrink: 0 }}
+
+
               >
                 <X style={{ width: "18px", height: "18px" }} aria-hidden="true" />
               </button>
@@ -190,20 +175,12 @@ export default function SubmitRegistration({
       />
 
       <div style={{ display: "flex", justifyContent: "center" }}>
-        <button
+        <button aria-busy={Boolean(isLoading)} data-ui="primary"
           type="button"
           onClick={onSubmit}
           disabled={isLoading}
-          className="font-inter font-bold uppercase tracking-wider transition hover:bg-[#e6c900] active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-          style={{
-            fontSize: "13px",
-            padding: "10px 28px",
-            backgroundColor: "#ffe100",
-            color: "#111827",
-            border: "2px solid #1f5cae",
-            borderRadius: "6px",
-            letterSpacing: "0.06em",
-          }}
+          className="font-inter font-bold transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+          style={{  }}
         >
           {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
           {isLoading ? "Processing..." : "Next: Final Review"}

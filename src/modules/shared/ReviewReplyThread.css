@@ -8,6 +8,34 @@
   padding: 10px 0 10px 20px;
 }
 
+.review-reply-thread .reply-thread-item {
+  position: relative;
+  min-width: 0;
+}
+
+/* Keep chronological order and a single visual nesting level on narrow screens. */
+.review-reply-thread .reply-thread-item--nested {
+  margin-inline-start: var(--space-4, 16px);
+  padding-inline-start: var(--space-5, 20px);
+}
+
+.review-reply-thread .reply-thread-connector {
+  position: absolute;
+  inset-inline-start: 0;
+  top: var(--space-2, 8px);
+  color: var(--ui-blue, #1a59a5);
+}
+
+.review-reply-thread .reply-thread-action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+}
+
+.review-reply-thread .reply-thread-action svg {
+  flex-shrink: 0;
+}
+
 .review-reply-thread .reply-compose {
   display: flex;
   min-width: 0;
@@ -80,7 +108,31 @@
   white-space: nowrap;
 }
 
+.review-reply-thread .reply-compose.reply-compose--inline {
+  flex-direction: column;
+  align-items: stretch;
+  margin-block: var(--space-3, 12px) var(--space-4, 16px);
+}
+
+.review-reply-thread .reply-compose--inline .reply-compose-actions {
+  align-self: flex-end;
+}
+
+.review-reply-thread .reply-compose-context {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  margin-bottom: var(--space-2, 8px);
+  color: var(--ui-muted, #64748b);
+  font-size: var(--type-meta, 12px);
+}
+
 @media (max-width: 639px) {
+  .review-reply-thread .reply-thread-item--nested {
+    margin-inline-start: var(--space-2, 8px);
+  }
+
   .review-reply-thread .reply-compose {
     flex-direction: column;
     align-items: stretch;

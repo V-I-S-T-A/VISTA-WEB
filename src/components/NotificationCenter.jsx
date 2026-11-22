@@ -11,6 +11,7 @@ import { notificationService } from "../services/notificationService";
 import { useCurrentUser } from "../hooks/useAuth";
 import { useToast } from "./toastContext";
 import { tokenClaims } from "../services/realtimeService";
+import AnchoredPopover from "./AnchoredPopover";
 
 const PREVIEW_LIMIT = 5;
 
@@ -18,6 +19,7 @@ export default function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
   const [filter, setFilter] = useState('all');
   const rootRef = useRef(null);
+  const panelRef = useRef(null);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
@@ -41,7 +43,7 @@ export default function NotificationCenter() {
 
   useEffect(() => {
     const closeOutside = (event) => {
-      if (rootRef.current && !rootRef.current.contains(event.target)) setIsOpen(false);
+      if (rootRef.current && !rootRef.current.contains(event.target) && !panelRef.current?.contains(event.target)) setIsOpen(false);
     };
     document.addEventListener("mousedown", closeOutside);
     return () => document.removeEventListener("mousedown", closeOutside);
@@ -69,7 +71,7 @@ export default function NotificationCenter() {
     setIsOpen(false);
     if (currentUser?.role === "staff") {
       if (!isCurrentStaff()) return;
-      navigate("/staff/review-panel", { state: { submission: staffSubmission, notificationId: item.notification_id } });
+      navigate(`/staff/review-panel/${encodeURIComponent(staffSubmission.id)}`, { state: { submission: staffSubmission, notificationId: item.notification_id } });
     } else if (currentUser?.role === "admin") {
       navigate("/admin/dashboard");
     } else {
@@ -79,17 +81,20 @@ export default function NotificationCenter() {
 
   return (
     <div ref={rootRef} className="student-notification-root">
-      <button type="button" onClick={() => setIsOpen((open) => !open)} aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`} aria-expanded={isOpen} className="student-notification-trigger">
+      <button data-ui="navigation" type="button" onClick={() => setIsOpen((open) => !open)} aria-label={`Notifications${unreadCount ? `, ${unreadCount} unread` : ""}`} aria-expanded={isOpen} className="student-notification-trigger">
         <Bell size={19} aria-hidden="true" />
         {unreadCount > 0 && <span className="student-notification-count">{unreadCount > 99 ? "99+" : unreadCount}</span>}
       </button>
-      {isOpen && <section
+      {isOpen && <AnchoredPopover
+        ref={panelRef}
+        onDismiss={() => setIsOpen(false)}
+        style={{ width: "370px" }}
         className="student-notification-popover"
         aria-label={`${currentUser?.role || "Account"} notifications`}
       >
         <header className="student-notification-popover-header">
           <div className="student-notification-popover-title">
-            <span className="student-notification-popover-title-icon"><Bell size={18} aria-hidden="true" /></span>
+            <span className="vista-plain-icon"><Bell size={18} aria-hidden="true" /></span>
             <div className="min-w-0">
               <h2>Notifications</h2>
               <p>{isError ? "Unread count unavailable" : "Recent submission updates"}</p>
@@ -97,7 +102,7 @@ export default function NotificationCenter() {
           </div>
           <div className="student-notification-popover-actions">
             {!isError && unreadCount > 0 && <span className="student-notification-unread-pill">{unreadCount} unread</span>}
-            <button type="button" onClick={() => setIsOpen(false)} aria-label="Close notifications" className="student-notification-close"><X size={17} aria-hidden="true" /></button>
+            <button data-ui="navigation" type="button" onClick={() => setIsOpen(false)} aria-label="Close notifications" className="student-notification-close"><X size={17} aria-hidden="true" /></button>
           </div>
         </header>
         <NotificationTabs value={filter} onChange={setFilter} id="notification-preview" />
@@ -109,12 +114,12 @@ export default function NotificationCenter() {
         </div>
         <footer className="student-notification-popover-footer">
           {notifications.length > PREVIEW_LIMIT && currentUser?.role === "student"
-            ? <button type="button" className="student-notification-all-link" onClick={() => { setIsOpen(false); navigate(`/${currentUser?.role || "student"}/profile`); }}>
+            ? <button data-ui="tertiary" type="button" className="student-notification-all-link" onClick={() => { setIsOpen(false); navigate(`/${currentUser?.role || "student"}/profile`); }}>
                 View all notifications for the past 30 days <ChevronRight size={15} aria-hidden="true" />
               </button>
             : <><CheckCheck size={14} color="#1f5cae" aria-hidden="true" />Select an update to open its submission.</>}
         </footer>
-      </section>}
+      </AnchoredPopover>}
     </div>
   );
 }

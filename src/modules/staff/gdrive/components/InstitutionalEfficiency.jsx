@@ -1,4 +1,5 @@
-import { Cloud, ShieldCheck } from "lucide-react";
+import GoogleDriveLogo from "../../../../components/GoogleDriveLogo";
+import { ShieldCheck } from "lucide-react";
 
 export default function InstitutionalEfficiency() {
   return (
@@ -7,7 +8,7 @@ export default function InstitutionalEfficiency() {
       <div style={{ marginBottom: "20px" }}>
         <h3
           style={{
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: "16px",
             fontWeight: "700",
             color: "#031c36",
@@ -19,7 +20,7 @@ export default function InstitutionalEfficiency() {
         </h3>
         <p className="drive-efficiency-description"
           style={{
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: "13px",
             color: "#4b5563",
             margin: "6px 0 0 24px",
@@ -43,26 +44,11 @@ export default function InstitutionalEfficiency() {
           marginLeft: "80px",
         }}
       >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "6px",
-            background: "#031c36",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <Cloud
-            style={{ width: "20px", height: "20px", color: "#ffffff" }}
-          />
-        </div>
+        <span className="vista-plain-icon"><GoogleDriveLogo size={24} /></span>
         <div>
           <h4
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "14px",
               fontWeight: "600",
               color: "#031c36",
@@ -73,7 +59,7 @@ export default function InstitutionalEfficiency() {
           </h4>
           <p
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "12px",
               color: "#4b5563",
               margin: "3px 0 0",
@@ -95,26 +81,13 @@ export default function InstitutionalEfficiency() {
           marginLeft: "80px",
         }}
       >
-        <div
-          style={{
-            width: "40px",
-            height: "40px",
-            borderRadius: "6px",
-            background: "#031c36",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
-        >
-          <ShieldCheck
-            style={{ width: "20px", height: "20px", color: "#ffffff" }}
-          />
-        </div>
+        <span className="vista-plain-icon"><ShieldCheck
+            style={{ width: "20px", height: "20px", color: "currentColor" }}
+          /></span>
         <div>
           <h4
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "14px",
               fontWeight: "600",
               color: "#031c36",
@@ -125,7 +98,7 @@ export default function InstitutionalEfficiency() {
           </h4>
           <p
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "12px",
               color: "#4b5563",
               margin: "3px 0 0",

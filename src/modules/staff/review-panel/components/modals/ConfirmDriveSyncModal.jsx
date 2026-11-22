@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from "react";
+import DialogLayer from "../../../../../components/DialogLayer";
+import { useState, useRef, useEffect, useCallback } from "react";
 import {
   X,
-  HardDrive,
   Folder,
   CheckCircle2,
   Loader2,
@@ -18,6 +18,7 @@ import {
 import { useDriveConnection } from "../../../../../hooks/useDrive";
 import { imagesToPdf } from "../../../../../utils/imagesToPdf";
 import "./ConfirmDriveSyncModal.css";
+import GoogleDriveLogo from "../../../../../components/GoogleDriveLogo";
 
 const MAX_FILES = 10;
 const APPROVED_FOLDER_NAME = "Approved";
@@ -33,18 +34,17 @@ const formatSize = (bytes) =>
     : `${(bytes / 1024).toFixed(1)} KB`;
 
 function ImagePreview({ file, large = false }) {
-  const [previewUrl, setPreviewUrl] = useState("");
-
-  useEffect(() => {
+  const previewRef = useCallback((image) => {
+    if (!image) return;
     const url = URL.createObjectURL(file);
-    setPreviewUrl(url);
+    image.src = url;
     return () => URL.revokeObjectURL(url);
   }, [file]);
 
-  return previewUrl ? (
+  return (
     <img
       className={large ? "drive-sync-photo-preview-large" : "drive-sync-photo-preview"}
-      src={previewUrl}
+      ref={previewRef}
       alt={`Preview of ${file.name}`}
       style={{
         width: "100%",
@@ -54,7 +54,7 @@ function ImagePreview({ file, large = false }) {
         borderRadius: 6,
       }}
     />
-  ) : null;
+  );
 }
 
 function SelectedFileRow({
@@ -73,7 +73,7 @@ function SelectedFileRow({
         justifyContent: "space-between",
         background: "#f0fdf4",
         border: "1.5px solid #86efac",
-        borderRadius: "8px",
+        borderRadius: "var(--radius-chip)",
         padding: "8px 12px",
       }}
     >
@@ -96,7 +96,7 @@ function SelectedFileRow({
         <div style={{ minWidth: 0 }}>
           <p
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "12.5px",
               fontWeight: 700,
               color: "#14532d",
@@ -110,7 +110,7 @@ function SelectedFileRow({
           </p>
           <p
             style={{
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "11px",
               color: "#16a34a",
               margin: 0,
@@ -132,49 +132,29 @@ function SelectedFileRow({
           style={{
             width: "min(45%, 260px)",
             border: "1px solid #d1d5db",
-            borderRadius: "6px",
+            borderRadius: "var(--radius-field)",
             padding: "6px 8px",
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: "12px",
           }}
         />
       )}
       {onPreview && (
-        <button
+        <button data-ui="secondary"
           type="button"
           onClick={onPreview}
           title={`Preview ${fileName}`}
           aria-label={`Preview PDF ${fileName} in a new tab`}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 4,
-            border: "1px solid #bfdbfe",
-            borderRadius: 6,
-            background: "#fff",
-            color: "#1e3a8a",
-            padding: "6px 8px",
-            cursor: "pointer",
-            fontSize: 11,
-            fontWeight: 700,
-            whiteSpace: "nowrap",
-          }}
+          style={{ display: "inline-flex", alignItems: "center", gap: 4, cursor: "pointer", whiteSpace: "nowrap" }}
         >
           <Eye size={14} /> Preview PDF
         </button>
       )}
-      <button
+      <button data-ui="destructive"
         type="button"
         onClick={onRemove}
         title="Remove file"
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          padding: "4px",
-          color: "#dc2626",
-          display: "flex",
-        }}
+        style={{ cursor: "pointer", display: "flex" }}
       >
         <Trash2 style={{ width: "16px", height: "16px" }} />
       </button>
@@ -288,11 +268,16 @@ export default function ConfirmDriveSyncModal({
     setIsCameraOpen(false);
   };
 
+  const [previousOpen, setPreviousOpen] = useState(isOpen);
+  if (previousOpen !== isOpen) {
+    setPreviousOpen(isOpen);
+    if (!isOpen) setIsCameraOpen(false);
+  }
+
   useEffect(() => {
     if (!isOpen) {
       cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
       cameraStreamRef.current = null;
-      setIsCameraOpen(false);
     }
     return () =>
       cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
@@ -407,13 +392,14 @@ export default function ConfirmDriveSyncModal({
   const removeFile = (key) =>
     setFinalFiles((files) => files.filter((f) => fileKey(f) !== key));
 
-  const reorderImage = (targetKey, target = "final") => {
-    if (!draggingImageKey || draggingImageKey === targetKey || draggingImageTarget !== target) return;
+  const reorderImage = (targetKey, target = "final", keyboardSourceKey) => {
+    const sourceKey = keyboardSourceKey || draggingImageKey;
+    if (!sourceKey || sourceKey === targetKey || (!keyboardSourceKey && draggingImageTarget !== target)) return;
     const setFiles = target === "report" ? setReportFiles : setFinalFiles;
     setFiles((files) => {
       const images = files.filter(isImage);
       const from = images.findIndex(
-        (file) => fileKey(file) === draggingImageKey,
+        (file) => fileKey(file) === sourceKey,
       );
       const to = images.findIndex((file) => fileKey(file) === targetKey);
       if (from < 0 || to < 0) return files;
@@ -424,6 +410,16 @@ export default function ConfirmDriveSyncModal({
     });
     setDraggingImageKey(null);
     setDragOverImageKey(null);
+  };
+
+  const reorderWithKeyboard = (event, file, target = "final") => {
+    const direction = { ArrowLeft: -1, ArrowUp: -1, ArrowRight: 1, ArrowDown: 1 }[event.key];
+    if (!direction) return;
+    event.preventDefault();
+    const images = (target === "report" ? reportFiles : finalFiles).filter(isImage);
+    const index = images.findIndex(image => fileKey(image) === fileKey(file));
+    const neighbor = images[index + direction];
+    if (neighbor) reorderImage(fileKey(neighbor), target, fileKey(file));
   };
 
   const replaceImage = (event) => {
@@ -562,7 +558,7 @@ export default function ConfirmDriveSyncModal({
   };
 
   return (
-    <div
+    <DialogLayer label={"Archive files to Google Drive"} onDismiss={onClose} dismissDisabled={isSubmitting}
       className="drive-sync-modal-overlay"
       style={{
         position: "fixed",
@@ -575,14 +571,14 @@ export default function ConfirmDriveSyncModal({
         backdropFilter: "blur(4px)",
         padding: "16px",
       }}
-      role="dialog"
-      aria-modal="true"
+
+
     >
       {capturedImage && (
-        <div
+        <DialogLayer label={"Review captured photo"} onDismiss={retakeCapturedImage} dismissDisabled={false}
           className="drive-sync-captured-overlay"
-          role="dialog"
-          aria-modal="true"
+
+
           aria-label="Review captured photo"
           style={{
             position: "fixed",
@@ -600,10 +596,10 @@ export default function ConfirmDriveSyncModal({
             style={{
               width: "100%",
               maxWidth: 600,
-              maxHeight: "90vh",
+              maxHeight: "min(90vh, calc(100dvh - 32px))",
               overflowY: "auto",
-              background: "#fff",
-              borderRadius: 12,
+              background: "var(--ui-surface)",
+              borderRadius: "var(--radius-dialog)",
               padding: 18,
               display: "flex",
               flexDirection: "column",
@@ -615,7 +611,7 @@ export default function ConfirmDriveSyncModal({
                 style={{
                   margin: 0,
                   color: "#1e3a8a",
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: 16,
                 }}
               >
@@ -623,7 +619,7 @@ export default function ConfirmDriveSyncModal({
                   ? "Review accomplishment report photo"
                   : "Review your photo"}
               </h3>
-              <p style={{ margin: "4px 0 0", color: "#64748b", fontSize: 12 }}>
+              <p style={{ margin: "4px 0 0", color: "var(--ui-muted)", fontSize: 12 }}>
                 {capturedTarget === "report"
                   ? "Retake it or add it to the report images for the Report folder."
                   : "Retake the photo or add it to your selected images."}
@@ -641,42 +637,26 @@ export default function ConfirmDriveSyncModal({
                 gap: 8,
               }}
             >
-              <button
+              <button data-ui="secondary"
                 type="button"
                 onClick={retakeCapturedImage}
-                style={{
-                  border: "1px solid #bfdbfe",
-                  borderRadius: 6,
-                  padding: "8px 12px",
-                  background: "#fff",
-                  color: "#1e3a8a",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
+                style={{ cursor: "pointer" }}
               >
                 Retake photo
               </button>
-              <button
+              <button data-ui="primary"
                 type="button"
                 onClick={() => acceptCapturedImage()}
-                style={{
-                  border: 0,
-                  borderRadius: 6,
-                  padding: "8px 12px",
-                  background: "#1f5cae",
-                  color: "#fff",
-                  cursor: "pointer",
-                  fontWeight: 700,
-                }}
+                style={{ cursor: "pointer" }}
               >
                 Use this photo
               </button>
             </div>
           </div>
-        </div>
+        </DialogLayer>
       )}
       {isCameraOpen && (
-        <div
+        <DialogLayer label={"Capture document photo"} onDismiss={stopCamera} dismissDisabled={false}
           className="drive-sync-camera-overlay"
           style={{
             position: "fixed",
@@ -694,8 +674,8 @@ export default function ConfirmDriveSyncModal({
             style={{
               width: "100%",
               maxWidth: 560,
-              background: "#fff",
-              borderRadius: 12,
+              background: "var(--ui-surface)",
+              borderRadius: "var(--radius-dialog)",
               padding: 18,
               display: "flex",
               flexDirection: "column",
@@ -705,7 +685,7 @@ export default function ConfirmDriveSyncModal({
             <h3
               style={{
                 margin: 0,
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: 16,
               }}
             >
@@ -734,43 +714,31 @@ export default function ConfirmDriveSyncModal({
             <div
               style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}
             >
-              <button
+              <button data-ui="secondary"
                 type="button"
                 onClick={stopCamera}
-                style={{
-                  padding: "8px 12px",
-                  border: "1px solid #d1d5db",
-                  borderRadius: 6,
-                  background: "#fff",
-                  cursor: "pointer",
-                }}
+                style={{ cursor: "pointer" }}
               >
                 Cancel
               </button>
-              <button
+              <button data-ui="primary"
                 type="button"
                 onClick={captureCameraImage}
-                style={{
-                  padding: "8px 12px",
-                  border: 0,
-                  borderRadius: 6,
-                  background: "#1f5cae",
-                  color: "#fff",
-                  fontWeight: 700,
-                  cursor: "pointer",
-                }}
+                style={{ cursor: "pointer" }}
               >
                 Capture photo
               </button>
             </div>
           </div>
-        </div>
+        </DialogLayer>
       )}
       <div
-        className="drive-sync-modal-panel"
+        className="vista-surface drive-sync-modal-panel"
         style={{
-          background: "#ffffff",
-          borderRadius: "14px",
+          fontFamily: "var(--font-body)",
+          color: "var(--ui-text)",
+          background: "var(--ui-surface)",
+          borderRadius: "var(--radius-dialog)",
           width: "100%",
           maxWidth: "540px",
           boxShadow: "0 20px 60px rgba(0, 0, 0, 0.25)",
@@ -784,7 +752,8 @@ export default function ConfirmDriveSyncModal({
         <div
           className="drive-sync-modal-header"
           style={{
-            background: "#1f5cae",
+            background: "var(--ui-surface)",
+            borderBottom: "1px solid var(--ui-border)",
             padding: "18px 24px",
             display: "flex",
             alignItems: "center",
@@ -793,29 +762,14 @@ export default function ConfirmDriveSyncModal({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
-            <div
-              style={{
-                background: "rgba(255, 255, 255, 0.2)",
-                borderRadius: "8px",
-                width: "36px",
-                height: "36px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                flexShrink: 0,
-              }}
-            >
-              <HardDrive
-                style={{ width: "18px", height: "18px", color: "#ffffff" }}
-              />
-            </div>
+            <span className="vista-plain-icon"><GoogleDriveLogo size={24} /></span>
             <div>
               <h2
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "16px",
                   fontWeight: "700",
-                  color: "#ffffff",
+                  color: "var(--ui-navy)",
                   margin: 0,
                   lineHeight: "1.2",
                 }}
@@ -824,9 +778,9 @@ export default function ConfirmDriveSyncModal({
               </h2>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
-                  color: "rgba(255, 255, 255, 0.85)",
+                  color: "var(--ui-muted)",
                   margin: "2px 0 0",
                   lineHeight: "1.2",
                 }}
@@ -836,21 +790,21 @@ export default function ConfirmDriveSyncModal({
             </div>
           </div>
 
-          <button
+          <button aria-busy={Boolean(isSubmitting)} data-ui="icon"
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
             style={{
-              background: "rgba(255, 255, 255, 0.2)",
+              background: "var(--ui-field)",
               border: "none",
-              borderRadius: "7px",
+              borderRadius: "var(--radius-control)",
               width: "30px",
               height: "30px",
               cursor: isSubmitting ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#ffffff",
+              color: "var(--ui-muted)",
               opacity: isSubmitting ? 0.5 : 1,
             }}
             aria-label="Close modal"
@@ -876,7 +830,7 @@ export default function ConfirmDriveSyncModal({
             style={{
               background: "#f8f9fc",
               border: "1.5px solid #e5e7eb",
-              borderRadius: "10px",
+              borderRadius: "var(--radius-chip)",
               padding: "14px 16px",
               display: "flex",
               flexDirection: "column",
@@ -892,10 +846,10 @@ export default function ConfirmDriveSyncModal({
             >
               <span
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "11px",
                   fontWeight: "700",
-                  color: "#6b7280",
+                  color: "var(--ui-muted)",
                   textTransform: "uppercase",
                   letterSpacing: "0.04em",
                 }}
@@ -904,10 +858,10 @@ export default function ConfirmDriveSyncModal({
               </span>
               <span
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "11px",
                   fontWeight: "700",
-                  color: "#1f5cae",
+                  color: "var(--ui-blue)",
                   background: "#eaf1ff",
                   padding: "2px 8px",
                   borderRadius: "4px",
@@ -919,7 +873,7 @@ export default function ConfirmDriveSyncModal({
 
             <p
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "14px",
                 fontWeight: "700",
                 color: "#111827",
@@ -933,16 +887,16 @@ export default function ConfirmDriveSyncModal({
             <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
               <span
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
-                  color: "#6b7280",
+                  color: "var(--ui-muted)",
                 }}
               >
                 Action:
               </span>
               <span
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
                   fontWeight: "700",
                   color: "#15803d",
@@ -958,13 +912,13 @@ export default function ConfirmDriveSyncModal({
             {remarks && (
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
                   color: "#4b5563",
                   fontStyle: "italic",
-                  background: "#ffffff",
+                  background: "var(--ui-surface)",
                   border: "1px solid #e5e7eb",
-                  borderRadius: "6px",
+                  borderRadius: "var(--radius-chip)",
                   padding: "8px 12px",
                   margin: "4px 0 0",
                 }}
@@ -978,7 +932,7 @@ export default function ConfirmDriveSyncModal({
             <div
               style={{
                 border: "1.5px solid #bfdbfe",
-                borderRadius: "10px",
+                borderRadius: "var(--radius-chip)",
                 padding: "16px",
                 display: "flex",
                 flexDirection: "column",
@@ -995,7 +949,7 @@ export default function ConfirmDriveSyncModal({
               >
                 <label
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "11px",
                     fontWeight: 700,
                     color: "#1e3a8a",
@@ -1007,7 +961,7 @@ export default function ConfirmDriveSyncModal({
                 </label>
                 <span
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "10px",
                     fontWeight: 700,
                     color: reportFiles.length ? "#15803d" : "#1e3a8a",
@@ -1035,7 +989,7 @@ export default function ConfirmDriveSyncModal({
                 style={{
                   border: `2px dashed ${isReportDragging ? "#1f5cae" : "#93c5fd"}`,
                   backgroundColor: isReportDragging ? "#eff6ff" : "#ffffff",
-                  borderRadius: "8px",
+                  borderRadius: "var(--radius-chip)",
                   padding: "18px 14px",
                   textAlign: "center",
                   display: "flex",
@@ -1055,10 +1009,10 @@ export default function ConfirmDriveSyncModal({
                   }}
                   style={{ display: "none" }}
                 />
-                <UploadCloud style={{ width: "18px", height: "18px", color: "#1f5cae" }} />
+                <UploadCloud style={{ width: "18px", height: "18px", color: "var(--ui-blue)" }} />
                 <p
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "13px",
                     fontWeight: 700,
                     color: "#1e3a8a",
@@ -1067,15 +1021,15 @@ export default function ConfirmDriveSyncModal({
                 >
                   Drop report PDFs or images here
                 </p>
-                <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
-                  <button type="button" onClick={() => reportFileInputRef.current?.click()} style={{ border: "1px solid #bfdbfe", borderRadius: 6, padding: "7px 12px", background: "#fff", color: "#1e3a8a", cursor: "pointer", fontWeight: 700 }}>Select file</button>
-                  <button type="button" onClick={() => openCamera(null, "report")} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid #bfdbfe", borderRadius: 6, padding: "7px 12px", background: "#fff", color: "#1e3a8a", cursor: "pointer", fontWeight: 700 }}><Camera size={15} /> Open camera</button>
+                <div className="drive-sync-upload-actions" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
+                  <button data-ui="secondary" type="button" onClick={() => reportFileInputRef.current?.click()} style={{ cursor: "pointer" }}>Select file</button>
+                  <button data-ui="secondary" type="button" onClick={() => openCamera(null, "report")} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Camera size={15} /> Open camera</button>
                 </div>
                 <p
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "11px",
-                    color: "#64748b",
+                    color: "var(--ui-muted)",
                     margin: 0,
                   }}
                 >
@@ -1084,26 +1038,26 @@ export default function ConfirmDriveSyncModal({
                 </p>
               </div>
               {reportImageFiles.length > 0 && (
-                <div ref={reportImageReviewRef} style={{ border: "1px solid #bfdbfe", borderRadius: 8, padding: 12, background: "#fff", display: "flex", flexDirection: "column", gap: 10 }}>
+                <div ref={reportImageReviewRef} style={{ border: "1px solid #bfdbfe", borderRadius: 8, padding: 12, background: "var(--ui-surface)", display: "flex", flexDirection: "column", gap: 10 }}>
                   <div>
                     <p style={{ margin: 0, color: "#1e3a8a", fontSize: 13, fontWeight: 700 }}>Review accomplishment report images</p>
-                    <p style={{ margin: "3px 0 0", color: "#64748b", fontSize: 11 }}>Arrange report pages, retake or replace photos, then convert them into a PDF for the Report folder.</p>
+                    <p style={{ margin: "3px 0 0", color: "var(--ui-muted)", fontSize: 11 }}>Arrange report pages, retake or replace photos, then convert them into a PDF for the Report folder.</p>
                   </div>
                   <div className="drive-sync-image-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(145px, 1fr))", gap: 10 }}>
                     {reportImageFiles.map((file) => (
                       <div key={fileKey(file)} onDragOver={(event) => { event.preventDefault(); setDragOverImageKey(fileKey(file)); }} onDragLeave={() => setDragOverImageKey((key) => key === fileKey(file) ? null : key)} onDrop={(event) => { event.preventDefault(); reorderImage(fileKey(file), "report"); }} style={{ minWidth: 0, border: `1px solid ${dragOverImageKey === fileKey(file) ? "#1f5cae" : "#dbeafe"}`, borderRadius: 8, padding: 8, background: dragOverImageKey === fileKey(file) ? "#eff6ff" : "#fff", display: "flex", flexDirection: "column", gap: 7 }}>
-                        <button type="button" draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; setDraggingImageKey(fileKey(file)); setDraggingImageTarget("report"); }} onDragEnd={() => { setDraggingImageKey(null); setDragOverImageKey(null); }} aria-label={`Drag to reorder ${file.name}`} style={{ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", gap: 4, border: "1px solid #d1d5db", borderRadius: 5, padding: "3px 6px", background: "#fff", color: "#475569", cursor: "grab", fontSize: 10 }}><GripVertical size={13} /> Drag to reorder pages</button>
+                        <button data-ui="secondary" type="button" draggable onKeyDown={event => reorderWithKeyboard(event, file, "report")} onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; setDraggingImageKey(fileKey(file)); setDraggingImageTarget("report"); }} onDragEnd={() => { setDraggingImageKey(null); setDragOverImageKey(null); }} aria-label={`Reorder ${file.name}. Use arrow keys or drag.`} style={{ alignSelf: "flex-start", cursor: "grab" }}><GripVertical size={13} aria-hidden="true" /> Reorder pages</button>
                         <ImagePreview file={file} />
                         <span title={file.name} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: 11, color: "#334155" }}>{file.name}</span>
-                        <button type="button" onClick={() => openCamera(fileKey(file), "report")} style={{ border: "1px solid #bfdbfe", borderRadius: 5, padding: "6px 7px", background: "#fff", color: "#1e3a8a", cursor: "pointer", fontSize: 11 }}>Retake with camera</button>
-                        <button type="button" onClick={() => { setReplaceImageKey(fileKey(file)); setReplaceImageTarget("report"); replaceImageInputRef.current?.click(); }} style={{ border: "1px solid #d1d5db", borderRadius: 5, padding: "6px 7px", background: "#fff", color: "#334155", cursor: "pointer", fontSize: 11 }}>Replace image file</button>
-                        <button type="button" onClick={() => removeReportFile(fileKey(file))} style={{ border: 0, background: "transparent", color: "#b91c1c", cursor: "pointer", fontSize: 11 }}>Remove photo</button>
+                        <button data-ui="secondary" type="button" onClick={() => openCamera(fileKey(file), "report")} style={{ cursor: "pointer" }}>Retake with camera</button>
+                        <button data-ui="secondary" type="button" onClick={() => { setReplaceImageKey(fileKey(file)); setReplaceImageTarget("report"); replaceImageInputRef.current?.click(); }} style={{ cursor: "pointer" }}>Replace image file</button>
+                        <button data-ui="destructive" type="button" onClick={() => removeReportFile(fileKey(file))} style={{ cursor: "pointer" }}>Remove photo</button>
                       </div>
                     ))}
                   </div>
                   <div className="drive-sync-image-actions" style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 8 }}>
-                    <button type="button" onClick={() => openCamera(null, "report")} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid #bfdbfe", borderRadius: 6, padding: "8px 10px", background: "#fff", color: "#1e3a8a", cursor: "pointer", fontWeight: 700, fontSize: 12 }}><Camera size={14} /> Take another report photo</button>
-                    <button type="button" onClick={() => convertImagesToPdf("report")} disabled={isConvertingImages} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: 0, borderRadius: 6, padding: "8px 10px", background: "#1f5cae", color: "#fff", cursor: isConvertingImages ? "wait" : "pointer", fontWeight: 700, fontSize: 12, opacity: isConvertingImages ? 0.7 : 1 }}>
+                    <button data-ui="secondary" type="button" onClick={() => openCamera(null, "report")} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}><Camera size={14} /> Take another report photo</button>
+                    <button aria-busy={Boolean(isConvertingImages)} data-ui="primary" type="button" onClick={() => convertImagesToPdf("report")} disabled={isConvertingImages} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: isConvertingImages ? "wait" : "pointer", opacity: isConvertingImages ? 0.7 : 1 }}>
                       {isConvertingImages ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
                       {isConvertingImages ? "Converting…" : "Convert report images to PDF"}
                     </button>
@@ -1142,7 +1096,7 @@ export default function ConfirmDriveSyncModal({
               {reportFileError && (
                 <p
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "11px",
                     color: "#dc2626",
                     margin: 0,
@@ -1157,15 +1111,15 @@ export default function ConfirmDriveSyncModal({
 
           {/* Drop PDF Section (Final Paper Replacement) */}
           {/* Final PDFs (replace the submission's current documents) */}
-          <div
+          <div className="vista-surface"
             style={{
               border: "1.5px solid #e5e7eb",
-              borderRadius: "10px",
+              borderRadius: "var(--radius-chip)",
               padding: "16px",
               display: "flex",
               flexDirection: "column",
               gap: "10px",
-              background: "#ffffff",
+              background: "var(--ui-surface)",
             }}
           >
             <div
@@ -1177,7 +1131,7 @@ export default function ConfirmDriveSyncModal({
             >
               <label
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "11px",
                   fontWeight: 700,
                   color: "#374151",
@@ -1192,7 +1146,7 @@ export default function ConfirmDriveSyncModal({
               </label>
               <span
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "10px",
                   fontWeight: 700,
                   color: finalFiles.length ? "#15803d" : "#6b7280",
@@ -1224,7 +1178,7 @@ export default function ConfirmDriveSyncModal({
                 style={{
                   border: `2px dashed ${isDragging ? "#1f5cae" : "#cbd5e1"}`,
                   backgroundColor: isDragging ? "#f0f5fc" : "#f8fafd",
-                  borderRadius: "8px",
+                  borderRadius: "var(--radius-chip)",
                   padding: "18px 14px",
                   textAlign: "center",
                   transition: "all 0.15s ease",
@@ -1253,11 +1207,11 @@ export default function ConfirmDriveSyncModal({
                   style={{ display: "none" }}
                 />
                 <UploadCloud
-                  style={{ width: "18px", height: "18px", color: "#1f5cae" }}
+                  style={{ width: "18px", height: "18px", color: "var(--ui-blue)" }}
                 />
                 <p
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "13px",
                     fontWeight: 700,
                     color: "#1e3a8a",
@@ -1266,46 +1220,27 @@ export default function ConfirmDriveSyncModal({
                 >
                   Drop PDFs or images here
                 </p>
-                <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-                  <button
+                <div className="drive-sync-upload-actions" style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                  <button data-ui="secondary"
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    style={{
-                      border: "1px solid #bfdbfe",
-                      borderRadius: "6px",
-                      padding: "7px 12px",
-                      background: "#fff",
-                      color: "#1e3a8a",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
+                    style={{ cursor: "pointer" }}
                   >
                     Select file
                   </button>
-                  <button
+                  <button data-ui="secondary"
                     type="button"
                     onClick={() => openCamera()}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: "6px",
-                      border: "1px solid #bfdbfe",
-                      borderRadius: "6px",
-                      padding: "7px 12px",
-                      background: "#fff",
-                      color: "#1e3a8a",
-                      fontWeight: 700,
-                      cursor: "pointer",
-                    }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px", cursor: "pointer" }}
                   >
                     <Camera size={15} /> Open camera
                   </button>
                 </div>
                 <p
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "11px",
-                    color: "#64748b",
+                    color: "var(--ui-muted)",
                     margin: 0,
                   }}
                 >
@@ -1343,7 +1278,7 @@ export default function ConfirmDriveSyncModal({
                   <p
                     style={{
                       margin: "3px 0 0",
-                      color: "#64748b",
+                      color: "var(--ui-muted)",
                       fontSize: 11,
                     }}
                   >
@@ -1390,9 +1325,10 @@ export default function ConfirmDriveSyncModal({
                         gap: 7,
                       }}
                     >
-                      <button
+                      <button data-ui="secondary"
                         type="button"
                         draggable
+                        onKeyDown={event => reorderWithKeyboard(event, file)}
                     onDragStart={(event) => {
                           event.dataTransfer.effectAllowed = "move";
                           setDraggingImageKey(fileKey(file));
@@ -1402,23 +1338,14 @@ export default function ConfirmDriveSyncModal({
                           setDraggingImageKey(null);
                           setDragOverImageKey(null);
                         }}
-                        aria-label={`Drag to reorder ${file.name}`}
-                        title="Drag to change PDF page order"
+                        aria-label={`Reorder ${file.name}. Use arrow keys or drag.`}
+                        title="Use arrow keys or drag to change PDF page order"
                         style={{
                           alignSelf: "flex-start",
-                          display: "inline-flex",
-                          alignItems: "center",
-                          gap: 4,
-                          border: "1px solid #d1d5db",
-                          borderRadius: 5,
-                          padding: "3px 6px",
-                          background: "#fff",
-                          color: "#475569",
                           cursor: "grab",
-                          fontSize: 10,
                         }}
                       >
-                        <GripVertical size={13} /> Drag to reorder
+                        <GripVertical size={13} aria-hidden="true" /> Reorder pages
                       </button>
                       <ImagePreview file={file} />
                       <span
@@ -1433,50 +1360,28 @@ export default function ConfirmDriveSyncModal({
                       >
                         {file.name}
                       </span>
-                      <button
+                      <button data-ui="secondary"
                         type="button"
                         onClick={() => openCamera(fileKey(file))}
-                        style={{
-                          border: "1px solid #bfdbfe",
-                          borderRadius: 5,
-                          padding: "6px 7px",
-                          background: "#fff",
-                          color: "#1e3a8a",
-                          cursor: "pointer",
-                          fontSize: 11,
-                        }}
+                        style={{ cursor: "pointer" }}
                       >
                         Retake with camera
                       </button>
-                      <button
+                      <button data-ui="secondary"
                         type="button"
                         onClick={() => {
                           setReplaceImageKey(fileKey(file));
                           setReplaceImageTarget("final");
                           replaceImageInputRef.current?.click();
                         }}
-                        style={{
-                          border: "1px solid #d1d5db",
-                          borderRadius: 5,
-                          padding: "6px 7px",
-                          background: "#fff",
-                          color: "#334155",
-                          cursor: "pointer",
-                          fontSize: 11,
-                        }}
+                        style={{ cursor: "pointer" }}
                       >
                         Replace image file
                       </button>
-                      <button
+                      <button data-ui="destructive"
                         type="button"
                         onClick={() => removeFile(fileKey(file))}
-                        style={{
-                          border: 0,
-                          background: "transparent",
-                          color: "#b91c1c",
-                          cursor: "pointer",
-                          fontSize: 11,
-                        }}
+                        style={{ cursor: "pointer" }}
                       >
                         Remove photo
                       </button>
@@ -1492,43 +1397,18 @@ export default function ConfirmDriveSyncModal({
                     gap: 8,
                   }}
                 >
-                  <button
+                  <button data-ui="secondary"
                     type="button"
                     onClick={() => openCamera()}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      border: "1px solid #bfdbfe",
-                      borderRadius: 6,
-                      padding: "8px 10px",
-                      background: "#fff",
-                      color: "#1e3a8a",
-                      cursor: "pointer",
-                      fontWeight: 700,
-                      fontSize: 12,
-                    }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer" }}
                   >
                     <Camera size={14} /> Take another picture
                   </button>
-                  <button
+                  <button aria-busy={Boolean(isConvertingImages)} data-ui="primary"
                     type="button"
                     onClick={convertImagesToPdf}
                     disabled={isConvertingImages}
-                    style={{
-                      display: "inline-flex",
-                      alignItems: "center",
-                      gap: 6,
-                      border: 0,
-                      borderRadius: 6,
-                      padding: "8px 10px",
-                      background: "#1f5cae",
-                      color: "#fff",
-                      cursor: isConvertingImages ? "wait" : "pointer",
-                      fontWeight: 700,
-                      fontSize: 12,
-                      opacity: isConvertingImages ? 0.7 : 1,
-                    }}
+                    style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: isConvertingImages ? "wait" : "pointer", opacity: isConvertingImages ? 0.7 : 1 }}
                   >
                     {isConvertingImages ? (
                       <Loader2 size={14} className="animate-spin" />
@@ -1577,7 +1457,7 @@ export default function ConfirmDriveSyncModal({
             {(fileError || cameraError) && (
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "11px",
                   color: "#dc2626",
                   margin: 0,
@@ -1590,15 +1470,15 @@ export default function ConfirmDriveSyncModal({
           </div>
 
           {/* Automated Drive Storage Hierarchy Section */}
-          <div
+          <div className="vista-surface"
             style={{
               border: "1.5px solid #e5e7eb",
-              borderRadius: "10px",
+              borderRadius: "var(--radius-chip)",
               padding: "16px",
               display: "flex",
               flexDirection: "column",
               gap: "14px",
-              background: "#ffffff",
+              background: "var(--ui-surface)",
             }}
           >
             <div
@@ -1610,7 +1490,7 @@ export default function ConfirmDriveSyncModal({
             >
               <label
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "11px",
                   fontWeight: "700",
                   color: "#374151",
@@ -1627,7 +1507,7 @@ export default function ConfirmDriveSyncModal({
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "4px",
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "11px",
                     fontWeight: "700",
                     color: "#15803d",
@@ -1647,7 +1527,7 @@ export default function ConfirmDriveSyncModal({
                     display: "inline-flex",
                     alignItems: "center",
                     gap: "4px",
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "11px",
                     fontWeight: "700",
                     color: "#b45309",
@@ -1665,11 +1545,11 @@ export default function ConfirmDriveSyncModal({
             </div>
 
             {/* Root Folder Banner */}
-            <div
+            <div className="drive-sync-root-folder"
               style={{
                 background: "#f0f7ff",
                 border: "1px solid #bfdbfe",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-chip)",
                 padding: "10px 14px",
                 display: "flex",
                 alignItems: "center",
@@ -1685,29 +1565,14 @@ export default function ConfirmDriveSyncModal({
                   minWidth: 0,
                 }}
               >
-                <div
-                  style={{
-                    width: "32px",
-                    height: "32px",
-                    borderRadius: "6px",
-                    backgroundColor: "#dbeafe",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <HardDrive
-                    style={{ width: "16px", height: "16px", color: "#1f5cae" }}
-                  />
-                </div>
+                <span className="vista-plain-icon"><GoogleDriveLogo size={24} /></span>
                 <div style={{ minWidth: 0 }}>
                   <span
                     style={{
-                      fontFamily: "Inter, sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontSize: "10.5px",
                       fontWeight: "700",
-                      color: "#6b7280",
+                      color: "var(--ui-muted)",
                       textTransform: "uppercase",
                       letterSpacing: "0.03em",
                       display: "block",
@@ -1717,7 +1582,7 @@ export default function ConfirmDriveSyncModal({
                   </span>
                   <p
                     style={{
-                      fontFamily: "Inter, sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontSize: "13px",
                       fontWeight: "700",
                       color: "#1e3a8a",
@@ -1734,11 +1599,11 @@ export default function ConfirmDriveSyncModal({
 
               <span
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "10px",
                   fontWeight: "700",
                   color: "#1d4ed8",
-                  background: "#ffffff",
+                  background: "var(--ui-surface)",
                   padding: "3px 8px",
                   borderRadius: "4px",
                   border: "1px solid #bfdbfe",
@@ -1755,7 +1620,7 @@ export default function ConfirmDriveSyncModal({
               style={{
                 background: "#f8fafc",
                 border: "1px solid #e2e8f0",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-chip)",
                 padding: "14px 16px",
               }}
             >
@@ -1769,7 +1634,7 @@ export default function ConfirmDriveSyncModal({
               >
                 <span
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "11px",
                     fontWeight: "700",
                     color: "#475569",
@@ -1781,9 +1646,9 @@ export default function ConfirmDriveSyncModal({
                 </span>
                 <span
                   style={{
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "10.5px",
-                    color: "#64748b",
+                    color: "var(--ui-muted)",
                     fontStyle: "italic",
                   }}
                 >
@@ -1797,7 +1662,7 @@ export default function ConfirmDriveSyncModal({
                   display: "flex",
                   flexDirection: "column",
                   gap: "9px",
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12.5px",
                 }}
               >
@@ -1831,7 +1696,7 @@ export default function ConfirmDriveSyncModal({
                   <span
                     style={{
                       fontSize: "10px",
-                      color: "#64748b",
+                      color: "var(--ui-muted)",
                       background: "#e2e8f0",
                       padding: "1px 6px",
                       borderRadius: "4px",
@@ -2013,9 +1878,9 @@ export default function ConfirmDriveSyncModal({
 
             <p
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "11px",
-                color: "#64748b",
+                color: "var(--ui-muted)",
                 margin: 0,
                 lineHeight: "1.4",
               }}
@@ -2049,56 +1914,31 @@ export default function ConfirmDriveSyncModal({
             alignItems: "center",
             gap: "10px",
             flexShrink: 0,
-            background: "#f9fafb",
+            background: "var(--ui-field)",
           }}
         >
-          <button
+          <button aria-busy={Boolean(isSubmitting)} data-ui="secondary"
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "600",
-              color: "#374151",
-              background: "#ffffff",
-              border: "1.5px solid #d1d5db",
-              borderRadius: "8px",
-              padding: "8px 18px",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              opacity: isSubmitting ? 0.5 : 1,
-            }}
+            style={{ cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.5 : 1 }}
           >
             CANCEL
           </button>
 
-          <button
+          <button aria-busy={Boolean(isSubmitting || isConvertingImages)} data-ui="primary"
             type="button"
             onClick={handleFinalSubmit}
             disabled={
               isSubmitting || hasUnconvertedImages || isConvertingImages
             }
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "700",
-              color: "#031c36",
-              background: "#ffc700",
-              border: "none",
-              borderRadius: "8px",
-              padding: "9px 20px",
-              cursor:
+            style={{ cursor:
                 isSubmitting || hasUnconvertedImages || isConvertingImages
                   ? "not-allowed"
-                  : "pointer",
-              opacity:
+                  : "pointer", opacity:
                 isSubmitting || hasUnconvertedImages || isConvertingImages
                   ? 0.5
-                  : 1,
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
+                  : 1, display: "flex", alignItems: "center", gap: "6px" }}
           >
             {isSubmitting ? (
               <Loader2
@@ -2112,6 +1952,6 @@ export default function ConfirmDriveSyncModal({
           </button>
         </div>
       </div>
-    </div>
+    </DialogLayer>
   );
 }

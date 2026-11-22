@@ -1,4 +1,6 @@
 import { Skeleton } from "./loading/Skeleton";
+import { useEffect, useRef } from "react";
+import { registerDialog } from "../utils/dialogFocus";
 import { useNavigate, useLocation } from "react-router-dom";
 import {
   Users,
@@ -7,10 +9,10 @@ import {
   LayoutDashboard,
   ClipboardList,
   ClipboardCheck,
-  CloudUpload,
   Settings,
   X,
 } from "lucide-react";
+import GoogleDriveLogo from "./GoogleDriveLogo";
 import { getSidebarConfig } from "../config/navigation";
 import { useCurrentUser, useLogout } from "../hooks/useAuth";
 
@@ -20,7 +22,7 @@ const ICON_MAP = {
   LayoutDashboard,
   ClipboardList,
   ClipboardCheck,
-  CloudUpload,
+  CloudUpload: GoogleDriveLogo,
   Settings,
 };
 
@@ -29,12 +31,30 @@ export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const { data: currentUser, isLoading: userLoading } = useCurrentUser();
+  const displayName = [currentUser?.first_name, currentUser?.last_name]
+    .filter(Boolean).join(" ").trim() || currentUser?.full_name?.trim() || config?.user.name;
   const logoutMutation = useLogout();
+  const drawerRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    const media = window.matchMedia('(max-width: 1024px)');
+    let release;
+    const sync = () => {
+      if (media.matches && !release) release = registerDialog(drawerRef.current, { onDismiss: onClose });
+      else if (!media.matches && release) { release(); release = undefined; }
+    };
+    sync();
+    media.addEventListener('change', sync);
+    return () => { media.removeEventListener('change', sync); release?.(); };
+  }, [isOpen, onClose]);
 
   if (!config) return null;
 
   return (
     <aside
+      ref={drawerRef}
+      aria-label="Workspace navigation"
+      tabIndex={-1}
       className={[
         "vista-sidebar sticky top-0 flex h-screen w-[275px] flex-col bg-[#1f5cae] text-white justify-between",
         isOpen ? "sidebar--open" : "",
@@ -42,7 +62,7 @@ export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
     >
       <div className="flex flex-col flex-1">
         {/* Mobile close button — hidden on big screens via CSS */}
-        <button
+        <button data-ui="navigation"
           type="button"
           onClick={onClose}
           className="sidebar-close-btn absolute top-3 right-3 items-center justify-center w-8 h-8 rounded-lg bg-white/10 text-white hover:bg-white/20 transition-colors"
@@ -53,20 +73,12 @@ export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
 
         {/* Header */}
         <div style={{ paddingTop: "38px" }}>
-          <div
-            className="flex items-center justify-center gap-3.5"
-            style={{ paddingLeft: "12px", paddingRight: "12px" }}
-          >
-            <img
-              src={config.logo}
-              alt=""
-              className="h-14 w-14 object-contain"
-              aria-hidden="true"
-            />
-
-            <h1 className="font-inter text-3xl font-black tracking-wide leading-none">
-              {config.brand}
-            </h1>
+          <div className="vista-brand" aria-label="VISTA — Office of Student Affairs">
+            <img src={config.logo} alt="" aria-hidden="true" />
+            <div className="vista-brand__wordmark">
+              <h1>{config.brand}</h1>
+              <p>Office of Student Affairs</p>
+            </div>
           </div>
 
           <div style={{ paddingLeft: "12px", paddingRight: "12px" }}>
@@ -83,7 +95,7 @@ export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
           </div>
 
           {/* Profile shortcut — click avatar/name to go to the profile page */}
-          <button
+          <button data-ui="navigation"
             type="button"
             onClick={() => navigate(`/${role}/profile`)}
             className={`flex items-center gap-3.5 w-full rounded-md text-left transition-colors ${
@@ -114,7 +126,7 @@ export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
               >
                 {userLoading
                   ? <Skeleton width={110} height={15} />
-                  : (currentUser?.full_name ?? config.user.name)}
+                  : displayName}
               </p>
             </div>
           </button>
@@ -134,8 +146,9 @@ export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
             const isActive = location.pathname.startsWith(item.path);
 
             return (
-              <button
+              <button data-ui="navigation"
                 key={item.label}
+                aria-current={isActive ? "page" : undefined}
                 type="button"
                 onClick={() => navigate(item.path)}
                 className={[
@@ -187,13 +200,13 @@ export default function Sidebar({ role = "admin", isOpen = false, onClose }) {
             paddingBottom: "10px",
           }}
         >
-          <button
+          <button data-ui="navigation"
             type="button"
             onClick={async () => {
               try {
                 const refresh = localStorage.getItem("refresh_token");
                 await logoutMutation.mutateAsync({ refresh });
-              } catch (err) {
+              } catch {
                 // fallback: clear tokens and navigate to login
                 localStorage.removeItem("access_token");
                 localStorage.removeItem("refresh_token");

@@ -1,4 +1,6 @@
-import { Loader2 } from "lucide-react";
+import { useId } from "react";
+import { Loader2, FileText, Eye } from "lucide-react";
+import SubmissionPass from "../../../../components/SubmissionPass";
 import AttachmentImagePreview from '../../../../components/AttachmentImagePreview';
 
 export default function OCRResults({
@@ -8,6 +10,7 @@ export default function OCRResults({
   onRedo,
   isSubmitting,
 }) {
+  const previewTitleId = useId();
   return (
     <div className="ocr-results">
       <div style={{ marginBottom: "16px" }}>
@@ -21,139 +24,67 @@ export default function OCRResults({
           className="font-inter text-gray-500 mt-1"
           style={{ fontSize: "13px" }}
         >
-          Please verify the information before finalizing the approval.
+          Please verify the information before creating the submission.
         </p>
       </div>
 
-      <div
-        style={{
-          background: "#1f5cae",
-          borderRadius: "10px",
-          padding: "14px 24px",
-          marginBottom: "20px",
-        }}
-      >
-        <p
-          className="font-inter font-bold uppercase"
-          style={{
-            fontSize: "14px",
-            letterSpacing: "0.04em",
-            color: "#ffffff",
+      <section className="submission-pass registration-pass-preview" aria-labelledby={previewTitleId}>
+        <SubmissionPass
+          preview
+          titleId={previewTitleId}
+          submission={{
+            title: summaryData?.title,
+            site: summaryData?.org_name,
+            documentType: summaryData?.doc_type_name || "Unknown",
+            submittedDate: `${new Date().toLocaleDateString()} (Today)`,
           }}
+          submitterName={summaryData?.submitted_by_name}
+          avatarUrl={summaryData?.submitted_by_image_url}
+          organizationAvatarUrl={summaryData?.org_image_url}
+          academicYear={summaryData?.academic_year}
+          category={summaryData?.category_name}
         >
-          Pending Structured Data
-        </p>
-      </div>
-
-      <div
-        style={{
-          border: "1.5px solid #e5e7eb",
-          borderRadius: "8px",
-          padding: "24px",
-          marginBottom: "28px",
-          backgroundColor: "#f8f9fc",
-        }}
-      >
-        <div className="responsive-form-grid"
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "20px",
-          }}
-        >
-          {[
-            ["Organization", summaryData?.org_name],
-            ["Submitter Name", summaryData?.submitted_by_name],
-            ["Academic Year", summaryData?.academic_year],
-            ["Document Type", summaryData?.doc_type_name],
-            ["Category", summaryData?.category_name],
-            ["Document Title", summaryData?.title],
-            ["Date of Submission", `${new Date().toLocaleDateString()} (Today)`],
-            ["Attached File", summaryData?.file_name || "No File Attached"],
-          ].map(([label, value]) => (
-            <div key={label} style={{ minWidth: 0 }}>
-              <p className="font-inter font-bold text-[#142d55] uppercase"
-                style={{ fontSize: "11px", letterSpacing: "0.04em", marginBottom: "6px" }}>{label}</p>
-              {label === "Attached File" ? (
-                <AttachmentImagePreview file={file}>
-                  {({ openPreview, canPreview }) => (
-                    <div
-                      role={canPreview ? "button" : undefined}
-                      tabIndex={canPreview ? 0 : undefined}
-                      onClick={canPreview ? openPreview : undefined}
-                      onKeyDown={canPreview ? (e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          openPreview();
-                        }
-                      } : undefined}
-                      title={canPreview ? "Click to preview attachment" : undefined}
-                      aria-label={canPreview ? `Preview ${value || "attachment"}` : undefined}
-                      style={{
-                        border: canPreview ? "1.5px solid #1f5cae" : "1.5px solid #d1d5db",
-                        borderRadius: "8px",
-                        padding: "9px 13px",
-                        fontSize: "13px",
-                        fontFamily: "Inter, sans-serif",
-                        color: canPreview ? "#1f5cae" : "#111827",
-                        fontWeight: canPreview ? 600 : 400,
-                        backgroundColor: canPreview ? "#f7f9ff" : "#fff",
-                        overflowWrap: "anywhere",
-                        cursor: canPreview ? "pointer" : "default",
-                      }}
-                    >
-                      {value || "Unknown"}
-                    </div>
-                  )}
-                </AttachmentImagePreview>
-              ) : (
-                <div style={{ border: "1.5px solid #d1d5db", borderRadius: "8px", padding: "9px 13px", fontSize: "13px", fontFamily: "Inter, sans-serif", color: "#111827", backgroundColor: "#fff", overflowWrap: "anywhere" }}>
-                  {value || "Unknown"}
-                </div>
+          <div className="submission-pass__attachments">
+            <p className="submission-pass__attachment-label">Attached File</p>
+            <AttachmentImagePreview file={file}>
+              {({ openPreview, canPreview }) => (
+                <button
+                  type="button"
+                  data-ui="secondary"
+                  className="registration-pass-attachment"
+                  onClick={canPreview ? openPreview : undefined}
+                  disabled={!canPreview}
+                  aria-label={canPreview ? `Preview ${summaryData?.file_name || file?.name || "attachment"}` : undefined}
+                >
+                  <FileText size={18} aria-hidden="true" />
+                  <span>{summaryData?.file_name || file?.name || "No File Attached"}</span>
+                  {canPreview && <Eye size={16} aria-hidden="true" />}
+                </button>
               )}
-            </div>
-          ))}
-        </div>
-      </div>
+            </AttachmentImagePreview>
+          </div>
+        </SubmissionPass>
+      </section>
+      <p className="registration-preview-help">Preview only. Approve to create this submission, or Redo to edit the details.</p>
 
       <div className="responsive-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "12px" }}>
-        <button
+        <button aria-busy={Boolean(isSubmitting)} data-ui="secondary"
           type="button"
           onClick={onRedo}
           disabled={isSubmitting}
-          className="font-inter font-bold uppercase tracking-wider transition hover:bg-gray-100 active:scale-95 disabled:opacity-50"
-          style={{
-            fontSize: "12px",
-            padding: "10px 24px",
-
-            color: "#142d55",
-            backgroundColor: "#fff",
-            border: "2px solid #142d55",
-            borderRadius: "6px",
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-            letterSpacing: "0.06em",
-          }}
+          className="font-inter font-bold transition active:scale-95 disabled:opacity-50"
+          style={{ cursor: isSubmitting ? "not-allowed" : "pointer" }}
         >
           Redo
         </button>
-        <button
+        <button aria-busy={Boolean(isSubmitting)} data-ui="primary"
           type="button"
           onClick={onApprove}
           disabled={isSubmitting}
-          className="inline-flex items-center gap-2 font-inter font-bold uppercase tracking-wider transition hover:brightness-105 active:scale-95 disabled:opacity-50"
-          style={{
-            fontSize: "12px",
-            padding: "10px 24px",
-
-            backgroundColor: "#ffc700",
-            color: "#9a3412",
-            border: "2px solid #ea580c",
-            borderRadius: "6px",
-            cursor: isSubmitting ? "not-allowed" : "pointer",
-            letterSpacing: "0.06em",
-          }}
+          className="inline-flex items-center gap-2 font-inter font-bold transition hover:brightness-105 active:scale-95 disabled:opacity-50"
+          style={{ cursor: isSubmitting ? "not-allowed" : "pointer" }}
         >
-          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin text-[#9a3412]" />}
+          {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
           {isSubmitting ? "Saving..." : "Approve"}
         </button>
       </div>
