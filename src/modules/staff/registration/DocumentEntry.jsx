@@ -243,6 +243,7 @@ export default function DocumentEntry() {
         ? `${selectedUser.first_name} ${selectedUser.last_name}`
         : "Unknown",
       submitted_by_image_url: selectedUser?.image_url,
+      submitted_by_email: selectedUser?.email,
       doc_type_name: selectedDocType?.name || "Unknown",
       org_name: organizations.find(item => String(item.org_id) === String(formData.org_id))?.name || "Unknown",
       org_image_url: organizations.find(item => String(item.org_id) === String(formData.org_id))?.image_url,

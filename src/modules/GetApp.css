@@ -64,8 +64,8 @@
 .ga-workflow-tags { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:22px; margin:-14px 32px 0; position:relative; z-index:3; }
 .ga-workflow-tags>span { --ga-tag-surface:#2267d4; display:flex; align-items:center; justify-content:center; gap:10px; min-height:44px; padding:13px 8px; background:var(--ga-tag-surface); color:var(--ui-on-brand); border-radius:var(--radius-field); box-shadow:var(--shadow-card); font-size:var(--type-label); line-height:18px; font-weight:600; text-align:center; }
 .ga-workflow-tags svg { width:18px; height:18px; stroke-width:1.75; color:currentColor; }
-/* Saturated brand variants retain at least 4.5:1 contrast with white labels. */
-.ga-workflow-tags>span:nth-child(2) { --ga-tag-surface:#947100; }
+/* Brand surfaces retain readable contrast with their matching foregrounds. */
+.ga-workflow-tags>span:nth-child(2) { --ga-tag-surface:var(--ui-yellow); color:var(--ui-on-yellow); }
 .ga-workflow-tags>span:nth-child(3) { --ga-tag-surface:#258738; }
 .ga-workflow-tags>span:nth-child(4) { --ga-tag-surface:#3075a5; }
 .ga-section-heading { text-align:center; }

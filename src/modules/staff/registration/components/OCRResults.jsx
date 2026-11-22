@@ -39,6 +39,7 @@ export default function OCRResults({
             submittedDate: `${new Date().toLocaleDateString()} (Today)`,
           }}
           submitterName={summaryData?.submitted_by_name}
+          submitterEmail={summaryData?.submitted_by_email}
           avatarUrl={summaryData?.submitted_by_image_url}
           organizationAvatarUrl={summaryData?.org_image_url}
           academicYear={summaryData?.academic_year}
