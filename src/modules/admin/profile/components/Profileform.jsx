@@ -1,3 +1,4 @@
+import FormField from "../../../../components/FormField";
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useState } from "react";
 import ProfileAvatarUpload from "./Profileavatarupload";
@@ -11,7 +12,7 @@ import GenderField from "../../../../components/GenderField";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 
 const PILL_CLASS =
-  "w-full bg-white font-inter text-gray-900 placeholder:text-gray-400 outline-none rounded-full border-none";
+  "profile-input w-full font-inter outline-none";
 
 const pillStyle = {
   height: "46px",
@@ -73,10 +74,11 @@ export default function ProfileForm() {
 
   return (
     <div
-      className="profile-form-panel w-full rounded-2xl bg-[#1f5cae]"
+      className="profile-form-panel vista-surface w-full"
       style={{ padding: "32px", marginTop: "20px" }}
     >
-      <form
+      <h2 className="profile-section-title">Account details</h2>
+      <form aria-label="Account details"
         onSubmit={handleSubmit}
         className="profile-form-layout flex flex-col md:flex-row"
         style={{ gap: "36px" }}
@@ -90,34 +92,37 @@ export default function ProfileForm() {
           className="profile-form-fields flex-1 flex flex-col"
           style={{ gap: "12px", maxWidth: "520px" }}
         >
-          <input
+          <FormField label="First name"><input
             type="text"
             value={form.firstName}
             onChange={(e) => set("firstName", e.target.value)}
+            aria-label="First name"
             placeholder="First Name"
             className={PILL_CLASS}
             style={pillStyle}
             disabled={isLoading}
-          />
-          <input
+          /></FormField>
+          <FormField label="Last name"><input
             type="text"
             value={form.lastName}
             onChange={(e) => set("lastName", e.target.value)}
+            aria-label="Last name"
             placeholder="Last Name"
             className={PILL_CLASS}
             style={pillStyle}
             disabled={isLoading}
-          />
-          <input
+          /></FormField>
+          <FormField label="Email"><input
             type="email"
             value={form.email}
+            aria-label="Email"
             placeholder="Email"
             className={PILL_CLASS}
             style={{ ...pillStyle, opacity: 0.7, cursor: "not-allowed" }}
             disabled
             readOnly
             title="Email can't be changed from this form yet"
-          />
+          /></FormField>
 
           <PhoneNumberField
             value={form.phone}
@@ -153,12 +158,12 @@ export default function ProfileForm() {
           </section>
 
           {updateProfile.isError && (
-            <p style={{ color: "#ffe1e1", fontSize: "13px", margin: 0 }}>
+            <p className="profile-save-error" role="alert" style={{ fontSize: "13px", margin: 0 }}>
               {getApiErrorMessage(updateProfile.error, "Couldn't update your profile. Please try again.")}
             </p>
           )}
           {updateProfile.isSuccess && (
-            <p style={{ color: "#e1ffe6", fontSize: "13px", margin: 0 }}>
+            <p className="profile-save-success" role="status" style={{ fontSize: "13px", margin: 0 }}>
               Profile updated.
             </p>
           )}
@@ -168,34 +173,19 @@ export default function ProfileForm() {
             className="flex items-center"
             style={{ gap: "12px", marginTop: "10px" }}
           >
-            <button
+            <button aria-busy={Boolean(updateProfile.isPending)} data-ui="primary"
               type="submit"
               disabled={updateProfile.isPending}
-              className="font-inter font-bold rounded-full transition hover:brightness-95 active:scale-95"
-              style={{
-                backgroundColor: "#FFC933",
-                color: "#5a3d00",
-                fontSize: "13px",
-                padding: "11px 32px",
-                border: "none",
-                cursor: updateProfile.isPending ? "wait" : "pointer",
-                opacity: updateProfile.isPending ? 0.7 : 1,
-              }}
+              className="font-inter font-bold transition hover:brightness-95 active:scale-95"
+              style={{ cursor: updateProfile.isPending ? "wait" : "pointer", opacity: updateProfile.isPending ? 0.7 : 1 }}
             >
               {updateProfile.isPending ? "Saving..." : "Update Profile"}
             </button>
-            <button
+            <button data-ui="secondary"
               type="button"
               onClick={handleCancel}
-              className="font-inter font-bold rounded-full transition hover:bg-gray-50 active:scale-95"
-              style={{
-                backgroundColor: "#fff",
-                color: "#1f5cae",
-                fontSize: "13px",
-                padding: "11px 28px",
-                border: "none",
-                cursor: "pointer",
-              }}
+              className="font-inter font-bold transition active:scale-95"
+              style={{ cursor: "pointer" }}
             >
               Cancel
             </button>
@@ -217,7 +207,7 @@ export default function ProfileForm() {
               }}
             />
             <p
-              className="font-inter text-white"
+              className="profile-branding-caption font-inter"
               style={{ fontSize: "13px", lineHeight: 1.4 }}
             >
               <span className="font-bold">Office of Student Affairs</span> —

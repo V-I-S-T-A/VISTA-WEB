@@ -22,7 +22,7 @@
 
 @container (min-width: 1001px) {
   .users-management-table table {
-    min-width: 1050px;
+    min-width: 100%;
   }
 }
 

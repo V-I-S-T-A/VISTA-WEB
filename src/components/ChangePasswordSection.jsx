@@ -14,10 +14,11 @@ const RESEND_COOLDOWN = 30;
 
 function EyeToggle({ shown, onToggle }) {
   return (
-    <button
+    <button data-ui="icon"
       type="button"
       onClick={onToggle}
-      tabIndex={-1}
+      aria-label={shown ? "Hide password" : "Show password"}
+      aria-pressed={shown}
       style={{
         position: "absolute",
         right: "16px",
@@ -25,7 +26,11 @@ function EyeToggle({ shown, onToggle }) {
         transform: "translateY(-50%)",
         background: "none",
         border: "none",
-        color: "#9ca3af",
+        color: "var(--ui-muted)",
+        minWidth: "32px",
+        minHeight: "32px",
+        alignItems: "center",
+        justifyContent: "center",
         display: "flex",
         padding: 0,
       }}
@@ -45,7 +50,8 @@ function EyeToggle({ shown, onToggle }) {
  *    the section expands automatically and shows a temporary-password notice.
  */
 export default function ChangePasswordSection({ forceOpen = false }) {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(forceOpen);
+  const [previousForceOpen, setPreviousForceOpen] = useState(forceOpen);
   const [step, setStep] = useState("form"); // "form" | "verify"
   const [showOld, setShowOld] = useState(false);
   const [showNew, setShowNew] = useState(false);
@@ -65,9 +71,10 @@ export default function ChangePasswordSection({ forceOpen = false }) {
 
   // Profile data loads asynchronously, so open the panel as soon as the
   // "must change password" flag arrives.
-  useEffect(() => {
+  if (previousForceOpen !== forceOpen) {
+    setPreviousForceOpen(forceOpen);
     if (forceOpen) setIsOpen(true);
-  }, [forceOpen]);
+  }
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -155,10 +162,10 @@ export default function ChangePasswordSection({ forceOpen = false }) {
 
   if (!isOpen) {
     return (
-      <button
+      <button data-ui="tertiary"
         type="button"
         onClick={() => setIsOpen(true)}
-        className="flex items-center gap-2 font-inter font-bold text-white/90 hover:text-white transition"
+        className="profile-change-password-link flex items-center gap-2 font-inter font-bold transition"
         style={{
           fontSize: "13px",
           padding: "4px 0",
@@ -178,24 +185,24 @@ export default function ChangePasswordSection({ forceOpen = false }) {
       className="flex flex-col"
       style={{
         gap: "10px",
-        background: "rgba(255,255,255,0.08)",
-        borderRadius: "16px",
+        background: "var(--ui-field)",
+        borderRadius: "var(--radius-card)",
         padding: "16px",
       }}
     >
       <div className="flex items-center justify-between">
         <p
-          className="font-inter font-bold text-white"
+          className="font-inter font-bold text-[#1e3a68]"
           style={{ fontSize: "13px" }}
         >
           {step === "form" ? "Change Password" : "Verify Your Email"}
         </p>
         {/* Hide Cancel while a change is required, so it can't be dismissed */}
         {!forceOpen && (
-          <button
+          <button data-ui="tertiary"
             type="button"
             onClick={resetAll}
-            className="font-inter text-white/70 hover:text-white"
+            className="font-inter text-slate-600 hover:text-[#1a59a5]"
             style={{
               fontSize: "12px",
               background: "none",
@@ -210,7 +217,7 @@ export default function ChangePasswordSection({ forceOpen = false }) {
 
       {forceOpen && step === "form" && (
         <p
-          className="font-inter text-white/90"
+          className="font-inter text-slate-600"
           style={{ fontSize: "12px", lineHeight: 1.5, margin: 0 }}
         >
           You're signed in with a temporary password. Please set a new one to
@@ -264,25 +271,17 @@ export default function ChangePasswordSection({ forceOpen = false }) {
           </div>
 
           {error && (
-            <p style={{ color: "#ffe1e1", fontSize: "12px", margin: 0 }}>
+            <p style={{ color: "var(--ui-danger)", fontSize: "12px", margin: 0 }}>
               {error}
             </p>
           )}
 
-          <button
+          <button aria-busy={Boolean(requestCode.isPending)} data-ui="primary"
             type="button"
             onClick={handleSendCode}
             disabled={requestCode.isPending}
-            className="font-inter font-bold rounded-full transition hover:brightness-95 active:scale-95"
-            style={{
-              backgroundColor: "#FFC933",
-              color: "#5a3d00",
-              fontSize: "13px",
-              padding: "11px 0",
-              border: "none",
-              cursor: requestCode.isPending ? "wait" : "pointer",
-              opacity: requestCode.isPending ? 0.7 : 1,
-            }}
+            className="font-inter font-bold transition hover:brightness-95 active:scale-95"
+            style={{ cursor: requestCode.isPending ? "wait" : "pointer", opacity: requestCode.isPending ? 0.7 : 1 }}
           >
             {requestCode.isPending
               ? "Sending code..."
@@ -292,7 +291,7 @@ export default function ChangePasswordSection({ forceOpen = false }) {
       ) : (
         <>
           <p
-            className="font-inter text-white/85"
+            className="font-inter text-[#1e3a68]/85"
             style={{ fontSize: "12px", lineHeight: 1.5 }}
           >
             <Mail
@@ -323,41 +322,33 @@ export default function ChangePasswordSection({ forceOpen = false }) {
           />
 
           {error && (
-            <p style={{ color: "#ffe1e1", fontSize: "12px", margin: 0 }}>
+            <p style={{ color: "var(--ui-danger)", fontSize: "12px", margin: 0 }}>
               {error}
             </p>
           )}
           {successMessage && (
-            <p style={{ color: "#e1ffe6", fontSize: "12px", margin: 0 }}>
+            <p style={{ color: "var(--ui-success)", fontSize: "12px", margin: 0 }}>
               {successMessage}
             </p>
           )}
 
-          <button
+          <button aria-busy={Boolean(confirmChange.isPending)} data-ui="primary"
             type="button"
             onClick={handleConfirm}
             disabled={confirmChange.isPending}
-            className="font-inter font-bold rounded-full transition hover:brightness-95 active:scale-95"
-            style={{
-              backgroundColor: "#FFC933",
-              color: "#5a3d00",
-              fontSize: "13px",
-              padding: "11px 0",
-              border: "none",
-              cursor: confirmChange.isPending ? "wait" : "pointer",
-              opacity: confirmChange.isPending ? 0.7 : 1,
-            }}
+            className="font-inter font-bold transition hover:brightness-95 active:scale-95"
+            style={{ cursor: confirmChange.isPending ? "wait" : "pointer", opacity: confirmChange.isPending ? 0.7 : 1 }}
           >
             {confirmChange.isPending
               ? "Verifying..."
               : "Verify & Update Password"}
           </button>
 
-          <button
+          <button aria-busy={Boolean(requestCode.isPending)} data-ui="tertiary"
             type="button"
             onClick={handleResend}
             disabled={cooldown > 0 || requestCode.isPending}
-            className="font-inter font-semibold text-white/80 hover:text-white"
+            className="font-inter font-semibold text-slate-600 hover:text-[#1a59a5]"
             style={{
               fontSize: "12px",
               background: "none",

@@ -1,12 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createServer } from 'vite';
+import { createServer as reservePort } from 'node:net';
 
 test('a second web server refuses the occupied port instead of sharing the live dependency cache', async () => {
+  // Vite treats 0 as its default port; do not collide with a developer's server.
+  const reservation = reservePort();
+  await new Promise(resolve => reservation.listen(0, '127.0.0.1', resolve));
+  const port = reservation.address().port;
+  await new Promise(resolve => reservation.close(resolve));
   const options = {
     // Never touch the developer's running Vite dependency cache.
     cacheDir: 'node_modules/.vite-tests/port-isolation',
-    server: { host: '127.0.0.1', port: 0, hmr: false },
+    server: { host: '127.0.0.1', port, hmr: false },
     optimizeDeps: { noDiscovery: true, entries: [], include: [] },
     logLevel: 'silent',
   };

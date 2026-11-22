@@ -4,6 +4,7 @@ import { Building2, Check, ChevronDown, Loader2, Search, X } from "lucide-react"
 import api from "../lib/axios";
 import { fetchOrganizationOptions, nextOrganizationPage, organizationOptions } from "../utils/organizationPicker";
 import "./OrganizationPicker.css";
+import AnchoredPopover from "./AnchoredPopover";
 
 export default function OrganizationPicker({ id, value, onChange, disabled = false, error = "", selectedLabel = "" }) {
   const generatedId = useId();
@@ -16,6 +17,7 @@ export default function OrganizationPicker({ id, value, onChange, disabled = fal
   const [search, setSearch] = useState("");
   const [highlightedId, setHighlightedId] = useState(null);
   const trigger = useRef(null);
+  const panel = useRef(null);
   const list = useRef(null);
   const cache = useQueryClient();
 
@@ -90,9 +92,9 @@ export default function OrganizationPicker({ id, value, onChange, disabled = fal
   return <div className="organization-picker" onKeyDown={event => {
     if (open && event.key === "Escape") { event.preventDefault(); event.stopPropagation(); close(); }
   }} onBlur={event => {
-    if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false);
+    if (!event.currentTarget.contains(event.relatedTarget) && !panel.current?.contains(event.relatedTarget)) setOpen(false);
   }}>
-    <button ref={trigger} id={controlId} type="button" className="organization-picker-trigger"
+    <button data-ui="toggle" ref={trigger} id={controlId} type="button" className="organization-picker-trigger"
       disabled={disabled} aria-expanded={open} aria-haspopup="listbox" aria-controls={open ? listId : undefined}
       aria-invalid={!!error} aria-describedby={`${helpId}${error ? ` ${errorId}` : ""}`}
       onClick={() => { setOpen(current => !current); setInput(""); setSearch(""); setHighlightedId(value || null); }}>
@@ -108,20 +110,21 @@ export default function OrganizationPicker({ id, value, onChange, disabled = fal
     <p id={helpId} className="organization-picker-help">Search by organization name or acronym.</p>
     {error && <p id={errorId} role="alert" className="organization-picker-error">{error}</p>}
     {value && selected.isError && <p role="alert" className="organization-picker-error">
-      Could not load the selected organization. <button type="button" onClick={() => selected.refetch()}>Try again</button>
+      Could not load the selected organization. <button data-ui="tertiary" type="button" onClick={() => selected.refetch()}>Try again</button>
     </p>}
-    {open && !disabled && <div className="organization-picker-panel">
+    {open && !disabled && <AnchoredPopover ref={panel} className="organization-picker-panel" onDismiss={close}
+      style={{ width: "360px" }}>
       <div className="organization-picker-search">
         <Search size={17} aria-hidden="true" />
         <input autoFocus role="combobox" aria-label="Search organizations" aria-expanded="true" aria-autocomplete="list"
           aria-controls={listId} aria-activedescendant={activeOption} autoComplete="off"
           placeholder="Type a name or acronym…" value={input} disabled={disabled}
           onKeyDown={onSearchKey} onChange={event => { setInput(event.target.value); setHighlightedId(null); }} />
-        <button type="button" aria-label="Close organization picker" onClick={close}><X size={16} /></button>
+        <button data-ui="icon" type="button" aria-label="Close organization picker" onClick={close}><X size={16} /></button>
       </div>
       <div className="organization-picker-results" ref={list}>
         <div id={listId} role="listbox" aria-label="Organizations" aria-busy={pendingSearch || options.isFetching}>
-          {!pendingSearch && organizations.map((org, index) => <button
+          {!pendingSearch && organizations.map((org, index) => <button data-ui="toggle"
             key={org.org_id} id={`${listId}-${index}`} type="button" role="option" tabIndex={-1}
             aria-selected={org.org_id === value} className={`organization-picker-option${org.org_id === highlightedId ? " is-highlighted" : ""}`}
             onMouseDown={event => event.preventDefault()} onMouseEnter={() => setHighlightedId(org.org_id)} onClick={() => choose(org)}>
@@ -134,7 +137,7 @@ export default function OrganizationPicker({ id, value, onChange, disabled = fal
         </div>
         {(pendingSearch || options.isPending) && <p className="organization-picker-message" role="status"><Loader2 size={16} className="animate-spin" /> Searching organizations…</p>}
         {!pendingSearch && options.isError && <div className="organization-picker-message organization-picker-error" role="alert">
-          Could not load organizations. <button type="button" onClick={() => options.isFetchNextPageError ? options.fetchNextPage() : options.refetch()}>Try again</button>
+          Could not load organizations. <button data-ui="tertiary" type="button" onClick={() => options.isFetchNextPageError ? options.fetchNextPage() : options.refetch()}>Try again</button>
         </div>}
         {!pendingSearch && !options.isPending && !options.isError && !organizations.length && <p className="organization-picker-message" role="status">
           {search ? "No organizations match your search. Try another name or acronym." : "No organizations are available."}
@@ -142,10 +145,10 @@ export default function OrganizationPicker({ id, value, onChange, disabled = fal
       </div>
       {!pendingSearch && !!organizations.length && <div className="organization-picker-footer">
         <span role="status">Showing {organizations.length} of {total} organizations</span>
-        {options.hasNextPage && <button type="button" disabled={options.isFetching} onClick={() => options.fetchNextPage()}>
+        {options.hasNextPage && <button data-ui="tertiary" type="button" disabled={options.isFetching} onClick={() => options.fetchNextPage()}>
           {options.isFetchingNextPage ? "Loading…" : "Load more"}
         </button>}
       </div>}
-    </div>}
+    </AnchoredPopover>}
   </div>;
 }

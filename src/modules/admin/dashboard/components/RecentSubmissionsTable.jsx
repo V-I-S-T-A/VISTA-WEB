@@ -30,7 +30,7 @@ import {
 const PAGE_SIZE = TABLE_PAGE_SIZE;
 const CONTENT_PADDING = "30px";
 const SEARCH_DEBOUNCE_MS = 350;
-const ACTION_BUTTON_STYLE = { fontSize: "12px", padding: "4px 12px", minHeight: "28px" };
+const ACTION_BUTTON_STYLE = { fontSize: "var(--type-meta)", padding: "6px 12px", minHeight: "var(--control-compact)" };
 
 // Pulls the filename the backend suggested via Content-Disposition, falling
 // back to a sensible default if the header isn't present.
@@ -129,11 +129,11 @@ const UserRow = memo(function UserRow({
       </td>
       <td data-label="Actions" className="px-5 py-2.5">
         <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap [&>button]:shrink-0">
-          <button
+          <button data-ui="primary"
             type="button"
             onClick={handleEdit}
             disabled={isUpdating || isDeleting || isResending}
-            className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50 disabled:opacity-50"
+            className="inline-flex items-center gap-1 font-inter font-bold transition active:scale-95 border disabled:opacity-50"
             style={ACTION_BUTTON_STYLE}
           >
             <SquarePen
@@ -142,18 +142,18 @@ const UserRow = memo(function UserRow({
             />
             EDIT
           </button>
-          <button
+          <button data-ui="destructive"
             type="button"
             onClick={() => onDelete(user.user_id)}
             disabled={isUpdating || isDeleting || isResending}
-            className="inline-flex items-center gap-1 rounded bg-[#ef4444] font-inter font-bold text-white transition hover:bg-[#dc2626] active:scale-95 border border-[#b91c1c]/50 disabled:opacity-50"
+            className="inline-flex items-center gap-1 font-inter font-bold transition active:scale-95 border disabled:opacity-50"
             style={ACTION_BUTTON_STYLE}
           >
             <Trash2 style={{ width: "12px", height: "12px" }} aria-hidden="true" />
             DELETE
           </button>
           {user.is_active && !user.last_login && user.must_change_password && (
-            <button
+            <button data-ui="icon"
               type="button"
               onClick={() => onResend(user)}
               disabled={isUpdating || isDeleting || isResending}

@@ -26,11 +26,11 @@
   .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .table-header-bar {
     padding: 16px !important;
     gap: 12px;
-    border-radius: 12px 12px 0 0;
+    border-radius: var(--radius-card) var(--radius-card) 0 0;
   }
   .dashboard-main :is(.responsive-records, .admin-data-table, .registration-orgs) .table-header-bar h3 {
     padding-left: 0 !important;
-    font-size: 17px !important;
+    font-size: var(--type-heading) !important;
     line-height: 1.4;
   }
   .dashboard-main .responsive-records { min-width: 0; max-width: 100%; overflow: visible; }

@@ -13,7 +13,7 @@ import { Skeleton } from "./loading/Skeleton";
  *  - label     {string}          — card label, e.g. "Total Users"
  *  - value     {string|number}   — the statistic value displayed prominently
  *  - icon      {ComponentType}   — Lucide icon component (not JSX)
- *  - bg        {string}          — Tailwind bg-* class, e.g. "bg-[#1a51a5]"
+ *  - bg        {string}          — Tailwind bg-* class, e.g. "bg-[var(--ui-blue)]"
  *  - isLoading {boolean}         — shows "—" when true
  *  - size      {"lg"|"sm"}       — card variant (default "sm")
  *  - className {string}          — additional classes for the wrapper (e.g. col-span)
@@ -22,7 +22,7 @@ export default function SummaryCard({
   label,
   value,
   icon: Icon,
-  bg = "bg-[#1a51a5]",
+  bg = "bg-[var(--ui-blue)]",
   isLoading = false,
   size = "sm",
   className = "",
@@ -31,10 +31,10 @@ export default function SummaryCard({
 
   return (
     <div
-      className={`relative overflow-hidden rounded-xl ${bg} text-white flex flex-col justify-between ${className}`}
+      className={`vista-summary-card relative overflow-hidden ${bg} text-white flex flex-col justify-between ${className}`}
       style={{
         padding: isLarge ? "16px 20px" : "20px 22px",
-        height: isLarge ? "150px" : "130px",
+        minHeight: isLarge ? "150px" : "140px",
       }}
     >
       {/* Label */}
@@ -76,12 +76,7 @@ export default function SummaryCard({
           >
             {isLoading ? <Skeleton width={72} height={40} /> : String(value)}
           </p>
-          <span
-            className="flex items-center justify-center rounded-xl bg-white/15"
-            style={{ width: "44px", height: "44px" }}
-          >
-            <Icon style={{ width: "22px", height: "22px" }} aria-hidden="true" />
-          </span>
+          <span className="vista-plain-icon"><Icon style={{ width: "22px", height: "22px" }} aria-hidden="true" /></span>
         </div>
       )}
     </div>

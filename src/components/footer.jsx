@@ -123,7 +123,7 @@ export default function Footer() {
 
             <div className="footer-social-row">
               {SOCIALS.map(({ label, icon }) => (
-                <button
+                <button data-ui="navigation"
                   key={label}
                   type="button"
                   aria-label={label}

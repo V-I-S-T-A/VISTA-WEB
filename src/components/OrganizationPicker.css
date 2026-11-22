@@ -1,4 +1,4 @@
-.organization-picker { min-width: 0; font-family: Inter, sans-serif; }
+.organization-picker { min-width: 0; font-family: var(--font-body); }
 .organization-picker button { cursor: pointer; }
 .organization-picker button:disabled { cursor: not-allowed; opacity: .6; }
 .organization-picker-trigger {

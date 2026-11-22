@@ -3,19 +3,19 @@ export default function LogDetailsHeader({ onBack }) {
     <div style={{ marginBottom: "20px" }}>
       <h2
         className="font-inter font-bold text-[#0a1e3f]"
-        style={{ fontSize: "28px", lineHeight: 1.15 }}
+        style={{ fontSize: "var(--type-title)", lineHeight: 1.2 }}
       >
         Audit Log History Details
       </h2>
       <p
         className="font-inter text-[#0a1e3f] mt-1"
-        style={{ fontSize: "16px" }}
+        style={{ fontSize: "var(--type-body)" }}
       >
         System-wide transparency of activities.
       </p>
 
       <div className="flex items-center gap-4 mt-5">
-        <button
+        <button data-ui="navigation"
           type="button"
           onClick={onBack}
           className="inline-flex items-center justify-center transition hover:brightness-110 active:scale-95"

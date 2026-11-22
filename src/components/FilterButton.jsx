@@ -3,7 +3,7 @@ import { Filter } from "lucide-react";
 /**
  * FilterButton
  *
- * Dark navy Filter button with an optional active-filter count badge.
+ * Brand-blue Filter button with an optional active-filter count badge.
  * Used in every table header bar across all modules.
  *
  * Props:
@@ -12,15 +12,11 @@ import { Filter } from "lucide-react";
  */
 export default function FilterButton({ onClick, activeCount = 0 }) {
   return (
-    <button
+    <button data-ui="primary"
       type="button"
       onClick={onClick}
-      className="filter-btn inline-flex items-center gap-1.5 rounded-md font-inter font-bold text-white transition hover:brightness-110 active:scale-95"
-      style={{
-        fontSize: "12.5px",
-        padding: "7px 14px",
-        backgroundColor: "#12345b",
-      }}
+      className="filter-btn inline-flex items-center gap-1.5 font-inter font-bold transition hover:brightness-110 active:scale-95"
+      style={{  }}
     >
       <Filter style={{ width: "13px", height: "13px" }} aria-hidden="true" />
       <span className="btn-label">Filter</span>
@@ -31,7 +27,7 @@ export default function FilterButton({ onClick, activeCount = 0 }) {
             width: "16px",
             height: "16px",
             borderRadius: "9999px",
-            backgroundColor: "#ffffff",
+            backgroundColor: "var(--ui-surface)",
             color: "#12345b",
             fontSize: "10px",
             marginLeft: "4px",

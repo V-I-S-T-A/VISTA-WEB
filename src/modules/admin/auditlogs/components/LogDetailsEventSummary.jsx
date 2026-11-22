@@ -4,7 +4,7 @@ export default function LogDetailsEventSummary({ log, actionDisplay }) {
   return (
     <div
       style={{
-        backgroundColor: "#ffffff",
+        backgroundColor: "var(--ui-surface)",
         borderRadius: "4px",
         border: "1px solid #e2e6ee",
         overflow: "hidden",
@@ -21,18 +21,18 @@ export default function LogDetailsEventSummary({ log, actionDisplay }) {
       >
         <h4
           className="font-inter font-bold uppercase tracking-wider"
-          style={{ fontSize: "13px", color: "#ffffff" }}
+          style={{ fontSize: "13px", color: "var(--ui-surface)" }}
         >
           Event Summary
         </h4>
-        <Info style={{ width: "16px", height: "16px", color: "#ffffff" }} />
+        <Info style={{ width: "16px", height: "16px", color: "var(--ui-surface)" }} />
       </div>
 
       <div className="flex gap-8" style={{ padding: "24px 28px" }}>
         <div style={{ flex: 1 }}>
           <p
             className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "11px", marginBottom: "8px", color: "#6b7280" }}
+            style={{ fontSize: "11px", marginBottom: "8px", color: "var(--ui-muted)" }}
           >
             Action Category
           </p>
@@ -42,7 +42,7 @@ export default function LogDetailsEventSummary({ log, actionDisplay }) {
               backgroundColor: "#edf2fb",
               color: "#1A59A5",
               padding: "10px 16px",
-              borderRadius: "6px",
+              borderRadius: "var(--radius-chip)",
               fontSize: "14px",
             }}
           >
@@ -52,7 +52,7 @@ export default function LogDetailsEventSummary({ log, actionDisplay }) {
         <div style={{ flex: 1 }}>
           <p
             className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "11px", marginBottom: "8px", color: "#6b7280" }}
+            style={{ fontSize: "11px", marginBottom: "8px", color: "var(--ui-muted)" }}
           >
             Reference ID
           </p>

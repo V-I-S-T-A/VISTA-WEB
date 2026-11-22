@@ -1,55 +1,69 @@
 import { Skeleton } from "../../../../components/loading/Skeleton";
-import { FolderOpen, Clock, ClipboardCheck } from "lucide-react";
+import DashboardIllustration from "../../../../components/DashboardIllustration";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
+import ErrorNotice from "../../../../components/ErrorNotice";
 
 // Cards reflect only the current student org's submissions — the backend
 // scopes the /submissions/ list to the authenticated student's org, so no
 // client-side filtering by org is needed here.
 export default function SubmissionSummaryCards() {
-  const { data: allData, isLoading: isLoadingAll } = useSubmissions({
+  const { data: allData, isLoading: isLoadingAll, isError: allError, refetch: retryAll } = useSubmissions({
     page: 1,
     pageSize: 1,
   });
-  const { data: pendingData, isLoading: isLoadingPending } = useSubmissions({
+  const { data: pendingData, isLoading: isLoadingPending, isError: pendingError, refetch: retryPending } = useSubmissions({
     page: 1,
     pageSize: 1,
     status: "pending",
   });
-  const { data: approvedData, isLoading: isLoadingApproved } = useSubmissions({
+  const { data: approvedData, isLoading: isLoadingApproved, isError: approvedError, refetch: retryApproved } = useSubmissions({
     page: 1,
     pageSize: 1,
     status: "approved",
   });
+  const { data: returnedData, isLoading: isLoadingReturned, isError: returnedError, refetch: retryReturned } = useSubmissions({
+    page: 1,
+    pageSize: 1,
+    status: "rejected",
+  });
 
-  const isLoading = isLoadingAll || isLoadingPending || isLoadingApproved;
+  const isLoading = isLoadingAll || isLoadingPending || isLoadingApproved || isLoadingReturned;
 
   const total = allData?.count ?? 0;
   const pending = pendingData?.count ?? 0;
   const completed = approvedData?.count ?? 0;
+  const returned = returnedData?.count ?? 0;
 
   const cards = [
     {
       label: "Total Submissions",
-      value: total,
-      icon: FolderOpen,
-      bg: "bg-[#1a51a5]",
+      value: allError && !allData ? "—" : total,
+      illustration: "total",
+      bg: "bg-[var(--ui-blue)]",
       badgeBg: "bg-white/15",
-      span: "card-full-width",
+      span: "",
     },
     {
       label: "Pending",
-      value: pending,
-      icon: Clock,
-      bg: "bg-[#FDC849]",
+      value: pendingError && !pendingData ? "—" : pending,
+      illustration: "process",
+      bg: "bg-[var(--ui-yellow)]",
       badgeBg: "bg-black/10",
       span: "",
     },
     {
-      label: "Completed",
-      value: completed,
-      icon: ClipboardCheck,
-      bg: "bg-[#2d9f6f]",
+      label: "Approved",
+      value: approvedError && !approvedData ? "—" : completed,
+      illustration: "approved",
+      bg: "bg-[#52B764]",
       badgeBg: "bg-black/10",
+      span: "",
+    },
+    {
+      label: "Returned",
+      value: returnedError && !returnedData ? "—" : returned,
+      illustration: "returned",
+      bg: "bg-[var(--ui-danger)]",
       span: "",
     },
   ];
@@ -57,14 +71,15 @@ export default function SubmissionSummaryCards() {
   return (
     <div className="w-full">
       <div
-        className="student-cards-grid grid grid-cols-1 md:grid-cols-3"
+        className="student-cards-grid grid grid-cols-2 lg:grid-cols-4"
         style={{ gap: "16px" }}
       >
-        {cards.map(({ label, value, icon: Icon, bg, badgeBg, span }) => (
+        {cards.map(({ label, value, illustration, bg, span }, index) => (
           <div
             key={label}
-            className={`relative rounded-2xl ${bg} text-white flex flex-col justify-between ${span} shadow-sm hover:shadow-md transition-shadow`}
-            style={{ padding: "20px 22px", height: "130px" }}
+            data-tone={index === 1 ? "process" : index === 2 ? "approved" : index === 3 ? "returned" : "default"}
+            className={`vista-summary-card relative ${bg} text-white flex flex-col justify-between ${span} shadow-sm`}
+            style={{ padding: "var(--space-5)", minHeight: "140px" }}
           >
             <p
               className="font-inter font-semibold text-white/90"
@@ -73,25 +88,20 @@ export default function SubmissionSummaryCards() {
               {label}
             </p>
             <div className="flex items-end justify-between">
-              <p
+              <p data-summary-value
                 className="font-inter font-bold leading-none"
                 style={{ fontSize: "44px" }}
               >
                 {isLoading ? <Skeleton width={72} height={40} /> : value.toString()}
               </p>
-              <span
-                className={`flex items-center justify-center rounded-xl ${badgeBg}`}
-                style={{ width: "44px", height: "44px" }}
-              >
-                <Icon
-                  style={{ width: "22px", height: "22px" }}
-                  aria-hidden="true"
-                />
-              </span>
+              <DashboardIllustration kind={illustration} />
             </div>
           </div>
         ))}
       </div>
+      {(allError || pendingError || approvedError || returnedError) && <ErrorNotice
+        message="Some submission totals could not be refreshed. Unavailable totals are shown as a dash."
+        onRetry={() => { retryAll(); retryPending(); retryApproved(); retryReturned(); }} />}
     </div>
   );
 }

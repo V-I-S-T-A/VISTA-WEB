@@ -15,7 +15,7 @@ export default function NotificationTabs({ value, onChange, id }) {
   };
 
   return <div className="student-notification-tabs" role="tablist" aria-label="Filter notifications">
-    {NOTIFICATION_TABS.map(tab => <button
+    {NOTIFICATION_TABS.map(tab => <button data-ui="toggle"
       key={tab.value} id={`${id}-${tab.value}`} type="button" role="tab"
       aria-selected={value === tab.value} aria-controls={`${id}-panel`}
       tabIndex={value === tab.value ? 0 : -1}

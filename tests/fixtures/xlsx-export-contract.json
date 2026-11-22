@@ -1,0 +1,555 @@
+{
+  "analytics": [
+    {
+      "name": "Executive Summary",
+      "rows": [
+        [
+          "VISTA - Institutional Document Tracking System"
+        ],
+        [
+          "Staff Analytics & Performance Report"
+        ],
+        [],
+        [
+          "Metric",
+          "Value",
+          "Notes / Context"
+        ],
+        [
+          "Report Generated At",
+          "<export timestamp>",
+          "System export timestamp"
+        ],
+        [
+          "Report Filter / Timeframe",
+          "Fictional range",
+          "Applied date filter"
+        ],
+        [
+          "Total Submissions",
+          6,
+          "Total documents submitted"
+        ],
+        [
+          "Process (Pending / Review)",
+          3,
+          "Currently in processing or under review"
+        ],
+        [
+          "Approved",
+          1,
+          "Successfully completed and approved"
+        ],
+        [
+          "Returned (Rejected / Resubmit)",
+          2,
+          "Returned for revisions or rejected"
+        ],
+        [
+          "Approval Rate",
+          "33%",
+          "Share of resolved submissions that were approved"
+        ]
+      ],
+      "widths": [
+        32,
+        22,
+        44
+      ]
+    },
+    {
+      "name": "Status & Category",
+      "rows": [
+        [
+          "Status Category (Consolidated)",
+          "Count",
+          "Percentage"
+        ],
+        [
+          "Process",
+          3,
+          "50%"
+        ],
+        [
+          "Approved",
+          1,
+          "17%"
+        ],
+        [
+          "Returned",
+          2,
+          "33%"
+        ],
+        [],
+        [
+          "Detailed Sub-Status",
+          "Count",
+          "Percentage"
+        ],
+        [
+          "Pending",
+          1,
+          "17%"
+        ],
+        [
+          "Under Review",
+          2,
+          "33%"
+        ],
+        [
+          "Approved",
+          1,
+          "17%"
+        ],
+        [
+          "Rejected",
+          1,
+          "17%"
+        ],
+        [
+          "Resubmission Required",
+          1,
+          "17%"
+        ],
+        [],
+        [
+          "Category Breakdown",
+          "Count",
+          "Percentage"
+        ],
+        [
+          "In-Campus",
+          4,
+          "67%"
+        ]
+      ],
+      "widths": [
+        26,
+        14,
+        16
+      ]
+    },
+    {
+      "name": "Organizations",
+      "rows": [
+        [
+          "Organization Name",
+          "Acronym",
+          "Submissions Count",
+          "Activity Share"
+        ],
+        [
+          "Example Organization",
+          "EO",
+          3,
+          "50%"
+        ]
+      ],
+      "widths": [
+        36,
+        16,
+        20,
+        16
+      ]
+    },
+    {
+      "name": "Doc Types & Trends",
+      "rows": [
+        [
+          "Document Type",
+          "Submissions Count",
+          "Share"
+        ],
+        [
+          "Activity Report",
+          2,
+          "33%"
+        ],
+        [],
+        [
+          "Monthly Volume Trends",
+          "Submissions Count",
+          ""
+        ],
+        [
+          "November 2026",
+          6,
+          ""
+        ]
+      ],
+      "widths": [
+        34,
+        20,
+        16
+      ]
+    },
+    {
+      "name": "Submissions Registry",
+      "rows": [
+        [
+          "Submission ID",
+          "Document Title",
+          "Academic Year",
+          "Organization",
+          "Category",
+          "Document Type",
+          "Applicant Name",
+          "Applicant Email",
+          "Submitted Date",
+          "Status"
+        ],
+        [
+          "#12345670",
+          "Example <Report> & “Résumé”",
+          "2026–2027",
+          "Example Organization",
+          "In-Campus",
+          "Activity Report",
+          "Sample Student",
+          "student@example.test",
+          "Nov 15, 2026",
+          "Process"
+        ],
+        [
+          "#12345671",
+          "Untitled Document",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "Process"
+        ],
+        [
+          "#12345672",
+          "Untitled Document",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "Approved"
+        ],
+        [
+          "#12345673",
+          "Untitled Document",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "Returned"
+        ],
+        [
+          "#12345674",
+          "Untitled Document",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "Returned"
+        ],
+        [
+          "#12345675",
+          "Untitled Document",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "custom_status"
+        ]
+      ],
+      "widths": [
+        16,
+        34,
+        16,
+        28,
+        16,
+        24,
+        24,
+        28,
+        16,
+        22
+      ]
+    }
+  ],
+  "recent": [
+    {
+      "name": "Recent Submissions",
+      "rows": [
+        [
+          "ID",
+          "Document Title",
+          "Applicant",
+          "Email",
+          "Organization",
+          "Category",
+          "Document Type",
+          "Academic Year",
+          "Date",
+          "Status"
+        ],
+        [
+          "#12345670",
+          "Example <Report> & “Résumé”",
+          "Sample Student",
+          "student@example.test",
+          "Example Organization",
+          "In-Campus",
+          "Activity Report",
+          "2026–2027",
+          "Nov 15, 2026",
+          "Process"
+        ],
+        [
+          "#12345671",
+          "Untitled Document",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Process"
+        ],
+        [
+          "#12345672",
+          "Untitled Document",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Approved"
+        ],
+        [
+          "#12345673",
+          "Untitled Document",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Returned"
+        ],
+        [
+          "#12345674",
+          "Untitled Document",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "Returned"
+        ],
+        [
+          "#12345675",
+          "Untitled Document",
+          "Unknown",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "N/A",
+          "custom_status"
+        ]
+      ],
+      "widths": [
+        14,
+        32,
+        24,
+        26,
+        24,
+        16,
+        22,
+        16,
+        14,
+        18
+      ]
+    }
+  ],
+  "empty": [
+    {
+      "name": "Executive Summary",
+      "rows": [
+        [
+          "VISTA - Institutional Document Tracking System"
+        ],
+        [
+          "Staff Analytics & Performance Report"
+        ],
+        [],
+        [
+          "Metric",
+          "Value",
+          "Notes / Context"
+        ],
+        [
+          "Report Generated At",
+          "<export timestamp>",
+          "System export timestamp"
+        ],
+        [
+          "Report Filter / Timeframe",
+          "All Time",
+          "Applied date filter"
+        ],
+        [
+          "Total Submissions",
+          0,
+          "Total documents submitted"
+        ],
+        [
+          "Process (Pending / Review)",
+          0,
+          "Currently in processing or under review"
+        ],
+        [
+          "Approved",
+          0,
+          "Successfully completed and approved"
+        ],
+        [
+          "Returned (Rejected / Resubmit)",
+          0,
+          "Returned for revisions or rejected"
+        ],
+        [
+          "Approval Rate",
+          "0%",
+          "Share of resolved submissions that were approved"
+        ]
+      ],
+      "widths": [
+        32,
+        22,
+        44
+      ]
+    },
+    {
+      "name": "Status & Category",
+      "rows": [
+        [
+          "Status Category (Consolidated)",
+          "Count",
+          "Percentage"
+        ],
+        [
+          "Process",
+          0,
+          "0%"
+        ],
+        [
+          "Approved",
+          0,
+          "0%"
+        ],
+        [
+          "Returned",
+          0,
+          "0%"
+        ],
+        [],
+        [
+          "Detailed Sub-Status",
+          "Count",
+          "Percentage"
+        ],
+        [
+          "Pending",
+          0,
+          "0%"
+        ],
+        [
+          "Under Review",
+          0,
+          "0%"
+        ],
+        [
+          "Approved",
+          0,
+          "0%"
+        ],
+        [
+          "Rejected",
+          0,
+          "0%"
+        ],
+        [
+          "Resubmission Required",
+          0,
+          "0%"
+        ],
+        [],
+        [
+          "Category Breakdown",
+          "Count",
+          "Percentage"
+        ]
+      ],
+      "widths": [
+        26,
+        14,
+        16
+      ]
+    },
+    {
+      "name": "Organizations",
+      "rows": [
+        [
+          "Organization Name",
+          "Acronym",
+          "Submissions Count",
+          "Activity Share"
+        ]
+      ],
+      "widths": [
+        36,
+        16,
+        20,
+        16
+      ]
+    },
+    {
+      "name": "Doc Types & Trends",
+      "rows": [
+        [
+          "Document Type",
+          "Submissions Count",
+          "Share"
+        ],
+        [],
+        [
+          "Monthly Volume Trends",
+          "Submissions Count",
+          ""
+        ]
+      ],
+      "widths": [
+        34,
+        20,
+        16
+      ]
+    }
+  ]
+}

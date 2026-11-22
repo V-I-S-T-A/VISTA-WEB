@@ -1,7 +1,9 @@
+import StatusModal from "../../../../components/StatusModal";
+import AnchoredPopover from "../../../../components/AnchoredPopover";
 import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Download, Loader2, ChevronLeft, ChevronRight, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
+import { Download, Loader2, ChevronLeft, ChevronRight, FileSpreadsheet, FileText, ChevronDown } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useSubmissions } from "../../../../hooks/useSubmissions";
 import { submissionService } from "../../../../services/submissionService";
@@ -9,6 +11,8 @@ import defaultUser from "../../../../assets/shared/default_user.webp";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import {
   ActionButton,
+  TableSearchBar,
+  SubmissionStatusLabel,
   FilterButton,
   FilterPopover,
   FilterPopoverRow,
@@ -31,12 +35,6 @@ const UI_STATUS_MAP = {
   Returned: "Returned",
 };
 
-const STATUS_CONFIG = {
-  Process: { dot: "#2563eb", text: "#1d4ed8", bg: "#eff6ff" },
-  Approved: { dot: "#22c55e", text: "#15803d", bg: "#f0fdf4" },
-  Returned: { dot: "#ef4444", text: "#b91c1c", bg: "#fef2f2" },
-};
-
 const STATUS_OPTIONS = [
   "All Status",
   "Process",
@@ -48,20 +46,7 @@ const STATUS_OPTIONS = [
 const CATEGORY_OPTIONS = ["All Categories", "Off-Campus", "In-Campus"];
 
 function StatusDot({ status }) {
-  const uiStatus = UI_STATUS_MAP[status] || "New";
-  const config = STATUS_CONFIG[uiStatus] ?? { dot: "#9ca3af", text: "#6b7280" };
-  return (
-    <span
-      className="inline-flex items-center gap-1.5 font-inter font-semibold"
-      style={{ color: config.text, fontSize: "13px" }}
-    >
-      <span
-        className="h-1.5 w-1.5 rounded-full flex-shrink-0"
-        style={{ backgroundColor: config.dot }}
-      />
-      {uiStatus}
-    </span>
-  );
+  return <SubmissionStatusLabel status={status} />;
 }
 
 function formatDate(value) {
@@ -149,6 +134,7 @@ export default function RecentSubmissionsTable({
   activeStatusFilter,
   onStatusChange,
 } = {}) {
+  const [exportFeedback, setExportFeedback] = useState(null);
   const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -163,12 +149,14 @@ export default function RecentSubmissionsTable({
   const exportRef = useRef(null);
 
   // Sync external status filter if passed from KPI cards or analytics
-  useEffect(() => {
+  const [previousActiveStatus, setPreviousActiveStatus] = useState(activeStatusFilter);
+  if (previousActiveStatus !== activeStatusFilter) {
+    setPreviousActiveStatus(activeStatusFilter);
     if (activeStatusFilter !== undefined && activeStatusFilter !== statusFilter) {
       setStatusFilter(activeStatusFilter);
       setCurrentPage(1);
     }
-  }, [activeStatusFilter]);
+  }
 
   const handleStatusFilterChange = (newStatus) => {
     setStatusFilter(newStatus);
@@ -181,7 +169,7 @@ export default function RecentSubmissionsTable({
   // Close export dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
-      if (exportRef.current && !exportRef.current.contains(event.target)) {
+      if (exportRef.current && !exportRef.current.contains(event.target) && !event.target.closest(".vista-anchored-popover")) {
         setIsExportOpen(false);
       }
     }
@@ -209,7 +197,7 @@ export default function RecentSubmissionsTable({
     dateTo: dateTo || undefined,
   });
 
-  const submissions = data?.results ?? [];
+  const submissions = useMemo(() => data?.results ?? [], [data?.results]);
   const totalCount = data?.count ?? 0;
   const totalPages = data?.total_pages ?? 1;
   const safeCurrentPage = Math.min(currentPage, totalPages);
@@ -262,7 +250,7 @@ export default function RecentSubmissionsTable({
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to export PDF:", error);
-      alert("Failed to export PDF report. Please try again.");
+      setExportFeedback({ type: "error", message: "Failed to export PDF report. Please try again." });
     } finally {
       setIsExportingPdf(false);
       setIsExportOpen(false);
@@ -271,7 +259,7 @@ export default function RecentSubmissionsTable({
 
   function handleExportXlsx() {
     if (!filteredSubmissions.length) {
-      alert("No submissions to export.");
+      setExportFeedback({ type: "info", message: "No submissions to export." });
       return;
     }
     downloadXlsx(filteredSubmissions);
@@ -280,7 +268,7 @@ export default function RecentSubmissionsTable({
 
   function handleExportCsv() {
     if (!filteredSubmissions.length) {
-      alert("No submissions to export.");
+      setExportFeedback({ type: "info", message: "No submissions to export." });
       return;
     }
     downloadCsv(filteredSubmissions);
@@ -288,7 +276,7 @@ export default function RecentSubmissionsTable({
   }
 
   function handleReview(submission) {
-    navigate("/staff/review-panel", {
+    navigate(`/staff/review-panel/${encodeURIComponent(submission.submission_id)}`, {
       state: {
         submission: {
           id: submission.submission_id,
@@ -305,7 +293,9 @@ export default function RecentSubmissionsTable({
   }
 
   return (
-    <section className="responsive-records w-full overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
+    <>
+      <StatusModal isOpen={Boolean(exportFeedback)} onClose={() => setExportFeedback(null)} title={exportFeedback?.type === "error" ? "Export failed" : "Nothing to export"} message={exportFeedback?.message || ""} type={exportFeedback?.type || "info"} />
+      <section className="vista-table vista-surface responsive-records w-full overflow-visible rounded-xl border border-gray-200 bg-white shadow-sm">
       {/* Toolbar */}
       <div
         className="table-header-bar flex items-center justify-between gap-3 flex-wrap rounded-t-xl bg-[#1f5cae]"
@@ -321,20 +311,12 @@ export default function RecentSubmissionsTable({
         </h3>
 
         <div className="table-header-controls flex items-center gap-2">
-          <div className="relative table-search-bar">
-            <Search
-              className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-gray-400"
-              aria-hidden="true"
-            />
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              placeholder="Search submissions..."
-              className="font-inter font-medium text-gray-700 placeholder-gray-400 outline-none rounded-md bg-white"
-              style={{ fontSize: "12.5px", padding: "8px 12px 8px 32px", width: "220px" }}
-            />
-          </div>
+          <TableSearchBar
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+            placeholder="Search submissions..."
+            width="220px"
+          />
 
           <div className="relative">
             <FilterButton
@@ -392,17 +374,12 @@ export default function RecentSubmissionsTable({
 
           {/* Export Dropdown */}
           <div className="relative export-menu" ref={exportRef}>
-            <button
+            <button data-ui="primary" aria-expanded={isExportOpen}
               type="button"
               onClick={() => setIsExportOpen((prev) => !prev)}
               disabled={isExportingPdf}
-              className="export-btn inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 cursor-pointer disabled:opacity-60"
-              style={{
-                borderRadius: "6px",
-                backgroundColor: "#ffc700",
-                padding: "7px 14px",
-                fontSize: "12.5px",
-              }}
+              className="export-btn inline-flex items-center gap-1.5 font-inter font-bold transition hover:brightness-105 active:scale-95 cursor-pointer disabled:opacity-60"
+              style={{  }}
             >
               {isExportingPdf ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -419,12 +396,12 @@ export default function RecentSubmissionsTable({
             </button>
 
             {isExportOpen && (
-              <div
+              <AnchoredPopover onDismiss={() => setIsExportOpen(false)} aria-label="Export options"
                 className="absolute right-0 top-full z-30"
                 style={{
                   marginTop: "8px",
                   width: "210px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--radius-chip)",
                   border: "1px solid #b8cbe0",
                   backgroundColor: "#f7faff",
                   boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
@@ -436,14 +413,12 @@ export default function RecentSubmissionsTable({
                 </div>
 
                 {/* PDF Option */}
-                <button
+                <button data-ui="navigation"
                   type="button"
                   onClick={handleExportPdf}
                   className="flex items-center gap-2.5 w-full text-left font-inter font-semibold text-gray-700 hover:bg-[#f5f7fb] hover:text-[#142d55] transition-colors rounded-lg px-2.5 py-2 text-[12.5px] cursor-pointer"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-red-50 text-red-600">
-                    <FileText className="h-3.5 w-3.5" />
-                  </span>
+                  <span className="vista-plain-icon"><FileText className="h-3.5 w-3.5" /></span>
                   <div className="flex flex-col">
                     <span>Export as PDF</span>
                     <span className="text-[10px] text-gray-400 font-normal">.pdf document</span>
@@ -451,14 +426,12 @@ export default function RecentSubmissionsTable({
                 </button>
 
                 {/* Excel Option */}
-                <button
+                <button data-ui="navigation"
                   type="button"
                   onClick={handleExportXlsx}
                   className="flex items-center gap-2.5 w-full text-left font-inter font-semibold text-gray-700 hover:bg-[#f5f7fb] hover:text-[#142d55] transition-colors rounded-lg px-2.5 py-2 text-[12.5px] cursor-pointer mt-0.5"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-600">
-                    <FileSpreadsheet className="h-3.5 w-3.5" />
-                  </span>
+                  <span className="vista-plain-icon"><FileSpreadsheet className="h-3.5 w-3.5" /></span>
                   <div className="flex flex-col">
                     <span>Export as Excel</span>
                     <span className="text-[10px] text-gray-400 font-normal">.xlsx spreadsheet</span>
@@ -466,20 +439,18 @@ export default function RecentSubmissionsTable({
                 </button>
 
                 {/* CSV Option */}
-                <button
+                <button data-ui="navigation"
                   type="button"
                   onClick={handleExportCsv}
                   className="flex items-center gap-2.5 w-full text-left font-inter font-semibold text-gray-700 hover:bg-[#f5f7fb] hover:text-[#142d55] transition-colors rounded-lg px-2.5 py-2 text-[12.5px] cursor-pointer mt-0.5"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-blue-50 text-blue-600">
-                    <Download className="h-3.5 w-3.5" />
-                  </span>
+                  <span className="vista-plain-icon"><Download className="h-3.5 w-3.5" /></span>
                   <div className="flex flex-col">
                     <span>Export as CSV</span>
                     <span className="text-[10px] text-gray-400 font-normal">.csv plain text</span>
                   </div>
                 </button>
-              </div>
+              </AnchoredPopover>
             )}
           </div>
         </div>
@@ -584,7 +555,7 @@ export default function RecentSubmissionsTable({
                   <td data-label="Actions" className="px-5 py-2.5">
                     <ActionButton
                       onClick={() => handleReview(submission)}
-                      label="VIEW & REVIEW"
+                      label="View & review"
                     />
                   </td>
                 </tr>
@@ -611,7 +582,7 @@ export default function RecentSubmissionsTable({
           </p>
 
           <div className="table-pagination-row flex items-center gap-1.5">
-            <button
+            <button data-ui="navigation"
               type="button"
               onClick={() => goToPage(safeCurrentPage - 1)}
               disabled={safeCurrentPage === 1}
@@ -632,7 +603,7 @@ export default function RecentSubmissionsTable({
                 (page >= safeCurrentPage - 1 && page <= safeCurrentPage + 1)
               ) {
                 return (
-                  <button
+                  <button data-ui="navigation"
                     key={page}
                     type="button"
                     onClick={() => goToPage(page)}
@@ -655,7 +626,7 @@ export default function RecentSubmissionsTable({
               return null;
             })}
 
-            <button
+            <button data-ui="navigation"
               type="button"
               onClick={() => goToPage(safeCurrentPage + 1)}
               disabled={safeCurrentPage >= totalPages}
@@ -671,6 +642,6 @@ export default function RecentSubmissionsTable({
           </div>
         </div>
       )}
-    </section>
+    </section></>
   );
 }

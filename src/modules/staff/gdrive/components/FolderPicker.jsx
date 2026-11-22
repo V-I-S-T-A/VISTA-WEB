@@ -41,10 +41,10 @@ export default function FolderPicker({ onDone }) {
   }
 
   return (
-    <div className="drive-connection-panel"
+    <div className="vista-surface drive-connection-panel"
       style={{
-        background: "#ffffff",
-        borderRadius: "16px",
+        background: "var(--ui-surface)",
+        borderRadius: "var(--radius-card)",
         padding: "28px",
         boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
         marginTop: "28px",
@@ -54,7 +54,7 @@ export default function FolderPicker({ onDone }) {
     >
       <h3
         style={{
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "var(--font-body)",
           fontSize: "16px",
           fontWeight: 700,
           color: "#031c36",
@@ -65,7 +65,7 @@ export default function FolderPicker({ onDone }) {
       </h3>
       <p
         style={{
-          fontFamily: "Inter, sans-serif",
+          fontFamily: "var(--font-body)",
           fontSize: "13px",
           color: "#4b5563",
           margin: "6px 0 20px",
@@ -75,16 +75,16 @@ export default function FolderPicker({ onDone }) {
       </p>
 
       <div className="flex" style={{ gap: "8px", marginBottom: "18px" }}>
-        <button
+        <button data-ui="toggle"
           type="button"
           onClick={() => setMode("browse")}
           style={{
             flex: 1,
             padding: "9px 0",
-            borderRadius: "8px",
+            borderRadius: "var(--radius-control)",
             border: "none",
             cursor: "pointer",
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: "13px",
             fontWeight: 700,
             backgroundColor: mode === "browse" ? "#031c36" : "#f3f4f6",
@@ -93,16 +93,16 @@ export default function FolderPicker({ onDone }) {
         >
           Existing Folder
         </button>
-        <button
+        <button data-ui="toggle"
           type="button"
           onClick={() => setMode("create")}
           style={{
             flex: 1,
             padding: "9px 0",
-            borderRadius: "8px",
+            borderRadius: "var(--radius-control)",
             border: "none",
             cursor: "pointer",
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "var(--font-body)",
             fontSize: "13px",
             fontWeight: 700,
             backgroundColor: mode === "create" ? "#031c36" : "#f3f4f6",
@@ -135,10 +135,10 @@ export default function FolderPicker({ onDone }) {
               style={{
                 width: "100%",
                 border: "1.5px solid #d1d5db",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-field)",
                 padding: "9px 12px 9px 36px",
                 fontSize: "13px",
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 outline: "none",
               }}
             />
@@ -151,7 +151,7 @@ export default function FolderPicker({ onDone }) {
           ) : folders.length === 0 ? (
             <p
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "13px",
                 color: "#9ca3af",
                 textAlign: "center",
@@ -171,7 +171,7 @@ export default function FolderPicker({ onDone }) {
               }}
             >
               {folders.map((folder) => (
-                <button
+                <button aria-busy={Boolean(selectFolder.isPending)} data-ui="toggle"
                   key={folder.id}
                   type="button"
                   onClick={() => handleSelect(folder)}
@@ -181,7 +181,7 @@ export default function FolderPicker({ onDone }) {
                     width: "100%",
                     textAlign: "left",
                     padding: "10px 14px",
-                    borderRadius: "8px",
+                    borderRadius: "var(--radius-control)",
                     border: "1px solid #e5e7eb",
                     backgroundColor: "#f9fafb",
                     cursor: "pointer",
@@ -201,7 +201,7 @@ export default function FolderPicker({ onDone }) {
                     />
                     <span
                       style={{
-                        fontFamily: "Inter, sans-serif",
+                        fontFamily: "var(--font-body)",
                         fontSize: "13px",
                         fontWeight: 600,
                         color: "#111827",
@@ -220,7 +220,7 @@ export default function FolderPicker({ onDone }) {
                         style={{
                           width: "14px",
                           height: "14px",
-                          color: "#1f5cae",
+                          color: "var(--ui-blue)",
                         }}
                       />
                     )}
@@ -239,37 +239,24 @@ export default function FolderPicker({ onDone }) {
             style={{
               width: "100%",
               border: "1.5px solid #d1d5db",
-              borderRadius: "8px",
+              borderRadius: "var(--radius-field)",
               padding: "9px 13px",
               fontSize: "13px",
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               outline: "none",
               marginBottom: "14px",
             }}
           />
-          <button
+          <button aria-busy={Boolean(createFolder.isPending)} data-ui="primary"
             type="button"
             onClick={handleCreate}
             disabled={createFolder.isPending || !newFolderName.trim()}
             className="flex items-center justify-center"
-            style={{
-              width: "100%",
-              gap: "8px",
-              padding: "10px 0",
-              borderRadius: "8px",
-              border: "none",
-              backgroundColor: "#facc15",
-              color: "#031c36",
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: 700,
-              cursor:
+            style={{ width: "100%", gap: "8px", cursor:
                 createFolder.isPending || !newFolderName.trim()
                   ? "not-allowed"
-                  : "pointer",
-              opacity:
-                createFolder.isPending || !newFolderName.trim() ? 0.6 : 1,
-            }}
+                  : "pointer", opacity:
+                createFolder.isPending || !newFolderName.trim() ? 0.6 : 1 }}
           >
             {createFolder.isPending ? (
               <Loader2
@@ -290,7 +277,7 @@ export default function FolderPicker({ onDone }) {
             color: "#dc2626",
             fontSize: "12px",
             marginTop: "12px",
-            fontFamily: "Inter, sans-serif",
+            fontFamily: "var(--font-body)",
           }}
         >
           Something went wrong. Please try again.

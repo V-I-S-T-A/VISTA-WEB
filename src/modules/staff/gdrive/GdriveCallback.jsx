@@ -10,30 +10,27 @@ export default function GdriveCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [status, setStatus] = useState("processing"); // processing | success | error
-  const [message, setMessage] = useState("");
+  const [callbackParams] = useState(() => Object.fromEntries(
+    ['code', 'state', 'scope', 'error', 'status', 'detail'].map(key => [key, searchParams.get(key)]),
+  ));
+  const { code, state, scope, error: errorParam, status: statusParam, detail: detailParam } = callbackParams;
+  const initialError = statusParam === "error" || errorParam
+    ? detailParam || "Google sign-in was cancelled or denied."
+    : (!code || !state) && statusParam !== "success" ? "Missing authorization details from Google." : "";
+  const [status, setStatus] = useState(() => statusParam === "success" ? "success" : initialError ? "error" : "processing");
+  const [message, setMessage] = useState(initialError);
   const hasRun = useRef(false);
 
   useEffect(() => {
-    const code = searchParams.get("code");
-    const state = searchParams.get("state");
-    const scope = searchParams.get("scope");
-    const errorParam = searchParams.get("error");
-    const statusParam = searchParams.get("status");
-    const detailParam = searchParams.get("detail");
-
     // 1. Backend already processed the OAuth code and redirected with status=success
     if (statusParam === "success") {
       queryClient.invalidateQueries({ queryKey: ["drive-connection"] });
-      setStatus("success");
       const timer = setTimeout(() => navigate("/staff/gdrive-sync"), 1200);
       return () => clearTimeout(timer);
     }
 
     // 2. Backend redirected with error or user cancelled
     if (statusParam === "error" || errorParam) {
-      setStatus("error");
-      setMessage(detailParam || "Google sign-in was cancelled or denied.");
       return;
     }
 
@@ -46,8 +43,6 @@ export default function GdriveCallback() {
     if (code) sessionStorage.setItem(consumedKey, "1");
 
     if (!code || !state) {
-      setStatus("error");
-      setMessage("Missing authorization details from Google.");
       return;
     }
 
@@ -85,8 +80,7 @@ export default function GdriveCallback() {
     })();
 
     return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [code, state, scope, errorParam, statusParam, navigate, queryClient]);
 
   if (status === "processing") return <PageSkeleton />;
 
@@ -124,14 +118,14 @@ export default function GdriveCallback() {
             >
               {message}
             </p>
-            <button
+            <button data-ui="navigation"
               type="button"
               onClick={() => navigate("/staff/gdrive-sync")}
               className="font-inter font-bold text-white"
               style={{
-                backgroundColor: "#1f5cae",
+                backgroundColor: "var(--ui-blue)",
                 padding: "10px 20px",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-control)",
                 border: "none",
                 cursor: "pointer",
               }}

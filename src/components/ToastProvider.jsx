@@ -26,6 +26,7 @@ export function ToastProvider({ children }) {
     <ToastContext.Provider value={{ showToast, clearToasts }}>
       {children}
       <div
+        className="vista-toast-stack"
         style={{
           position: "fixed",
           bottom: 20,
@@ -40,31 +41,31 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             role="status"
-            className="font-inter"
+            className="vista-toast font-inter"
             style={{
               width: "min(420px, calc(100vw - 32px))",
               boxSizing: "border-box",
               padding: "12px 14px 14px",
               border: "1px solid #dbe4f0",
               borderRadius: 12,
-              background: "#fff",
+              background: "var(--ui-surface)",
               boxShadow: "0 12px 32px rgba(20, 45, 85, .2)",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
               <img src={vistaLogo} alt="" style={{ width: 22, height: 22, objectFit: "contain" }} />
-              <span style={{ flex: 1, color: "#64748b", fontSize: 12, fontWeight: 700, letterSpacing: ".04em" }}>VISTA - USTP CDO</span>
-              <button
+              <span style={{ flex: 1, color: "var(--ui-muted)", fontSize: 12, fontWeight: 700, letterSpacing: ".04em" }}>VISTA - USTP CDO</span>
+              <button data-ui="navigation"
                 type="button"
                 aria-label="Dismiss reply notification"
                 onClick={() => setToasts((items) => items.filter((item) => item.id !== t.id))}
-                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, padding: 0, border: 0, borderRadius: 6, background: "transparent", color: "#64748b", cursor: "pointer" }}
+                style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 28, height: 28, padding: 0, border: 0, borderRadius: 6, background: "transparent", color: "var(--ui-muted)", cursor: "pointer" }}
               >
                 <X size={16} />
               </button>
             </div>
             {t.onClick ? (
-              <button
+              <button data-ui="navigation"
                 type="button"
                 onClick={t.onClick}
                 aria-label={`Open notification about ${t.submissionTitle || "your submission"}`}
@@ -77,14 +78,14 @@ export function ToastProvider({ children }) {
                   style={{ width: 44, height: 44, flex: "0 0 44px", borderRadius: "50%", objectFit: "cover", background: "#eef2f7" }}
                 />
                 <span style={{ display: "flex", minWidth: 0, flexDirection: "column", gap: 3, paddingTop: 2 }}>
-                  <span style={{ color: "#142d55", fontSize: 14, lineHeight: 1.4 }}>
+                  <span style={{ color: "var(--ui-text)", fontSize: 14, lineHeight: 1.4 }}>
                     <strong>{t.actorName || "VISTA"}</strong> {t.headline || "updated your submission"}
                   </span>
-                  <span style={{ overflow: "hidden", color: "#64748b", fontSize: 13, lineHeight: 1.4, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <span style={{ overflow: "hidden", color: "var(--ui-muted)", fontSize: 13, lineHeight: 1.4, textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                     {t.submissionTitle || "Open your submission"}
                   </span>
-                  {t.detail && <span style={{ color: "#64748b", fontSize: 12, lineHeight: 1.4 }}>{t.detail}</span>}
-                  <span style={{ marginTop: 4, color: "#1f5cae", fontSize: 12, fontWeight: 700 }}>{t.actionLabel || "View notification"} →</span>
+                  {t.detail && <span style={{ color: "var(--ui-muted)", fontSize: 12, lineHeight: 1.4 }}>{t.detail}</span>}
+                  <span style={{ marginTop: 4, color: "var(--ui-blue)", fontSize: 12, fontWeight: 700 }}>{t.actionLabel || "View notification"} →</span>
                 </span>
               </button>
             ) : (
@@ -95,10 +96,10 @@ export function ToastProvider({ children }) {
           <div
             key={t.id}
             role={t.type === "error" ? "alert" : "status"}
-            className="flex items-center gap-2 rounded-lg shadow-lg font-inter"
+            className="vista-toast flex items-center gap-2 font-inter"
             style={{
               padding: "12px 16px",
-              background: "#fff",
+              background: "var(--ui-surface)",
               border: `1px solid ${t.type === "error" ? "#fecaca" : "#bbf7d0"}`,
               width: "min(400px, calc(100vw - 40px))",
               boxSizing: "border-box",
@@ -109,13 +110,13 @@ export function ToastProvider({ children }) {
             ) : (
               <CheckCircle2 className="text-green-600 w-4 h-4 flex-shrink-0" />
             )}
-            {t.onClick ? <button
+            {t.onClick ? <button data-ui="navigation"
               type="button"
               onClick={t.onClick}
               aria-label={`Open notification: ${t.message}`}
               style={{ fontSize: 13, color: "#374151", minWidth: 0, overflowWrap: "anywhere", textAlign: "left", background: "none", border: "none", padding: 0, cursor: "pointer" }}
             >{t.message}</button> : <span style={{ fontSize: 13, color: "#374151", minWidth: 0, overflowWrap: "anywhere" }}>{t.message}</span>}
-            <button
+            <button data-ui="navigation"
               type="button"
               aria-label="Dismiss toast"
               onClick={() => setToasts((ts) => ts.filter((x) => x.id !== t.id))}

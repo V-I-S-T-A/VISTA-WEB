@@ -18,14 +18,14 @@ export default function PageHeader({ title, subtitle, children }) {
       <div>
         <h2
           className="font-inter font-bold text-[#142d55]"
-          style={{ fontSize: "26px", lineHeight: 1.15 }}
+          style={{ fontSize: "var(--type-title)", lineHeight: 1.2 }}
         >
           {title}
         </h2>
         {subtitle && (
           <p
             className="font-inter text-gray-500 mt-0.5"
-            style={{ fontSize: "13px" }}
+            style={{ fontSize: "var(--type-body)" }}
           >
             {subtitle}
           </p>

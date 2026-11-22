@@ -1,3 +1,5 @@
+import FormField from "../../../../components/FormField";
+import DialogLayer from "../../../../components/DialogLayer";
 import VistaSelect from "../../../../components/VistaSelect";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useRef, useState } from "react";
@@ -9,7 +11,7 @@ const ROLES = ["staff", "student"];
 const FIELD_STYLES = {
   label: {
     display: "block",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     fontSize: "12px",
     fontWeight: "600",
     color: "#374151",
@@ -18,12 +20,12 @@ const FIELD_STYLES = {
   input: {
     width: "100%",
     border: "1.5px solid #d1d5db",
-    borderRadius: "8px",
+    borderRadius: "var(--radius-field)",
     padding: "9px 13px",
     fontSize: "13px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     color: "#111827",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--ui-field)",
     outline: "none",
     boxSizing: "border-box",
     transition: "border-color 0.15s",
@@ -34,12 +36,12 @@ const FIELD_STYLES = {
   select: {
     width: "100%",
     border: "1.5px solid #d1d5db",
-    borderRadius: "8px",
+    borderRadius: "var(--radius-field)",
     padding: "9px 13px",
     fontSize: "13px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     color: "#111827",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--ui-field)",
     outline: "none",
     boxSizing: "border-box",
     appearance: "none",
@@ -49,18 +51,12 @@ const FIELD_STYLES = {
     fontSize: "11px",
     color: "#dc2626",
     marginTop: "3px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
   },
 };
 
 function Field({ label, error, children, htmlFor }) {
-  return (
-    <div>
-      <label htmlFor={htmlFor} style={FIELD_STYLES.label}>{label}</label>
-      {children}
-      {error && <p style={FIELD_STYLES.error}>{error}</p>}
-    </div>
-  );
+  return <FormField label={label} error={error} htmlFor={htmlFor} labelStyle={FIELD_STYLES.label} errorStyle={FIELD_STYLES.error}>{children}</FormField>;
 }
 
 function FocusInput({ style, ...props }) {
@@ -121,11 +117,6 @@ function AddUserForm({
 
   useEffect(() => {
     if (!isOpen) return;
-    function onKey(e) {
-      if (e.key === "Escape" && !e.defaultPrevented && !saving && !isLoading) onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, onClose, saving, isLoading]);
 
   function set(field, value) {
@@ -176,7 +167,7 @@ function AddUserForm({
   if (!isOpen) return null;
 
   return (
-    <div
+    <DialogLayer aria-labelledby="add-user-title" label={"Add user"} onDismiss={onClose} dismissDisabled={saving || isLoading}
       ref={overlayRef}
       style={{
         position: "fixed",
@@ -189,26 +180,27 @@ function AddUserForm({
         padding: "16px",
       }}
     >
-      <div
+      <div className="vista-surface"
         style={{
-          background: "#fff",
-          borderRadius: "14px",
+          background: "var(--ui-surface)",
+          borderRadius: "var(--radius-dialog)",
           width: "100%",
           maxWidth: "520px",
           boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          maxHeight: "90vh",
+          maxHeight: "min(90vh, calc(100dvh - 32px))",
+          overflowY: "auto",
         }}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="add-user-title"
+
+
+
       >
         {/* Header */}
-        <div
+        <div className="vista-modal-heading"
           style={{
-            background: "#1f5cae",
+            background: "var(--ui-surface)",
             padding: "18px 24px",
             display: "flex",
             alignItems: "center",
@@ -217,29 +209,17 @@ function AddUserForm({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                background: "rgba(255,255,255,0.18)",
-                borderRadius: "8px",
-                width: "34px",
-                height: "34px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <UserPlus
-                style={{ width: "16px", height: "16px", color: "#fff" }}
-              />
-            </div>
+            <span className="vista-plain-icon"><UserPlus
+                style={{ width: "16px", height: "16px", color: "var(--ui-navy)" }}
+              /></span>
             <div>
               <h2
                 id="add-user-title"
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "16px",
                   fontWeight: "700",
-                  color: "#fff",
+                  color: "var(--ui-navy)",
                   margin: 0,
                 }}
               >
@@ -247,7 +227,7 @@ function AddUserForm({
               </h2>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
                   color: "rgba(255,255,255,0.7)",
                   margin: 0,
@@ -257,21 +237,21 @@ function AddUserForm({
               </p>
             </div>
           </div>
-          <button
+          <button aria-busy={Boolean(saving || isLoading)} data-ui="icon"
             type="button"
             onClick={onClose}
             disabled={saving || isLoading}
             style={{
-              background: "rgba(255,255,255,0.15)",
+              background: "var(--ui-selected)",
               border: "none",
-              borderRadius: "7px",
+              borderRadius: "var(--radius-control)",
               width: "30px",
               height: "30px",
               cursor: saving || isLoading ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#fff",
+              color: "var(--ui-navy)",
               opacity: saving || isLoading ? 0.5 : 1,
             }}
             aria-label="Close modal"
@@ -296,7 +276,7 @@ function AddUserForm({
               style={{
                 background: "#fee2e2",
                 border: "1px solid #fecaca",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-chip)",
                 padding: "12px",
                 fontSize: "13px",
                 color: "#991b1b",
@@ -355,7 +335,7 @@ function AddUserForm({
               gap: "10px",
               background: "#eff6ff",
               border: "1.5px solid #bfdbfe",
-              borderRadius: "8px",
+              borderRadius: "var(--radius-chip)",
               padding: "12px 14px",
             }}
           >
@@ -363,14 +343,14 @@ function AddUserForm({
               style={{
                 width: "16px",
                 height: "16px",
-                color: "#1f5cae",
+                color: "var(--ui-blue)",
                 flexShrink: 0,
                 marginTop: "1px",
               }}
             />
             <p
               style={{
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
                 fontSize: "12px",
                 lineHeight: 1.5,
                 color: "#1e3a8a",
@@ -423,14 +403,14 @@ function AddUserForm({
               justifyContent: "space-between",
               background: "#f8f9fc",
               border: "1.5px solid #e5e7eb",
-              borderRadius: "8px",
+              borderRadius: "var(--radius-chip)",
               padding: "12px 14px",
             }}
           >
             <div>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "13px",
                   fontWeight: "600",
                   color: "#374151",
@@ -441,9 +421,9 @@ function AddUserForm({
               </p>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "11px",
-                  color: "#6b7280",
+                  color: "var(--ui-muted)",
                   margin: "2px 0 0",
                 }}
               >
@@ -452,7 +432,7 @@ function AddUserForm({
                   : "Account is inactive and cannot log in."}
               </p>
             </div>
-            <button
+            <button aria-label="Account status" aria-busy={Boolean(saving || isLoading)} data-ui="toggle"
               type="button"
               role="switch"
               aria-checked={form.isActive}
@@ -479,7 +459,7 @@ function AddUserForm({
                   width: "18px",
                   height: "18px",
                   borderRadius: "50%",
-                  background: "#fff",
+                  background: "var(--ui-surface)",
                   transition: "left 0.2s",
                   boxShadow: "0 1px 3px rgba(0,0,0,0.2)",
                 }}
@@ -500,51 +480,25 @@ function AddUserForm({
             background: "#f9fafb",
           }}
         >
-          <button
+          <button aria-busy={Boolean(saving || isLoading)} data-ui="secondary"
             type="button"
             onClick={onClose}
             disabled={saving || isLoading}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "600",
-              color: "#374151",
-              background: "#fff",
-              border: "1.5px solid #d1d5db",
-              borderRadius: "8px",
-              padding: "8px 18px",
-              cursor: saving || isLoading ? "not-allowed" : "pointer",
-              transition: "background 0.15s",
-              opacity: saving || isLoading ? 0.5 : 1,
-            }}
+            style={{ cursor: saving || isLoading ? "not-allowed" : "pointer", opacity: saving || isLoading ? 0.5 : 1 }}
           >
             Cancel
           </button>
-          <button
+          <button aria-busy={Boolean(saving || isLoading)} data-ui="primary"
             type="button"
             onClick={handleSave}
             disabled={saving || isLoading}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "700",
-              color: "#111827",
-              background: saving || isLoading ? "#e6c900" : "#ffe100",
-              border: "1.5px solid #d4a000",
-              borderRadius: "8px",
-              padding: "8px 20px",
-              cursor: saving || isLoading ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "background 0.15s",
-            }}
+            style={{ cursor: saving || isLoading ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "6px" }}
           >
             <UserPlus style={{ width: "13px", height: "13px" }} />
             {saving || isLoading ? "Saving..." : "Add User"}
           </button>
         </div>
       </div>
-    </div>
+    </DialogLayer>
   );
 }

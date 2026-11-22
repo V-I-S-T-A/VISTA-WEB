@@ -23,7 +23,7 @@ export default function DetailsNotice({ status }) {
     <div className="submission-notice-panel"
       style={{
         backgroundColor: "#edf2fb",
-        borderRadius: "12px",
+        borderRadius: "var(--radius-card)",
         border: "1px solid #dbe4f0",
         borderLeft: "4px solid #1A59A5",
         padding: "20px 24px",
@@ -31,18 +31,7 @@ export default function DetailsNotice({ status }) {
       }}
     >
       <div className="flex gap-3">
-        <div
-          className="flex-shrink-0 flex items-center justify-center"
-          style={{
-            width: "28px",
-            height: "28px",
-            borderRadius: "9999px",
-            border: "2px solid #94a3b8",
-            marginTop: "2px",
-          }}
-        >
-          <Info style={{ width: "14px", height: "14px", color: "#64748b" }} />
-        </div>
+        <span className="vista-plain-icon"><Info style={{ width: "14px", height: "14px", color: "var(--ui-muted)" }} /></span>
         <div>
           <h4
             className="font-inter font-bold text-[#142d55]"

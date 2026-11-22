@@ -1,3 +1,9 @@
+.drive-sync-modal-panel :where(button,input,textarea,select) { font-family: var(--font-body); }
+.drive-sync-modal-header { gap: var(--space-4); }
+.drive-sync-modal-header h2 { letter-spacing: -.015em; }
+.drive-sync-upload-actions { flex-wrap: wrap; }
+.drive-sync-upload-actions > button { white-space: nowrap; }
+
 @media (max-width: 600px) {
   .drive-sync-modal-overlay {
     box-sizing: border-box !important;
@@ -30,14 +36,22 @@
   }
 
   .drive-sync-modal-footer {
-    flex-wrap: wrap !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
     padding: 12px 16px !important;
   }
 
   .drive-sync-modal-footer > button {
-    flex: 1 1 120px !important;
+    flex: 0 0 auto !important;
+    width: 100%;
+    white-space: nowrap;
+    font-size: 13px !important;
     justify-content: center !important;
   }
+
+  .drive-sync-root-folder { flex-wrap: wrap; }
+  .drive-sync-root-folder > div { flex: 1 1 100%; }
+  .drive-sync-root-folder p { white-space: normal !important; overflow-wrap: anywhere; }
 
   .drive-sync-image-grid {
     grid-template-columns: repeat(
@@ -94,6 +108,7 @@
 }
 
 @media (max-width: 380px) {
+  .drive-sync-upload-actions { flex-direction: column; align-items: stretch; width: 100%; }
   .drive-sync-modal-header {
     padding: 12px !important;
   }

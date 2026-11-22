@@ -3,7 +3,7 @@ import { Download, Loader2 } from "lucide-react";
 /**
  * ExportButton
  *
- * Amber Export button with a Download icon and optional loading/spinning state.
+ * Brand-blue export action with a Download icon and pending state.
  * Used in every table header bar across all modules.
  *
  * Props:
@@ -17,17 +17,12 @@ export default function ExportButton({
   label = "Export",
 }) {
   return (
-    <button
+    <button aria-busy={Boolean(isLoading)} data-ui="primary"
       type="button"
       onClick={onClick}
       disabled={isLoading}
-      className="export-btn inline-flex items-center gap-1.5 bg-[#fbbf24] hover:bg-[#f59e0b] font-inter font-semibold text-gray-900 transition-colors whitespace-nowrap disabled:opacity-60"
-      style={{
-        borderRadius: "6px",
-        padding: "6px 12px",
-        fontSize: "12px",
-        cursor: isLoading ? "not-allowed" : "pointer",
-      }}
+      className="export-btn inline-flex items-center gap-1.5 font-inter font-semibold transition-colors whitespace-nowrap disabled:opacity-60"
+      style={{ cursor: isLoading ? "not-allowed" : "pointer" }}
     >
       {isLoading ? (
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />

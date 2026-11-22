@@ -31,7 +31,7 @@ export default class PageErrorBoundary extends Component {
         <h1>{loadFailed ? "This page couldn’t finish loading." : "This page hit a problem."}</h1>
         <p>{loadFailed ? "Check your connection, then try opening it again." : "Reload the page to try again. If this continues, let the VISTA team know which page you were opening."}</p>
         <div className="page-error-actions">
-          <button type="button" onClick={() => window.location.reload()}><RefreshCw size={17} aria-hidden="true" />Reload page</button>
+          <button data-ui="primary" type="button" onClick={() => window.location.reload()}><RefreshCw size={17} aria-hidden="true" />Reload page</button>
           <a href="/"><ArrowLeft size={17} aria-hidden="true" />Back to VISTA</a>
         </div>
       </div>

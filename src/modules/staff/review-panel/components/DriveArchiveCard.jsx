@@ -1,5 +1,6 @@
-import { CheckCircle2, ExternalLink, FileText, Folder, HardDrive, UserRound } from "lucide-react";
+import { CheckCircle2, ExternalLink, FileText, Folder, UserRound } from "lucide-react";
 import "./DriveArchiveCard.css";
+import GoogleDriveLogo from "../../../../components/GoogleDriveLogo";
 
 function PathStep({ name, index }) {
   const labels = ["Year", "Organization", "File Type"];
@@ -29,7 +30,7 @@ export default function DriveArchiveCard({ archives = [], handledBy = null }) {
   return (
     <section
       aria-labelledby="drive-archive-heading"
-      className="drive-archive-card submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
+      className="vista-surface drive-archive-card submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
       style={{ padding: "24px", marginBottom: "24px" }}
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -74,9 +75,7 @@ export default function DriveArchiveCard({ archives = [], handledBy = null }) {
       ) : (
         <>
       <div className="drive-archive-card__root flex min-w-0 items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3.5">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-[#1f5cae]">
-          <HardDrive className="h-4 w-4" aria-hidden="true" />
-        </span>
+        <span className="vista-plain-icon"><GoogleDriveLogo size={24} /></span>
         <div className="min-w-0">
           <p className="font-inter text-[10.5px] font-bold uppercase tracking-wide text-slate-500">
             Root Storage Folder

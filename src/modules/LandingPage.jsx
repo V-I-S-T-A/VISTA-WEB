@@ -19,7 +19,7 @@ const FEATURES = [
 export default function LandingPage() {
   const imageReady = useImageReady(backgroundImage)
   return (
-      <main className="main-content">
+      <main id="main-content" className="main-content">
         <section
           className="hero-section"
           style={{ backgroundImage: `url(${backgroundImage})` }}

@@ -1,0 +1,34 @@
+/* Semantic variants apply to shared and audited legacy controls alike. Layout
+   (width, margin, alignment) remains owned by the calling screen. */
+:root button:is([data-ui="primary"],[data-ui="secondary"],[data-ui="destructive"]) {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--control-height); padding: 8px 16px;
+  border: 1px solid transparent; border-radius: var(--radius-button);
+  font: 600 var(--type-body)/20px var(--font-body); letter-spacing: 0; text-transform: none;
+  text-decoration: none; box-shadow: none; cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast), color var(--motion-fast), opacity var(--motion-fast);
+}
+:root button[data-ui="primary"] { background: var(--ui-blue); color: var(--ui-on-brand); border-color: var(--ui-blue); }
+:root button[data-ui="primary"]:hover:not(:disabled) { background: var(--ui-blue-hover); border-color: var(--ui-blue-hover); filter: none; }
+:root button[data-ui="primary"]:active:not(:disabled) { background: var(--ui-blue-pressed); border-color: var(--ui-blue-pressed); }
+:root button[data-ui="secondary"] { background: var(--ui-surface); color: var(--ui-text); border-color: var(--ui-control-border); }
+:root button[data-ui="secondary"]:hover:not(:disabled) { background: var(--ui-selected); border-color: var(--ui-blue); filter: none; }
+:root button[data-ui="secondary"]:active:not(:disabled) { background: #dbe6f4; }
+:root button[data-ui="destructive"] { background: var(--ui-danger); color: var(--ui-on-brand); border-color: var(--ui-danger); }
+:root button[data-ui="destructive"]:hover:not(:disabled) { background: var(--ui-danger-hover); border-color: var(--ui-danger-hover); }
+:root button[data-ui="destructive"]:active:not(:disabled) { background: #7f1d1d; }
+:root button:is([data-ui="primary"],[data-ui="secondary"],[data-ui="destructive"]):disabled { opacity: .5; cursor: not-allowed; }
+:root button:is([data-ui="primary"],[data-ui="secondary"],[data-ui="destructive"]) svg { flex-shrink: 0; }
+:root .vista-table button:is([data-ui="primary"],[data-ui="secondary"],[data-ui="destructive"]),
+:root .analytics-toolbar button:is([data-ui="primary"],[data-ui="secondary"]),
+:root button.vista-action-button { min-height: var(--control-compact); padding: 6px 12px; border-radius: var(--radius-compact); font-size: var(--type-meta); line-height: 18px; white-space: nowrap; flex-shrink: 0; }
+:root button[data-ui="tertiary"] { font-family: var(--font-body); font-weight: 600; cursor: pointer; }
+:root button[data-ui="tertiary"]:disabled { opacity: .5; cursor: not-allowed; }
+:root button[data-ui="icon"] { display: inline-flex; align-items: center; justify-content: center; min-width: 36px; min-height: 36px; border-radius: var(--radius-control); cursor: pointer; transition: background-color var(--motion-fast), color var(--motion-fast); }
+:root button[data-ui="icon"]:hover:not(:disabled) { background-color: var(--ui-selected); color: var(--ui-blue); }
+:root button[data-ui="icon"]:disabled { cursor: not-allowed; opacity: .5; }
+:root button[data-ui="icon"] > svg { width: 18px; height: 18px; flex-shrink: 0; }
+@media (max-width: 768px) {
+  :root button:is([data-ui="primary"],[data-ui="secondary"],[data-ui="destructive"]) { min-height: 44px; }
+  :root .vista-table button:is([data-ui="primary"],[data-ui="secondary"],[data-ui="destructive"]) { min-height: 36px; }
+}

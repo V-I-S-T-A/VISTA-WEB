@@ -1,3 +1,4 @@
+import DialogLayer from "../../../../components/DialogLayer";
 import { TableRowsSkeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
@@ -100,12 +101,12 @@ const OrgRow = memo(function OrgRow({
       </td>
       <td data-label="Actions" className="px-5 py-2.5 pl-6 whitespace-nowrap w-[170px]">
         <div className="flex items-center gap-2">
-          <button
+          <button data-ui="primary"
             type="button"
             onClick={handleEdit}
             disabled={isUpdating || isDeleting}
-            className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50 disabled:opacity-50"
-            style={{ fontSize: "12px", padding: "4px 12px" }}
+            className="inline-flex items-center gap-1 font-inter font-bold transition active:scale-95 border disabled:opacity-50"
+            style={{  }}
           >
             <SquarePen
               style={{ width: "12px", height: "12px" }}
@@ -113,12 +114,12 @@ const OrgRow = memo(function OrgRow({
             />
             EDIT
           </button>
-          <button
+          <button data-ui="destructive"
             type="button"
             onClick={handleDelete}
             disabled={isUpdating || isDeleting}
-            className="inline-flex items-center gap-1 rounded bg-[#ef4444] font-inter font-bold text-white transition hover:bg-[#dc2626] active:scale-95 border border-[#b91c1c]/50 disabled:opacity-50"
-            style={{ fontSize: "12px", padding: "4px 12px" }}
+            className="inline-flex items-center gap-1 font-inter font-bold transition active:scale-95 border disabled:opacity-50"
+            style={{  }}
           >
             <Trash2
               style={{ width: "12px", height: "12px" }}
@@ -445,7 +446,7 @@ export default function RegisteredOrgTable() {
 
       {/* Delete Organization Modal matching project modal design */}
       {deleteConfirmOrg && (
-        <div
+        <DialogLayer label={"Delete organization"} onDismiss={() => setDeleteConfirmOrg(null)} dismissDisabled={deleteOrgMutation.isPending}
           style={{
             position: "fixed",
             inset: 0,
@@ -458,23 +459,23 @@ export default function RegisteredOrgTable() {
             padding: "16px",
           }}
         >
-          <div
+          <div className="vista-surface"
             style={{
               width: "100%",
               maxWidth: "480px",
-              backgroundColor: "#ffffff",
-              borderRadius: "12px",
+              backgroundColor: "var(--ui-surface)",
+              borderRadius: "var(--radius-dialog)",
               boxShadow:
                 "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
               overflow: "hidden",
-            }}
-            role="dialog"
-            aria-modal="true"
+            maxHeight: "calc(100dvh - 32px)", overflowY: "auto",}}
+
+
           >
             {/* Modal Header */}
-            <div
+            <div className="vista-modal-heading"
               style={{
-                backgroundColor: "#ef4444",
+                backgroundColor: "var(--ui-surface)",
                 padding: "18px 24px",
                 display: "flex",
                 alignItems: "center",
@@ -482,26 +483,14 @@ export default function RegisteredOrgTable() {
               }}
             >
               <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                <div
-                  style={{
-                    backgroundColor: "rgba(255, 255, 255, 0.2)",
-                    borderRadius: "8px",
-                    width: "34px",
-                    height: "34px",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Trash2 style={{ width: "16px", height: "16px", color: "#ffffff" }} />
-                </div>
+                <span className="vista-plain-icon"><Trash2 style={{ width: "16px", height: "16px", color: "var(--ui-navy)" }} /></span>
                 <div>
                   <h2
                     style={{
-                      fontFamily: "Inter, sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontSize: "16px",
                       fontWeight: "700",
-                      color: "#ffffff",
+                      color: "var(--ui-navy)",
                       margin: 0,
                     }}
                   >
@@ -509,9 +498,9 @@ export default function RegisteredOrgTable() {
                   </h2>
                   <p
                     style={{
-                      fontFamily: "Inter, sans-serif",
+                      fontFamily: "var(--font-body)",
                       fontSize: "12px",
-                      color: "rgba(255, 255, 255, 0.85)",
+                      color: "var(--ui-muted)",
                       margin: 0,
                     }}
                   >
@@ -520,21 +509,21 @@ export default function RegisteredOrgTable() {
                 </div>
               </div>
 
-              <button
+              <button aria-busy={Boolean(deleteOrgMutation.isPending)} data-ui="icon"
                 type="button"
                 onClick={() => setDeleteConfirmOrg(null)}
                 disabled={deleteOrgMutation.isPending}
                 style={{
-                  background: "rgba(255, 255, 255, 0.15)",
+                  background: "var(--ui-selected)",
                   border: "none",
-                  borderRadius: "7px",
+                  borderRadius: "var(--radius-control)",
                   width: "30px",
                   height: "30px",
                   cursor: deleteOrgMutation.isPending ? "not-allowed" : "pointer",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  color: "#ffffff",
+                  color: "var(--ui-navy)",
                 }}
               >
                 <X style={{ width: "15px", height: "15px" }} />
@@ -545,7 +534,7 @@ export default function RegisteredOrgTable() {
             <div
               style={{
                 padding: "24px",
-                fontFamily: "Inter, sans-serif",
+                fontFamily: "var(--font-body)",
               }}
             >
               <p
@@ -577,43 +566,19 @@ export default function RegisteredOrgTable() {
                 gap: "12px",
               }}
             >
-              <button
+              <button aria-busy={Boolean(deleteOrgMutation.isPending)} data-ui="secondary"
                 type="button"
                 onClick={() => setDeleteConfirmOrg(null)}
                 disabled={deleteOrgMutation.isPending}
-                style={{
-                  border: "1.5px solid #d1d5db",
-                  backgroundColor: "#ffffff",
-                  color: "#374151",
-                  fontSize: "13px",
-                  fontWeight: "600",
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  cursor: deleteOrgMutation.isPending ? "not-allowed" : "pointer",
-                  fontFamily: "Inter, sans-serif",
-                }}
+                style={{ cursor: deleteOrgMutation.isPending ? "not-allowed" : "pointer" }}
               >
                 Cancel
               </button>
-              <button
+              <button aria-busy={Boolean(deleteOrgMutation.isPending)} data-ui="destructive"
                 type="button"
                 onClick={handleDeleteConfirm}
                 disabled={deleteOrgMutation.isPending}
-                style={{
-                  backgroundColor: "#ef4444",
-                  color: "#ffffff",
-                  fontSize: "13px",
-                  fontWeight: "700",
-                  padding: "8px 18px",
-                  borderRadius: "8px",
-                  border: "none",
-                  cursor: deleteOrgMutation.isPending ? "not-allowed" : "pointer",
-                  fontFamily: "Inter, sans-serif",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  opacity: deleteOrgMutation.isPending ? 0.7 : 1,
-                }}
+                style={{ cursor: deleteOrgMutation.isPending ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "6px", opacity: deleteOrgMutation.isPending ? 0.7 : 1 }}
               >
                 {deleteOrgMutation.isPending ? (
                   <>
@@ -626,7 +591,7 @@ export default function RegisteredOrgTable() {
               </button>
             </div>
           </div>
-        </div>
+        </DialogLayer>
       )}
     </>
   );

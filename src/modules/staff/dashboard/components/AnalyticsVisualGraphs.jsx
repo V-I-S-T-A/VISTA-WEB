@@ -1,3 +1,5 @@
+import StatusModal from "../../../../components/StatusModal";
+import AnchoredPopover from "../../../../components/AnchoredPopover";
 import { AnalyticsSkeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
 import { useState, useMemo, useRef, useEffect } from "react";
@@ -17,10 +19,6 @@ import {
   Tooltip,
   BarChart,
   Bar,
-  AreaChart,
-  Area,
-  LineChart,
-  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -87,11 +85,11 @@ function CustomChartTooltip({ active, payload, label }) {
 
     return (
       <div
-        className="font-inter"
+        className="vista-surface font-inter"
         style={{
           padding: "8px 14px",
-          backgroundColor: "#ffffff",
-          borderRadius: "10px",
+          backgroundColor: "var(--ui-surface)",
+          borderRadius: "var(--radius-chip)",
           border: "1px solid #e2e8f0",
           boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
         }}
@@ -114,6 +112,7 @@ export default function AnalyticsVisualGraphs({
   selectedStatus,
   onStatusSelect,
 } = {}) {
+  const [exportFeedback, setExportFeedback] = useState(null);
   const [timeRange, setTimeRange] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("All Categories");
   const [isTimeRangeOpen, setIsTimeRangeOpen] = useState(false);
@@ -127,13 +126,13 @@ export default function AnalyticsVisualGraphs({
   // Close dropdowns on outside click
   useEffect(() => {
     function handleClickOutside(event) {
-      if (exportRef.current && !exportRef.current.contains(event.target)) {
+      if (exportRef.current && !exportRef.current.contains(event.target) && !event.target.closest(".vista-anchored-popover")) {
         setIsExportOpen(false);
       }
-      if (timeRangeRef.current && !timeRangeRef.current.contains(event.target)) {
+      if (timeRangeRef.current && !timeRangeRef.current.contains(event.target) && !event.target.closest(".vista-anchored-popover")) {
         setIsTimeRangeOpen(false);
       }
-      if (categoryRef.current && !categoryRef.current.contains(event.target)) {
+      if (categoryRef.current && !categoryRef.current.contains(event.target) && !event.target.closest(".vista-anchored-popover")) {
         setIsCategoryOpen(false);
       }
     }
@@ -184,11 +183,7 @@ export default function AnalyticsVisualGraphs({
   const returnedCount = (activeStatusCounts.rejected || 0) + (activeStatusCounts.resubmission_required || 0);
   const statusCardTotal = processCount + approvedCount + returnedCount;
 
-  const statusSummary = {
-    process: processCount,
-    approved: approvedCount,
-    returned: returnedCount,
-  };
+  const statusSummary = useMemo(() => ({ process: processCount, approved: approvedCount, returned: returnedCount }), [processCount, approvedCount, returnedCount]);
 
   // Donut chart data with exactly 3 consolidated statuses
   const statusData = useMemo(() => {
@@ -198,7 +193,7 @@ export default function AnalyticsVisualGraphs({
       value: statusSummary[key] || 0,
       color,
     })).filter((item) => item.value > 0);
-  }, [processCount, approvedCount, returnedCount]);
+  }, [statusSummary]);
 
   // Document types breakdown by selected interval (Weeks | Months | Years)
   const activeDocTypeRaw = useMemo(() => {
@@ -275,7 +270,7 @@ export default function AnalyticsVisualGraphs({
       });
     } catch (error) {
       console.error("Failed to export Excel analytics:", error);
-      alert("Unable to generate Excel report. Please try again.");
+      setExportFeedback({ type: "error", message: "Unable to generate Excel report. Please try again." });
     } finally {
       setIsExporting(false);
       setIsExportOpen(false);
@@ -300,7 +295,7 @@ export default function AnalyticsVisualGraphs({
       URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Failed to export PDF analytics:", error);
-      alert("Unable to generate PDF report. Please try again.");
+      setExportFeedback({ type: "error", message: "Unable to generate PDF report. Please try again." });
     } finally {
       setIsExporting(false);
       setIsExportOpen(false);
@@ -317,10 +312,12 @@ export default function AnalyticsVisualGraphs({
   if (isLoading && !stats) return <AnalyticsSkeleton />;
 
   return (
-    <section className="analytics-panel w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mb-5">
-      {/* ── Standard Blue Header Bar matching VISTA Toolbar ── */}
+    <>
+      <StatusModal isOpen={Boolean(exportFeedback)} onClose={() => setExportFeedback(null)} title={exportFeedback?.type === "error" ? "Export failed" : "Nothing to export"} message={exportFeedback?.message || ""} type={exportFeedback?.type || "info"} />
+      <section className="vista-surface analytics-panel w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm mb-5">
+      {/* Shared panel header */}
       <div
-        className="flex items-center justify-between gap-3 flex-wrap bg-[#1f5cae]"
+        className="vista-panel-heading flex items-center justify-between gap-3 flex-wrap"
         style={{
           paddingLeft: "24px",
           paddingRight: "24px",
@@ -346,7 +343,7 @@ export default function AnalyticsVisualGraphs({
         <div className="analytics-toolbar flex items-center gap-2">
           {/* Time Range Custom Dropdown */}
           <div className="relative" ref={timeRangeRef}>
-            <button
+            <button data-ui="toggle" aria-expanded={isTimeRangeOpen}
               type="button"
               onClick={() => {
                 setIsTimeRangeOpen((prev) => !prev);
@@ -355,7 +352,7 @@ export default function AnalyticsVisualGraphs({
               }}
               className="inline-flex items-center justify-between gap-2 font-inter font-semibold text-gray-700 bg-[#f5f8fc] transition hover:bg-[#e8f1fa] active:scale-95 cursor-pointer"
               style={{
-                borderRadius: "6px",
+                borderRadius: "var(--radius-control)",
                 padding: "7px 14px",
                 fontSize: "12.5px",
                 border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -373,12 +370,12 @@ export default function AnalyticsVisualGraphs({
             </button>
 
             {isTimeRangeOpen && (
-              <div
+              <AnchoredPopover onDismiss={() => setIsTimeRangeOpen(false)} aria-label="Time range options"
                 className="absolute left-0 top-full z-30"
                 style={{
                   marginTop: "6px",
                   width: "175px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--radius-chip)",
                   border: "1px solid #b8cbe0",
                   backgroundColor: "#f7faff",
                   boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
@@ -391,7 +388,7 @@ export default function AnalyticsVisualGraphs({
                 {TIME_RANGES.map((r) => {
                   const isSelected = timeRange === r.value;
                   return (
-                    <button
+                    <button data-ui="toggle"
                       key={r.value}
                       type="button"
                       onClick={() => {
@@ -409,13 +406,13 @@ export default function AnalyticsVisualGraphs({
                     </button>
                   );
                 })}
-              </div>
+              </AnchoredPopover>
             )}
           </div>
 
           {/* Category Custom Dropdown */}
           <div className="relative" ref={categoryRef}>
-            <button
+            <button data-ui="toggle" aria-expanded={isCategoryOpen}
               type="button"
               onClick={() => {
                 setIsCategoryOpen((prev) => !prev);
@@ -424,7 +421,7 @@ export default function AnalyticsVisualGraphs({
               }}
               className="inline-flex items-center justify-between gap-2 font-inter font-semibold text-gray-700 bg-[#f5f8fc] transition hover:bg-[#e8f1fa] active:scale-95 cursor-pointer"
               style={{
-                borderRadius: "6px",
+                borderRadius: "var(--radius-control)",
                 padding: "7px 14px",
                 fontSize: "12.5px",
                 border: "1px solid rgba(0, 0, 0, 0.08)",
@@ -442,12 +439,12 @@ export default function AnalyticsVisualGraphs({
             </button>
 
             {isCategoryOpen && (
-              <div
+              <AnchoredPopover onDismiss={() => setIsCategoryOpen(false)} aria-label="Category options"
                 className="absolute left-0 top-full z-30"
                 style={{
                   marginTop: "6px",
                   width: "175px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--radius-chip)",
                   border: "1px solid #b8cbe0",
                   backgroundColor: "#f7faff",
                   boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
@@ -460,7 +457,7 @@ export default function AnalyticsVisualGraphs({
                 {CATEGORY_OPTIONS.map((c) => {
                   const isSelected = categoryFilter === c;
                   return (
-                    <button
+                    <button data-ui="toggle"
                       key={c}
                       type="button"
                       onClick={() => {
@@ -478,13 +475,13 @@ export default function AnalyticsVisualGraphs({
                     </button>
                   );
                 })}
-              </div>
+              </AnchoredPopover>
             )}
           </div>
 
           {/* Export Dropdown Button */}
           <div className="relative" ref={exportRef}>
-            <button
+            <button aria-busy={Boolean(isLoading)} data-ui="primary" aria-expanded={isExportOpen}
               type="button"
               onClick={() => {
                 setIsExportOpen((prev) => !prev);
@@ -492,15 +489,8 @@ export default function AnalyticsVisualGraphs({
                 setIsCategoryOpen(false);
               }}
               disabled={isExporting || isLoading}
-              className="inline-flex items-center gap-1.5 font-inter font-bold text-gray-900 transition hover:brightness-105 active:scale-95 cursor-pointer disabled:opacity-60"
-              style={{
-                borderRadius: "6px",
-                backgroundColor: "#ffc700",
-                padding: "7px 14px",
-                fontSize: "12.5px",
-                border: "1px solid rgba(0, 0, 0, 0.08)",
-                boxShadow: "0 1px 2px rgba(0, 0, 0, 0.05)",
-              }}
+              className="inline-flex items-center gap-1.5 font-inter font-bold transition hover:brightness-105 active:scale-95 cursor-pointer disabled:opacity-60"
+              style={{  }}
             >
               {isExporting ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
@@ -517,12 +507,12 @@ export default function AnalyticsVisualGraphs({
             </button>
 
             {isExportOpen && (
-              <div
+              <AnchoredPopover onDismiss={() => setIsExportOpen(false)} aria-label="Export options"
                 className="absolute right-0 top-full z-30"
                 style={{
                   marginTop: "8px",
                   width: "210px",
-                  borderRadius: "10px",
+                  borderRadius: "var(--radius-chip)",
                   border: "1px solid #b8cbe0",
                   backgroundColor: "#f7faff",
                   boxShadow: "0 10px 25px rgba(15, 42, 74, 0.12)",
@@ -533,34 +523,30 @@ export default function AnalyticsVisualGraphs({
                   Export As
                 </div>
 
-                <button
+                <button data-ui="navigation"
                   type="button"
                   onClick={handleExportPdf}
                   className="flex items-center gap-2.5 w-full text-left font-inter font-semibold text-gray-700 hover:bg-[#f5f7fb] hover:text-[#142d55] transition-colors rounded-lg px-2.5 py-2 text-[12.5px] cursor-pointer"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-red-50 text-red-600">
-                    <FileText className="h-3.5 w-3.5" />
-                  </span>
+                  <span className="vista-plain-icon"><FileText className="h-3.5 w-3.5" /></span>
                   <div className="flex flex-col">
                     <span>Export as PDF</span>
                     <span className="text-[10px] text-gray-400 font-normal">.pdf report</span>
                   </div>
                 </button>
 
-                <button
+                <button data-ui="navigation"
                   type="button"
                   onClick={handleExportXlsx}
                   className="flex items-center gap-2.5 w-full text-left font-inter font-semibold text-gray-700 hover:bg-[#f5f7fb] hover:text-[#142d55] transition-colors rounded-lg px-2.5 py-2 text-[12.5px] cursor-pointer mt-0.5"
                 >
-                  <span className="flex h-7 w-7 items-center justify-center rounded-md bg-emerald-50 text-emerald-600">
-                    <FileSpreadsheet className="h-3.5 w-3.5" />
-                  </span>
+                  <span className="vista-plain-icon"><FileSpreadsheet className="h-3.5 w-3.5" /></span>
                   <div className="flex flex-col">
                     <span>Export as Excel</span>
                     <span className="text-[10px] text-gray-400 font-normal">.xlsx spreadsheet</span>
                   </div>
                 </button>
-              </div>
+              </AnchoredPopover>
             )}
           </div>
         </div>
@@ -569,7 +555,7 @@ export default function AnalyticsVisualGraphs({
       {/* ── Card Body matching the approved single container ── */}
       <div className="analytics-body" style={{ padding: "24px 28px" }}>
         <div className="analytics-grid grid grid-cols-1 lg:grid-cols-2" style={{ gap: "28px" }}>
-          
+
           {/* 1. Submission Status Donut Chart (Top Left) - 3 Consolidated Statuses */}
           <div className="flex flex-col justify-between">
             <div style={{ marginBottom: "14px" }}>
@@ -585,7 +571,7 @@ export default function AnalyticsVisualGraphs({
                     alignItems: "center",
                     backgroundColor: "#f1f5f9",
                     border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
+                    borderRadius: "var(--radius-chip)",
                     padding: "3px",
                     gap: "4px",
                   }}
@@ -593,16 +579,16 @@ export default function AnalyticsVisualGraphs({
                   {STATUS_CATEGORY_OPTIONS.map((item) => {
                     const isSelected = statusCategoryFilter === item.key;
                     return (
-                      <button
+                      <button data-ui="toggle"
                         key={item.key}
                         type="button"
                         onClick={() => setStatusCategoryFilter(item.key)}
                         style={{
                           padding: "4px 10px",
-                          borderRadius: "6px",
+                          borderRadius: "var(--radius-control)",
                           border: "none",
                           cursor: "pointer",
-                          fontFamily: "Inter, sans-serif",
+                          fontFamily: "var(--font-body)",
                           fontSize: "12px",
                           fontWeight: isSelected ? "700" : "500",
                           backgroundColor: isSelected ? "#1f5cae" : "transparent",
@@ -683,7 +669,7 @@ export default function AnalyticsVisualGraphs({
                 const count = statusSummary[key] || 0;
                 const isSelected = selectedStatus === label;
                 return (
-                  <button
+                  <button data-ui="toggle"
                     key={key}
                     type="button"
                     onClick={() => onStatusSelect && onStatusSelect(label)}
@@ -720,7 +706,7 @@ export default function AnalyticsVisualGraphs({
                     alignItems: "center",
                     backgroundColor: "#f1f5f9",
                     border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
+                    borderRadius: "var(--radius-chip)",
                     padding: "3px",
                     gap: "4px",
                   }}
@@ -728,16 +714,16 @@ export default function AnalyticsVisualGraphs({
                   {DOC_TYPE_INTERVALS.map((item) => {
                     const isSelected = docTypeInterval === item.key;
                     return (
-                      <button
+                      <button data-ui="toggle"
                         key={item.key}
                         type="button"
                         onClick={() => setDocTypeInterval(item.key)}
                         style={{
                           padding: "4px 12px",
-                          borderRadius: "6px",
+                          borderRadius: "var(--radius-control)",
                           border: "none",
                           cursor: "pointer",
-                          fontFamily: "Inter, sans-serif",
+                          fontFamily: "var(--font-body)",
                           fontSize: "12px",
                           fontWeight: isSelected ? "700" : "500",
                           backgroundColor: isSelected ? "#1f5cae" : "transparent",
@@ -826,7 +812,7 @@ export default function AnalyticsVisualGraphs({
                     alignItems: "center",
                     backgroundColor: "#f1f5f9",
                     border: "1px solid #e2e8f0",
-                    borderRadius: "8px",
+                    borderRadius: "var(--radius-chip)",
                     padding: "3px",
                     gap: "4px",
                   }}
@@ -834,16 +820,16 @@ export default function AnalyticsVisualGraphs({
                   {TIMELINE_INTERVALS.map((item) => {
                     const isSelected = timelineInterval === item.key;
                     return (
-                      <button
+                      <button data-ui="toggle"
                         key={item.key}
                         type="button"
                         onClick={() => setTimelineInterval(item.key)}
                         style={{
                           padding: "4px 14px",
-                          borderRadius: "6px",
+                          borderRadius: "var(--radius-control)",
                           border: "none",
                           cursor: "pointer",
-                          fontFamily: "Inter, sans-serif",
+                          fontFamily: "var(--font-body)",
                           fontSize: "12px",
                           fontWeight: isSelected ? "700" : "500",
                           backgroundColor: isSelected ? "#1f5cae" : "transparent",
@@ -983,6 +969,6 @@ export default function AnalyticsVisualGraphs({
 
         </div>
       </div>
-    </section>
+    </section></>
   );
 }

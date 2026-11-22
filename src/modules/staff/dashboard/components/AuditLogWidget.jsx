@@ -89,7 +89,7 @@ export default function AuditLogWidget() {
 
   return (
     <div
-      className="audit-log-widget rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col"
+      className="vista-surface audit-log-widget rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col"
       style={{ padding: "1rem" }}
     >
       <div className="px-6 pt-5 pb-3">
@@ -123,22 +123,13 @@ export default function AuditLogWidget() {
                   key={log.audit_id}
                   className={`flex gap-3 py-3 ${index !== logs.length - 1 ? "border-b border-gray-100" : ""}`}
                 >
-                  <span
-                    className="flex-shrink-0 flex items-center justify-center rounded-full"
-                    style={{
-                      width: "28px",
-                      height: "28px",
-                      border: `1.5px solid ${config.color}`,
-                    }}
-                  >
-                    <Icon
+                  <span className="vista-plain-icon"><Icon
                       style={{
                         width: "14px",
                         height: "14px",
                         color: config.color,
                       }}
-                    />
-                  </span>
+                    /></span>
                   <div className="min-w-0">
                     <p className="font-inter text-[12px] text-gray-400">
                       {formatRelativeTime(log.performed_at)}
@@ -154,10 +145,10 @@ export default function AuditLogWidget() {
         )}
       </div>
 
-      <button
+      <button data-ui="secondary"
         type="button"
         onClick={() => navigate("/staff/audit-logs")}
-        className="w-full font-inter text-[12px] font-bold text-[#1f5cae] tracking-wide py-3.5 border-t border-gray-100 hover:bg-gray-50 transition-colors"
+        className="w-full font-inter text-[12px] font-bold py-3.5 border-t transition-colors"
       >
         VIEW ALL LOGS
       </button>

@@ -119,15 +119,12 @@
   }
 }
 
-/* Student summary cards: 3-col on desktop → 2-col on mobile (top card spans 2 columns, bottom cards side-by-side) */
+/* Student summary cards: four on desktop, balanced 2-by-2 on mobile. */
 @media (max-width: 768px) {
   .student-cards-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 
-  .student-cards-grid .card-full-width {
-    grid-column: span 2 !important;
-  }
 }
 
 /* ----------------------------------------------------------
@@ -174,7 +171,7 @@
    ---------------------------------------------------------- */
 
 @media (max-width: 768px) {
-  /* Blue header bar: stack title above controls with matching spacing */
+  /* Shared panel header: stack title above controls at narrow widths. */
   .table-header-bar {
     flex-direction: column !important;
     align-items: flex-start !important;
@@ -184,9 +181,9 @@
 
   .table-header-bar h3 {
     padding-left: 0 !important;
-    font-size: 19px !important;
+    font-size: var(--type-heading) !important;
     font-weight: 700 !important;
-    color: #ffffff !important;
+    color: var(--ui-on-brand) !important;
   }
 
   /* Controls container: wrap allowed, row 1 = search + filter, row 2 = export */

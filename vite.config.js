@@ -2,10 +2,15 @@ import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite'
 import { getUpdateTimestamp } from './build/updateTimestamp.mjs'
+import { productionApiUrl } from './build/productionApi.mjs'
 
-export default defineConfig(({ mode }) => {
+export default defineConfig(({ mode, command }) => {
   const env = loadEnv(mode, import.meta.dirname, 'DEV_')
   const releaseEnv = loadEnv(mode, import.meta.dirname, 'VITE_APP_')
+  // Every distributable build needs a public API, including custom build modes.
+  const deployedApi = command === 'build'
+    ? productionApiUrl(loadEnv(mode, import.meta.dirname, 'VITE_API_').VITE_API_URL)
+    : undefined
 
   return {
     plugins: [react(), tailwindcss()],
@@ -20,6 +25,7 @@ export default defineConfig(({ mode }) => {
     },
     define: {
       __APP_UPDATED_AT__: JSON.stringify(getUpdateTimestamp({ override: releaseEnv.VITE_APP_UPDATED_AT })),
+      ...(deployedApi ? { 'import.meta.env.VITE_API_URL': JSON.stringify(deployedApi) } : {}),
     },
     server: {
       // A second instance would rewrite the first server's optimized React files.

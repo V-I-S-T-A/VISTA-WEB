@@ -569,11 +569,11 @@ export default function ConfigTable({
                   style={{ paddingRight: CONTENT_PADDING }}
                 >
                   <div className="flex items-center gap-2">
-                    <button
+                    <button data-ui="primary"
                       type="button"
                       onClick={() => onEdit(item)}
-                      className="inline-flex items-center gap-1 rounded bg-[#ffe100] font-inter font-bold text-gray-900 transition hover:bg-[#e6c900] active:scale-95 border border-[#d4a000]/50"
-                      style={{ fontSize: "12px", padding: "4px 12px" }}
+                      className="inline-flex items-center gap-1 font-inter font-bold transition active:scale-95 border"
+                      style={{  }}
                     >
                       <SquarePen
                         style={{ width: "12px", height: "12px" }}
@@ -581,11 +581,11 @@ export default function ConfigTable({
                       />
                       EDIT
                     </button>
-                    <button
+                    <button data-ui="destructive"
                       type="button"
                       onClick={() => onDelete(item)}
-                      className="inline-flex items-center gap-1 rounded bg-[#ef4444] font-inter font-bold text-white transition hover:bg-[#dc2626] active:scale-95 border border-[#b91c1c]/50"
-                      style={{ fontSize: "12px", padding: "4px 12px" }}
+                      className="inline-flex items-center gap-1 font-inter font-bold transition active:scale-95 border"
+                      style={{  }}
                     >
                       <Trash2
                         style={{ width: "12px", height: "12px" }}

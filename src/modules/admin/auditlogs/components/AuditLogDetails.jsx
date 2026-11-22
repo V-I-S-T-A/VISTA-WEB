@@ -1,3 +1,4 @@
+import AuditActionLabel from "../../../../components/AuditActionLabel";
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import { useMemo, useState, useEffect } from "react";
 import {
@@ -205,13 +206,13 @@ export default function AuditLogDetails({ log, onBack }) {
       <div style={{ marginBottom: "20px" }}>
         <h2
           className="font-inter font-bold text-[#0a1e3f]"
-          style={{ fontSize: "28px", lineHeight: 1.15 }}
+          style={{ fontSize: "var(--type-title)", lineHeight: 1.2 }}
         >
           Audit Log History Details
         </h2>
         <p
           className="font-inter text-[#0a1e3f] mt-1"
-          style={{ fontSize: "16px" }}
+          style={{ fontSize: "var(--type-body)" }}
         >
           System-wide transparency of activities.
         </p>
@@ -248,7 +249,7 @@ export default function AuditLogDetails({ log, onBack }) {
       {/* ── 2. EXACT EVENT SUMMARY ── */}
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--ui-surface)",
           borderRadius: "4px",
           border: "1px solid #e2e6ee",
           overflow: "hidden",
@@ -261,11 +262,11 @@ export default function AuditLogDetails({ log, onBack }) {
         >
           <h4
             className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "13px", color: "#ffffff" }}
+            style={{ fontSize: "13px", color: "var(--ui-surface)" }}
           >
             Event Summary
           </h4>
-          <Info style={{ width: "16px", height: "16px", color: "#ffffff" }} />
+          <Info style={{ width: "16px", height: "16px", color: "var(--ui-surface)" }} />
         </div>
         <div className="flex gap-8" style={{ padding: "24px 28px" }}>
           <div style={{ flex: 1 }}>
@@ -274,23 +275,12 @@ export default function AuditLogDetails({ log, onBack }) {
               style={{
                 fontSize: "11px",
                 marginBottom: "8px",
-                color: "#6b7280",
+                color: "var(--ui-muted)",
               }}
             >
               Action Category
             </p>
-            <div
-              className="inline-flex font-mono font-bold uppercase"
-              style={{
-                backgroundColor: "#edf2fb",
-                color: "#1A59A5",
-                padding: "10px 16px",
-                borderRadius: "6px",
-                fontSize: "14px",
-              }}
-            >
-              {details.action}
-            </div>
+            <AuditActionLabel action={log.action} label={details.action} />
           </div>
           <div style={{ flex: 1 }}>
             <p
@@ -298,7 +288,7 @@ export default function AuditLogDetails({ log, onBack }) {
               style={{
                 fontSize: "11px",
                 marginBottom: "8px",
-                color: "#6b7280",
+                color: "var(--ui-muted)",
               }}
             >
               Reference ID
@@ -317,7 +307,7 @@ export default function AuditLogDetails({ log, onBack }) {
       {/* ── 3. IMPACTED ENTITIES ── */}
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--ui-surface)",
           borderRadius: "4px",
           border: "1px solid #e2e6ee",
           overflow: "hidden",
@@ -335,7 +325,7 @@ export default function AuditLogDetails({ log, onBack }) {
           <Users className="w-4 h-4 text-[#142d55]" />
           <h4
             className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "13px", color: "#142d55" }}
+            style={{ fontSize: "13px", color: "var(--ui-text)" }}
           >
             Impacted Entities
           </h4>
@@ -351,12 +341,7 @@ export default function AuditLogDetails({ log, onBack }) {
                 border: "1px solid #e2e6ee",
               }}
             >
-              <span
-                className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-md"
-                style={{ backgroundColor: "#1A59A5" }}
-              >
-                <FileText className="h-5 w-5 text-white" />
-              </span>
+              <span className="vista-plain-icon"><FileText className="h-5 w-5 text-[#1a59a5]" /></span>
               <div className="min-w-0">
                 <p
                   className="font-inter font-semibold uppercase text-gray-500"
@@ -389,7 +374,7 @@ export default function AuditLogDetails({ log, onBack }) {
       {/* ── 4. RECORD SNAPSHOT (Dynamic Cards) ── */}
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--ui-surface)",
           borderRadius: "4px",
           border: "1px solid #e2e6ee",
           overflow: "hidden",
@@ -402,7 +387,7 @@ export default function AuditLogDetails({ log, onBack }) {
         >
           <h4
             className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "13px", color: "#ffffff" }}
+            style={{ fontSize: "13px", color: "var(--ui-surface)" }}
           >
             {details.action.includes("CREATE")
               ? "Created Record Snapshot"
@@ -461,7 +446,7 @@ export default function AuditLogDetails({ log, onBack }) {
                             style={{
                               backgroundColor: "#f0f4fb",
                               border: "1px solid #e2e6ee",
-                              borderRadius: "6px",
+                              borderRadius: "var(--radius-chip)",
                               padding: "16px",
                             }}
                           >
@@ -476,9 +461,7 @@ export default function AuditLogDetails({ log, onBack }) {
                                   className="flex items-center justify-between rounded bg-white p-3 border border-gray-200 shadow-sm"
                                 >
                                   <div className="flex items-center gap-3 min-w-0">
-                                    <div className="w-8 h-8 flex-shrink-0 rounded bg-[#edf2fb] flex items-center justify-center">
-                                      <FileText className="w-4 h-4 text-[#1A59A5]" />
-                                    </div>
+                                    <span className="vista-plain-icon"><FileText className="w-4 h-4 text-[#1A59A5]" /></span>
                                     <span className="font-semibold text-[#142d55] text-[13px] truncate">
                                       {doc.file_name ||
                                         `Attached File ${idx + 1}`}
@@ -687,7 +670,7 @@ export default function AuditLogDetails({ log, onBack }) {
       {/* ── 5. EXACT TIMELINE DESIGN ── */}
       <div
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "var(--ui-surface)",
           borderRadius: "4px",
           border: "1px solid #e2e6ee",
           overflow: "hidden",
@@ -703,7 +686,7 @@ export default function AuditLogDetails({ log, onBack }) {
         >
           <h4
             className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "13px", color: "#142d55" }}
+            style={{ fontSize: "13px", color: "var(--ui-text)" }}
           >
             Context Timeline
           </h4>
@@ -732,7 +715,7 @@ export default function AuditLogDetails({ log, onBack }) {
                   style={{
                     width: "12px",
                     height: "12px",
-                    color: "#142d55",
+                    color: "var(--ui-text)",
                     strokeWidth: 3,
                   }}
                 />
@@ -741,7 +724,7 @@ export default function AuditLogDetails({ log, onBack }) {
                 style={{
                   width: "2px",
                   flex: 1,
-                  backgroundColor: "#e2e6ee",
+                  backgroundColor: "var(--ui-border)",
                   marginTop: "4px",
                   marginBottom: "4px",
                 }}
@@ -766,7 +749,7 @@ export default function AuditLogDetails({ log, onBack }) {
                 style={{
                   marginTop: "10px",
                   backgroundColor: "#1A59A5",
-                  color: "#ffffff",
+                  color: "var(--ui-surface)",
                   padding: "4px 8px",
                   borderRadius: "4px",
                   fontSize: "10px",
@@ -788,7 +771,7 @@ export default function AuditLogDetails({ log, onBack }) {
                   width: "16px",
                   height: "16px",
                   borderRadius: "9999px",
-                  backgroundColor: "#f7f9fc",
+                  backgroundColor: "var(--ui-field)",
                   border: "2px solid #e2e6ee",
                   marginTop: "4px",
                   flexShrink: 0,

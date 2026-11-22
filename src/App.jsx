@@ -63,7 +63,7 @@ function App() {
         />
         <Route path="/staff/audit-logs" element={<Suspense fallback={<PageSkeleton />}><StaffAuditLogs /></Suspense>} />
         <Route path="/staff/profile" element={<Suspense fallback={<PageSkeleton />}><StaffProfile /></Suspense>} />
-        <Route path="/staff/review-panel" element={<Suspense fallback={<PageSkeleton />}><StaffReviewPanel /></Suspense>} />
+        <Route path="/staff/review-panel/:submissionId?" element={<Suspense fallback={<PageSkeleton />}><StaffReviewPanel /></Suspense>} />
         <Route path="/staff/gdrive-sync" element={<Suspense fallback={<PageSkeleton />}><StaffGdrive /></Suspense>} />
         <Route
           path="/staff/gdrive-sync/callback"

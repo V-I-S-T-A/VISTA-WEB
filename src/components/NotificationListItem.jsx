@@ -48,7 +48,7 @@ export default function NotificationListItem({ notification, onClick }) {
 
   return (
     <li className="student-notification-item-wrap">
-      <button
+      <button data-ui="navigation"
         type="button"
         onClick={() => onClick(notification)}
         aria-label={`${notification.message || title}${notification.is_read ? "" : ". Unread"}`}

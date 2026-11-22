@@ -1,3 +1,4 @@
+import DialogLayer from "../../../../components/DialogLayer";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { convertImageToWebP } from "../../../../utils/fileOptimizer";
 import { useState, useEffect, useRef } from "react";
@@ -17,7 +18,7 @@ import api from "../../../../lib/axios";
 const FIELD_STYLES = {
   label: {
     display: "block",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     fontSize: "12px",
     fontWeight: "600",
     color: "#374151",
@@ -28,12 +29,12 @@ const FIELD_STYLES = {
     borderWidth: "1.5px",
     borderStyle: "solid",
     borderColor: isFocused ? "#1f5cae" : "#d1d5db",
-    borderRadius: "8px",
+    borderRadius: "var(--radius-field)",
     padding: "9px 13px",
     fontSize: "13px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     color: "#111827",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--ui-field)",
     outline: "none",
     boxSizing: "border-box",
     transition: "border-color 0.15s",
@@ -42,7 +43,7 @@ const FIELD_STYLES = {
     fontSize: "11px",
     color: "#dc2626",
     marginTop: "3px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
   },
 };
 
@@ -91,7 +92,9 @@ export default function ConfigEntryModal({
 
   const isEditMode = Boolean(initialData);
 
-  useEffect(() => {
+  const [previousInputs, setPreviousInputs] = useState(null);
+  if (!previousInputs || previousInputs.isOpen !== isOpen || previousInputs.initialData !== initialData || previousInputs.activeTab !== activeTab) {
+    setPreviousInputs({ isOpen, initialData, activeTab });
     if (isOpen) {
       setFormData(
         activeTab === "organizations"
@@ -100,17 +103,16 @@ export default function ConfigEntryModal({
       );
       setSelectedFile(null);
       setError("");
-      setTimeout(() => firstInputRef.current?.focus(), 50);
     }
+  }
+  useEffect(() => {
+    if (!isOpen) return;
+    const timer = setTimeout(() => firstInputRef.current?.focus(), 50);
+    return () => clearTimeout(timer);
   }, [isOpen, initialData, activeTab]);
 
   useEffect(() => {
     if (!isOpen) return;
-    function onKey(e) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -270,7 +272,7 @@ export default function ConfigEntryModal({
   };
 
   return (
-    <div
+    <DialogLayer label={"Registration configuration"} onDismiss={onClose} dismissDisabled={isSubmitting}
       ref={overlayRef}
       style={{
         position: "fixed",
@@ -283,24 +285,25 @@ export default function ConfigEntryModal({
         padding: "16px",
       }}
     >
-      <div
+      <div className="vista-surface"
         style={{
-          background: "#fff",
-          borderRadius: "14px",
+          background: "var(--ui-surface)",
+          borderRadius: "var(--radius-dialog)",
           width: "100%",
           maxWidth: "520px",
           boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
           overflow: "hidden",
           display: "flex",
           flexDirection: "column",
-          maxHeight: "90vh",
+          maxHeight: "min(90vh, calc(100dvh - 32px))",
+          overflowY: "auto",
         }}
-        role="dialog"
-        aria-modal="true"
+
+
       >
-        <div
+        <div className="vista-modal-heading"
           style={{
-            background: "#1f5cae",
+            background: "var(--ui-surface)",
             padding: "18px 24px",
             display: "flex",
             alignItems: "center",
@@ -309,28 +312,16 @@ export default function ConfigEntryModal({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-            <div
-              style={{
-                background: "rgba(255,255,255,0.18)",
-                borderRadius: "8px",
-                width: "34px",
-                height: "34px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <TabIcon
-                style={{ width: "16px", height: "16px", color: "#fff" }}
-              />
-            </div>
+            <span className="vista-plain-icon"><TabIcon
+                style={{ width: "16px", height: "16px", color: "var(--ui-navy)" }}
+              /></span>
             <div>
               <h2
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "16px",
                   fontWeight: "700",
-                  color: "#fff",
+                  color: "var(--ui-navy)",
                   margin: 0,
                 }}
               >
@@ -338,7 +329,7 @@ export default function ConfigEntryModal({
               </h2>
               <p
                 style={{
-                  fontFamily: "Inter, sans-serif",
+                  fontFamily: "var(--font-body)",
                   fontSize: "12px",
                   color: "rgba(255,255,255,0.7)",
                   margin: 0,
@@ -350,21 +341,21 @@ export default function ConfigEntryModal({
               </p>
             </div>
           </div>
-          <button
+          <button aria-busy={Boolean(isSubmitting)} data-ui="icon"
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
             style={{
-              background: "rgba(255,255,255,0.15)",
+              background: "var(--ui-selected)",
               border: "none",
-              borderRadius: "7px",
+              borderRadius: "var(--radius-control)",
               width: "30px",
               height: "30px",
               cursor: isSubmitting ? "not-allowed" : "pointer",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#fff",
+              color: "var(--ui-navy)",
               opacity: isSubmitting ? 0.5 : 1,
             }}
           >
@@ -386,7 +377,7 @@ export default function ConfigEntryModal({
               style={{
                 background: "#fee2e2",
                 border: "1px solid #fecaca",
-                borderRadius: "8px",
+                borderRadius: "var(--radius-chip)",
                 padding: "12px",
                 fontSize: "13px",
                 color: "#991b1b",
@@ -417,7 +408,7 @@ export default function ConfigEntryModal({
           {activeTab === "organizations" && (
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px",
-              padding: "16px", marginBottom: "24px", borderRadius: "10px",
+              padding: "16px", marginBottom: "24px", borderRadius: "var(--radius-chip)",
               border: `1px solid ${formData.is_active ? "#bbf7d0" : "#e5e7eb"}`,
               backgroundColor: formData.is_active ? "#f0fdf4" : "#f9fafb",
             }}>
@@ -425,13 +416,13 @@ export default function ConfigEntryModal({
                 <p id="config-org-active-label" style={{ fontSize: "13px", fontWeight: 600, color: "#374151", lineHeight: "1.5" }}>
                   Active Organization
                 </p>
-                <p id="config-org-active-help" style={{ marginTop: "6px", fontSize: "12px", color: "#6b7280", lineHeight: "1.6" }}>
+                <p id="config-org-active-help" style={{ marginTop: "6px", fontSize: "12px", color: "var(--ui-muted)", lineHeight: "1.6" }}>
                   {formData.is_active
                     ? "Currently active. Turn off to mark this organization inactive."
                     : "Currently inactive. Turn on to reactivate this organization."}
                 </p>
               </div>
-              <button
+              <button aria-label="Account status" aria-busy={Boolean(isSubmitting)} data-ui="toggle"
                 type="button"
                 role="switch"
                 aria-checked={Boolean(formData.is_active)}
@@ -457,7 +448,7 @@ export default function ConfigEntryModal({
               <div
                 style={{
                   border: "1.5px dashed #d1d5db",
-                  borderRadius: "8px",
+                  borderRadius: "var(--radius-chip)",
                   padding: "16px",
                   textAlign: "center",
                   backgroundColor: "#f9fafb",
@@ -483,7 +474,7 @@ export default function ConfigEntryModal({
                   }}
                 >
                   <Upload
-                    style={{ width: "20px", height: "20px", color: "#6b7280" }}
+                    style={{ width: "20px", height: "20px", color: "var(--ui-muted)" }}
                   />
                   <span
                     style={{
@@ -516,45 +507,19 @@ export default function ConfigEntryModal({
             background: "#f9fafb",
           }}
         >
-          <button
+          <button aria-busy={Boolean(isSubmitting)} data-ui="secondary"
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "600",
-              color: "#374151",
-              background: "#fff",
-              border: "1.5px solid #d1d5db",
-              borderRadius: "8px",
-              padding: "8px 18px",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              transition: "background 0.15s",
-              opacity: isSubmitting ? 0.5 : 1,
-            }}
+            style={{ cursor: isSubmitting ? "not-allowed" : "pointer", opacity: isSubmitting ? 0.5 : 1 }}
           >
             Cancel
           </button>
-          <button
+          <button aria-busy={Boolean(isSubmitting)} data-ui="primary"
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            style={{
-              fontFamily: "Inter, sans-serif",
-              fontSize: "13px",
-              fontWeight: "700",
-              color: "#111827",
-              background: isSubmitting ? "#e6c900" : "#ffe100",
-              border: "1.5px solid #d4a000",
-              borderRadius: "8px",
-              padding: "8px 20px",
-              cursor: isSubmitting ? "not-allowed" : "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-              transition: "background 0.15s",
-            }}
+            style={{ cursor: isSubmitting ? "not-allowed" : "pointer", display: "flex", alignItems: "center", gap: "6px" }}
           >
             {isSubmitting ? (
               <Loader2
@@ -577,6 +542,6 @@ export default function ConfigEntryModal({
           </button>
         </div>
       </div>
-    </div>
+    </DialogLayer>
   );
 }

@@ -23,10 +23,32 @@ CLI is needed for this workflow. Changes made through the app affect the shared
 production data; use designated QA records.
 
 The environment file is ignored by Git and applies only to development mode.
-Restart Vite after editing it. Railway's frontend service should continue to
-set `VITE_API_URL` to the full public backend URL ending in `/api` for production
-builds. Email links and Google Drive OAuth returns still use the deployed
+Restart Vite after editing it. The committed `.env.production` supplies the public
+Railway backend URL for production builds; Railway's `VITE_API_URL` can override it.
+The production build rejects local, private, relative or non-HTTPS API addresses.
+Use a public backend URL ending in `/api`; Vite embeds it at build time, so changing
+it requires a new frontend build. Development keeps its existing `/api` proxy.
+Run `npm run build` and use `npm start` on Railway: the existing start command
+serves `dist` on Railway's `$PORT` and supports React Router deep links. Do not use
+the local Vite port as the deployment port. Never put secrets in `VITE_*` variables.
+Email links and Google Drive OAuth returns still use the deployed
 backend's configured frontend URL and may open the deployed website.
+
+## CI and production readiness
+
+GitHub Actions validates pull requests to `main`, pushes to `main`, and manual
+runs without deploying. Use Node **24.22.2** (`.node-version`) and `npm ci`, matching
+the verified Railway runtime. The exact pin requires intentional future security
+updates: update both Node declarations and lockfile engine metadata together,
+validate the new version, and review Railway alignment before release. See
+[CI and Railway readiness](docs/CI_PRODUCTION_READINESS.md) for the six checks,
+production URL safeguards, local validation results and remaining hosted-CI and
+deployment verification. The recorded Node 24.22.2 validation passed 113 unit
+tests, 90 browser checks and the unchanged dependency security gate with zero
+findings. SheetJS is pinned to the official 0.20.3 archive in `vendor/`; include
+that archive with the manifest and lockfile in the eventual commit. The
+[hardening review](docs/CI_HARDENING_REVIEW.md) records the earlier remediation
+phase and its subsequently resolved findings.
 
 ## Automatic update date
 
@@ -42,27 +64,25 @@ An optional `VITE_APP_UPDATED_AT` ISO timestamp can pin a release date. Run
 
 ## Android app download
 
-The public header’s “Get the app” link opens `/get-app`, a mobile onboarding
-page with six anonymized feature previews, installation steps, and an explicit
-Android download. The page reuses the shared header and footer; its styles are
-scoped to the onboarding page. Preview screens are recreated in HTML/CSS using
-fictional sample identities, so the original Figma screenshots and personal
-photos are not published.
+The public header’s “Get the app” link opens `/get-app`, with Staff and Student
+guides, screenshot previews, a promo video, installation steps and a QR download
+dialog. Page assets are bundled from `src/assets/public/`, including the guide
+WebP images, promo video/poster and versioned QR. Preserve those files in the
+eventual commit; they are required application assets.
 
-The download buttons link directly to the VISTA Mobile 1.0.2 APK release asset
-at
-`https://github.com/V-I-S-T-A/VISTA-MOBILE/releases/download/1.0.2/vista-mobile.apk`.
-To publish a new app download, make sure the `V-I-S-T-A/VISTA-MOBILE` repository
-is publicly readable, then create a release and attach the standalone APK with
-the exact filename `vista-mobile.apk`. Update the URL in
-`src/config/appDownload.js` and the website QR code will encode the same URL.
-If the source repository must remain private, host the APK as a release asset
-in a public downloads repository and update the URL.
+`src/config/appDownload.js` is the download metadata source. Its current version
+label is **1.0.8 (29)** and its configured build page is
+[Expo build c4ec8f7c](https://expo.dev/accounts/purplehouse/projects/vista-app/builds/c4ec8f7c-c120-448e-991c-2b3790db9e0e).
+The download buttons use the direct APK artifact:
 
-Keep the APK as a release asset instead of committing it to this Vite site:
-the current artifact is about 107.5 MB, above GitHub's 100 MB per-file limit
-for ordinary Git files. The APK is downloaded directly without extracting an
-archive.
+`https://expo.dev/artifacts/eas/O5VzuxKVI3epJ8o6yJx1k-muFJJ5EhwjfAARLiMjDNM.apk`
+
+This describes the configured version; it does not assert that it is the latest
+Mobile source push or build. For an approved download update, verify the build
+version and public artifact availability, then update the metadata and matching
+QR asset together and rerun the download/QR regressions. Keep the APK hosted
+externally rather than adding it to the Vite bundle. Current artifact availability
+and physical Android installation require separate verification.
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

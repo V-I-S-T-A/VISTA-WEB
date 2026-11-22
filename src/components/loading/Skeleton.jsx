@@ -45,7 +45,15 @@ export function AnalyticsSkeleton() {
 
 export function PanelSkeleton({ kind = 'list', label = 'Loading panel', framed = true, rows = 4, chart = 'bars' }) {
   let content;
-  if (kind === 'profile' || kind === 'form') {
+  if (kind === 'decision') {
+    content = <div className="skeleton-decision">
+      <Skeleton width="48%" height={22} /><Skeleton width="85%" height={13} />
+      <div><Skeleton width="30%" height={11} /><Skeleton height={50} style={{ marginTop: 8, borderRadius: 16 }} /></div>
+      <div><Skeleton width="36%" height={11} /><Skeleton height={138} style={{ marginTop: 8, borderRadius: 16 }} /></div>
+      <div className="skeleton-decision-check"><Skeleton width={18} height={18} /><Skeleton width="60%" height={13} /></div>
+      <Skeleton height={42} style={{ borderRadius: 24 }} />
+    </div>;
+  } else if (kind === 'profile' || kind === 'form') {
     content = <div className={`skeleton-form ${kind === 'profile' ? 'skeleton-form--profile' : ''}`}>
       {kind === 'profile' && <div className="skeleton-avatar"><Skeleton circle width={112} height={112} /><Skeleton width={100} height={32} /></div>}
       <div className="skeleton-fields">{Array.from({ length: kind === 'profile' ? 6 : 8 }, (_, i) => <div key={i}><Skeleton width="32%" height={11} /><Skeleton height={46} style={{ marginTop: 8, borderRadius: 24 }} /></div>)}

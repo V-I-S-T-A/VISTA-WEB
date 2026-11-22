@@ -9,20 +9,13 @@ import { auditLogService } from "../services/auditLogService";
 import { fetchAllPages } from "../utils/fetchAllPages";
 import { auditLogParams, pageNumbers, TABLE_PAGE_SIZE } from "../utils/tablePagination";
 import ErrorNotice from "./ErrorNotice";
+import AuditActionLabel from "./AuditActionLabel";
 import {
   PageHeader, TableContainer, TableSearchBar, FilterButton, FilterPopover,
-  FilterPopoverRow, FilterSelect, FilterDateInput, ExportButton,
+  FilterPopoverRow, FilterSelect, FilterDateInput, ExportButton, ActionButton,
 } from "./index";
 import "./AdminDataTable.css";
 
-const ACTION_COLORS = {
-  login: { bg: "#dbeafe", text: "#1e40af" },
-  logout: { bg: "#f3f4f6", text: "#374151" },
-  create: { bg: "#dcfce7", text: "#166534" },
-  update: { bg: "#fef3c7", text: "#92400e" },
-  delete: { bg: "#fee2e2", text: "#991b1b" },
-  status_change: { bg: "#e9d5ff", text: "#6b21a8" },
-};
 const formatDate = value => value ? new Date(value).toLocaleString("en-US", {
   year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
 }) : "N/A";
@@ -146,7 +139,6 @@ export default function AuditLogTable({ onViewLog, includeAuthActions = false })
               : error ? <tr><td colSpan={4}><ErrorNotice message="Could not load audit logs. Please try again." onRetry={refetch} /></td></tr>
               : !logs.length ? <tr><td colSpan={4} className="p-10 text-center text-sm text-gray-500">No audit logs match your search.</td></tr>
               : logs.map(log => {
-                const color = ACTION_COLORS[log.action] || { bg: "#f3f4f6", text: "#4b5563" };
                 return <tr key={log.audit_id} className="h-16 border-b border-gray-100 last:border-b-0 hover:bg-[#f7f9ff]">
                   <td data-label="Timestamp" className="font-inter text-[13px] font-medium text-gray-700">{formatDate(log.performed_at)}</td>
                   <td data-label="User/Entity">
@@ -158,12 +150,10 @@ export default function AuditLogTable({ onViewLog, includeAuthActions = false })
                       </div>
                     </div>
                   </td>
-                  <td data-label="Action"><span className="audit-action-badge inline-flex rounded-full text-[12px] font-semibold" style={{ backgroundColor: color.bg, color: color.text }}>{String(log.action).replaceAll("_", " ").toUpperCase()}</span></td>
-                  <td data-label="Details"><button type="button" onClick={() => viewDetails(log)} disabled={!!loadingDetail}
-                    className="audit-details-button inline-flex items-center rounded border border-[#d4a000]/50 bg-[#ffe100] font-inter text-[12px] font-bold text-gray-900 hover:bg-[#e6c900] disabled:opacity-60">
-                    {loadingDetail === log.audit_id ? <Loader2 className="h-3 w-3 animate-spin" /> : <Eye className="h-3 w-3" />}
-                    VIEW DETAILS
-                  </button></td>
+                  <td data-label="Action"><AuditActionLabel action={log.action} /></td>
+                  <td data-label="Details"><ActionButton onClick={() => viewDetails(log)} disabled={!!loadingDetail}
+                    label="VIEW DETAILS" className="disabled:opacity-60"
+                    icon={loadingDetail === log.audit_id ? <Loader2 size={13} className="animate-spin" aria-hidden="true" /> : <Eye size={13} aria-hidden="true" />} /></td>
                 </tr>;
               })}
           </tbody>

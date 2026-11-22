@@ -8,10 +8,10 @@ export default function UserSummaryCards() {
   const count = key => isPending ? '…' : error ? '—' : String(data?.[key] ?? 0)
 
   const CARDS = [
-    { label: 'Total Users', value: count('total'), icon: Users, bg: 'bg-[#1a51a5]' },
-    { label: 'Staffs', value: count('staff'), icon: ShieldCheck, bg: 'bg-[#2d9f6f]' },
-    { label: 'Students', value: count('students'), icon: GraduationCap, bg: 'bg-[#3cb8a0]' },
-    { label: 'Inactive', value: count('inactive'), icon: FileClock, bg: 'bg-[#f7941d]' },
+    { label: 'Total Users', value: count('total'), icon: Users, bg: 'bg-[var(--ui-blue)]' },
+    { label: 'Staffs', value: count('staff'), icon: ShieldCheck, bg: 'bg-[var(--ui-green)]' },
+    { label: 'Students', value: count('students'), icon: GraduationCap, bg: 'bg-[var(--ui-navy)]' },
+    { label: 'Inactive', value: count('inactive'), icon: FileClock, bg: 'bg-[var(--ui-warning)]' },
   ]
 
   return (
@@ -21,18 +21,19 @@ export default function UserSummaryCards() {
         {CARDS.map(({ label, value, icon: Icon, bg }, index) => (
           <div
             key={label}
-            className={`relative overflow-hidden rounded-xl ${bg} text-white flex flex-col justify-between ${index === 0 ? 'card-full-width col-span-2' : 'col-span-1'}`}
-            style={{ padding: '16px 20px', height: '150px' }}
+            data-tone={index === 1 ? 'approved' : index > 1 ? 'muted' : 'default'}
+            className={`vista-summary-card relative overflow-hidden ${bg} text-white flex flex-col justify-between ${index === 0 ? 'card-full-width col-span-2' : 'col-span-1'}`}
+            style={{ padding: 'var(--space-5)', minHeight: '150px' }}
           >
             <p className="relative z-10 font-inter font-semibold text-white/90" style={{ fontSize: '13px' }}>
               {label}
             </p>
-            <p className="relative z-10 font-inter font-bold leading-none"
-              style={{ fontSize: index === 0 ? '72px' : '62px' }}>
+            <p data-summary-value className="relative z-10 font-inter font-bold leading-none"
+              style={{ fontSize: index === 0 ? 'clamp(40px, 4vw, 64px)' : 'clamp(36px, 3.5vw, 56px)' }}>
               {isPending ? <Skeleton width={90} height={60} /> : value}
             </p>
             <Icon
-              className="absolute text-white/20"
+              className="absolute opacity-25"
               style={{
                 right: '14px',
                 top: '50%',

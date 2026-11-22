@@ -13,6 +13,13 @@
   padding: 8px;
 }
 
+.process-attachments-summary .process-attachment-current-preview {
+  min-width: 0;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 520px) {
   .process-attachments-summary {
     padding: 14px;

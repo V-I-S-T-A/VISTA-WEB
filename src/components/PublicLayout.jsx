@@ -12,6 +12,7 @@ export default function PublicLayout() {
       : pathname === "/login" ? "login-page" : "landing-page";
 
   return <div className={`public-layout ${theme}`}>
+    <a className="vista-skip-link" href="#main-content">Skip to content</a>
     <Header />
     <PageErrorBoundary key={pathname}><Suspense fallback={<PageSkeleton />}><Outlet /></Suspense></PageErrorBoundary>
     <Footer />

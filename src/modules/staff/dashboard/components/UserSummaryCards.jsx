@@ -1,6 +1,6 @@
 import { Skeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
-import { FolderOpen, Clock, ClipboardCheck, RotateCcw } from "lucide-react";
+import DashboardIllustration from "../../../../components/DashboardIllustration";
 import { useSubmissionStatistics } from "../../../../hooks/useSubmissions";
 
 export default function SubmissionSummaryCards({
@@ -21,8 +21,7 @@ export default function SubmissionSummaryCards({
       label: "Total Submissions",
       filterValue: "All Status",
       value: total,
-      icon: FolderOpen,
-      bg: "bg-[#1a51a5]",
+      bg: "bg-[var(--ui-blue)]",
       badgeBg: "bg-white/15",
     },
     {
@@ -30,8 +29,7 @@ export default function SubmissionSummaryCards({
       label: "In Process",
       filterValue: "Process",
       value: processCount,
-      icon: Clock,
-      bg: "bg-[#FDC849]",
+      bg: "bg-[var(--ui-yellow)]",
       badgeBg: "bg-black/10",
     },
     {
@@ -39,8 +37,7 @@ export default function SubmissionSummaryCards({
       label: "Approved",
       filterValue: "Approved",
       value: approvedCount,
-      icon: ClipboardCheck,
-      bg: "bg-[#2d9f6f]",
+      bg: "bg-[#52B764]",
       badgeBg: "bg-black/10",
     },
     {
@@ -48,8 +45,7 @@ export default function SubmissionSummaryCards({
       label: "Returned",
       filterValue: "Returned",
       value: returnedCount,
-      icon: RotateCcw,
-      bg: "bg-[#dc2626]",
+      bg: "bg-[var(--ui-danger)]",
       badgeBg: "bg-white/15",
     },
   ];
@@ -69,18 +65,21 @@ export default function SubmissionSummaryCards({
         className="summary-cards-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
         style={{ gap: "16px" }}
       >
-        {cards.map(({ label, filterValue, value, icon: Icon, bg, badgeBg }) => {
+        {cards.map(({ id, label, filterValue, value, bg }) => {
           const isFilterActive =
             selectedStatus === filterValue && filterValue !== "All Status";
 
           return (
-            <div
+            <button data-ui="toggle"
+              type="button"
               key={label}
+              data-tone={id}
+              aria-pressed={isFilterActive}
               onClick={() => handleCardClick(filterValue)}
-              className={`relative rounded-2xl ${bg} text-white flex flex-col justify-between shadow-sm hover:shadow-md transition-all cursor-pointer ${
+              className={`vista-summary-card relative ${bg} text-white flex flex-col justify-between shadow-sm hover:shadow-md transition-shadow cursor-pointer ${
                 isFilterActive ? "ring-4 ring-offset-2 ring-blue-500" : ""
               }`}
-              style={{ padding: "20px 22px", height: "130px" }}
+              style={{ padding: "var(--space-5)", minHeight: "140px" }}
               title={`Click to filter submissions by ${label}`}
             >
               <p
@@ -90,7 +89,7 @@ export default function SubmissionSummaryCards({
                 {label}
               </p>
               <div className="flex items-end justify-between">
-                <p
+                <p data-summary-value
                   className="font-inter font-bold leading-none"
                   style={{ fontSize: "44px" }}
                 >
@@ -98,17 +97,9 @@ export default function SubmissionSummaryCards({
                     ? <Skeleton width={72} height={40} />
                     : value.toString()}
                 </p>
-                <span
-                  className={`flex items-center justify-center rounded-xl ${badgeBg}`}
-                  style={{ width: "44px", height: "44px" }}
-                >
-                  <Icon
-                    style={{ width: "22px", height: "22px" }}
-                    aria-hidden="true"
-                  />
-                </span>
+                <DashboardIllustration kind={id === 'all' ? 'total' : id} />
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

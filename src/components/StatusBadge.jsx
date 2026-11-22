@@ -10,7 +10,7 @@ import { memo } from "react";
  *  - isActive {boolean} — whether the entity is active
  */
 const STATUS_CONFIG = {
-  true: { dot: "#22c55e", text: "#16a34a", label: "Active" },
+  true: { dot: "#22c55e", text: "#15803d", label: "Active" },
   false: { dot: "#9ca3af", text: "#6b7280", label: "Inactive" },
 };
 

@@ -1,7 +1,9 @@
 import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useLocation, useParams } from "react-router-dom";
+import ErrorNotice from "../../components/ErrorNotice";
+import { getLoginRedirectPath, getSafeStaffSubmissionTarget } from "../../utils/redirectTarget";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
 import SystemSubmissionsPanel from "./review-panel/components/SystemSubmissionsPanel";
@@ -12,25 +14,37 @@ import { useSidebar } from "../../hooks/useSidebar";
 export default function ReviewPanel() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { submissionId } = useParams();
   const { data: currentUser, isLoading } = useCurrentUser();
-  const [selection, setSelection] = useState({ key: location.key, submission: location.state?.submission || null });
-  // The same mounted review page can receive another notification selection.
-  const selectedSubmission = selection.key === location.key ? selection.submission : location.state?.submission || null;
-  const setSelectedSubmission = submission => setSelection({ key: location.key, submission });
+  const legacySubmission = location.state?.submission;
+  const selectedSubmission = submissionId
+    ? (legacySubmission?.id === submissionId ? legacySubmission : { id: submissionId })
+    : legacySubmission || null;
+  const selectedId = submissionId || legacySubmission?.id;
+  const validTarget = !selectedId || Boolean(getSafeStaffSubmissionTarget(`/staff/review-panel/${selectedId}`));
+  const openSubmission = submission => {
+    if (submission?.id) navigate(`/staff/review-panel/${encodeURIComponent(submission.id)}`, { state: { submission } });
+  };
   const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {
     if (!isLoading && !currentUser) {
-      navigate("/login");
+      navigate(getLoginRedirectPath(`${location.pathname}${location.search}`), { replace: true });
     }
     if (!isLoading && currentUser && currentUser.role !== "staff") {
       if (currentUser.role === "admin") navigate("/admin/dashboard");
       else navigate("/login");
     }
-  }, [isLoading, currentUser, navigate]);
+  }, [isLoading, currentUser, location.pathname, location.search, navigate]);
+
+  useEffect(() => {
+    if (!submissionId && legacySubmission?.id && currentUser?.role === "staff") {
+      navigate(`/staff/review-panel/${encodeURIComponent(legacySubmission.id)}`, { replace: true, state: location.state });
+    }
+  }, [submissionId, legacySubmission?.id, currentUser?.role, navigate, location.state]);
 
 
-  if (isLoading) return <PageSkeleton />;
+  if (isLoading || !currentUser || currentUser.role !== "staff") return <PageSkeleton />;
 
   return (
     <div className="flex min-h-screen bg-white">
@@ -56,31 +70,26 @@ export default function ReviewPanel() {
             <div style={{ marginBottom: '20px' }}>
               <h2
                 className="font-inter font-bold text-[#142d55]"
-                style={{ fontSize: '26px', lineHeight: 1.15 }}
+                style={{ fontSize: "var(--type-title)", lineHeight: 1.2 }}
               >
                 Review Panel
               </h2>
               <p
                 className="font-inter text-gray-500 mt-0.5"
-                style={{ fontSize: '13px' }}
+                style={{ fontSize: "var(--type-body)" }}
               >
                 Updating of submitted document status.
               </p>
             </div>
 
-            {selectedSubmission ? (
+            {!validTarget ? <div><ErrorNotice message="This submission link is invalid." /><button data-ui="secondary" onClick={() => navigate('/staff/review-panel')}>Return to Review Panel</button></div> : selectedSubmission ? (
               <SubmissionReviewDetails
                 key={selectedSubmission.id}
                 submission={selectedSubmission}
-                onBack={() => {
-                  setSelectedSubmission(null);
-                  if (location.state?.submission) {
-                    window.history.replaceState({}, document.title);
-                  }
-                }}
+                onBack={() => navigate('/staff/review-panel')}
               />
             ) : (
-              <SystemSubmissionsPanel onViewReview={setSelectedSubmission} />
+              <SystemSubmissionsPanel onViewReview={openSubmission} />
             )}
             <SystemScopeBanner />
           </div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCurrentUser } from "../hooks/useAuth";
@@ -11,7 +11,6 @@ export default function StaffNotificationToasts() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { showToast } = useToast();
-  const [toast, setToast] = useState(null);
   const seen = useRef(new Set());
   const initialized = useRef(false);
   const sessionStarted = useRef(0);
@@ -48,50 +47,42 @@ export default function StaffNotificationToasts() {
       return user?.role === "staff" && unseen && notification.type === "review_reply_created" && !notification.is_read &&
         new Date(notification.created_at).getTime() >= sessionStarted.current && !document.hidden;
     });
-    if (item) setToast({ ...item, _accountId: user.user_id });
-  }, [data, enabled, user?.role, user?.user_id]);
-
-  const open = async () => {
-    const item = toast;
-    const isCurrent = () => String(tokenClaims(localStorage.getItem("access_token") || "").user_id) === String(item._accountId);
-    let submission;
-    try {
-      submission = await notificationService.getStaffReviewSubmission(item.submission_id);
-    } catch {
-      if (isCurrent()) showToast("This submission is unavailable or you no longer have access.", "error");
-      return;
-    }
-    if (!isCurrent()) return;
-    setToast(null);
-    try {
-      await notificationService.markAsRead(item.notification_id);
-      queryClient.invalidateQueries({ queryKey });
-    } catch { /* Keep navigation available if the read request temporarily fails. */ }
-    if (user.role === "staff") {
+    if (!item) return;
+    const accountId = user.user_id;
+    const open = async () => {
+      const isCurrent = () => String(tokenClaims(localStorage.getItem("access_token") || "").user_id) === String(accountId);
+      let submission;
+      try {
+        submission = await notificationService.getStaffReviewSubmission(item.submission_id);
+      } catch {
+        if (isCurrent()) showToast("This submission is unavailable or you no longer have access.", "error");
+        return;
+      }
       if (!isCurrent()) return;
-      navigate("/staff/review-panel", { state: { submission, notificationId: item.notification_id } });
-    } else {
-      navigate("/admin/dashboard");
-    }
-  };
+      try {
+        await notificationService.markAsRead(item.notification_id);
+        queryClient.invalidateQueries({ queryKey: ["notifications", accountId] });
+      } catch { /* Keep navigation available if the read request temporarily fails. */ }
+      if (user.role === "staff") {
+        if (!isCurrent()) return;
+        navigate("/staff/review-panel", { state: { submission, notificationId: item.notification_id } });
+      } else {
+        navigate("/admin/dashboard");
+      }
+    };
 
-  useEffect(() => {
-    if (!toast || toast._accountId !== user?.user_id) return;
-    showToast(toast.message || "A student replied to your review.", "success", 8000, {
+    showToast(item.message || "A student replied to your review.", "success", 8000, {
       scope: `notifications:${user.user_id}`,
       variant: "reply",
-      actorName: toast.actor_name,
-      actorImageUrl: toast.actor_image_url,
-      submissionTitle: toast.submission_title,
+      actorName: item.actor_name,
+      actorImageUrl: item.actor_image_url,
+      submissionTitle: item.submission_title,
       headline: "replied to your review",
-      detail: toast.message,
+      detail: item.message,
       actionLabel: "View conversation",
       onClick: open,
     });
-    setToast(null);
-  }, [toast, user?.user_id, showToast, open]);
-
-  if (!enabled || toast?._accountId !== user?.user_id) return null;
+  }, [data, enabled, user?.role, user?.user_id, queryClient, navigate, showToast]);
 
   return null;
 }

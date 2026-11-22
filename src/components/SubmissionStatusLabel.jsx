@@ -10,19 +10,10 @@
  * Props:
  *  - status {string} — raw submission status string from the API
  */
-const STATUS_CONFIG = {
-  pending: { label: "New", color: "#1d4ed8" },
-  under_review: { label: "Reviewing", color: "#b45309" },
-  approved: { label: "Verified", color: "#15803d" },
-  rejected: { label: "Flagged", color: "#b91c1c" },
-  resubmission_required: { label: "Resubmission Required", color: "#6d28d9" },
-};
+import { getSubmissionPresentation } from '../config/submissionPresentation';
 
 export default function SubmissionStatusLabel({ status }) {
-  const config = STATUS_CONFIG[status] ?? {
-    label: status || "Unknown",
-    color: "#6b7280",
-  };
+  const config = getSubmissionPresentation(status);
   return (
     <span
       className="inline-flex items-center gap-1.5 font-inter font-bold whitespace-nowrap"

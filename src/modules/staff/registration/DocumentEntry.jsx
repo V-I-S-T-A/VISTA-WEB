@@ -242,8 +242,10 @@ export default function DocumentEntry() {
       submitted_by_name: selectedUser
         ? `${selectedUser.first_name} ${selectedUser.last_name}`
         : "Unknown",
+      submitted_by_image_url: selectedUser?.image_url,
       doc_type_name: selectedDocType?.name || "Unknown",
       org_name: organizations.find(item => String(item.org_id) === String(formData.org_id))?.name || "Unknown",
+      org_image_url: organizations.find(item => String(item.org_id) === String(formData.org_id))?.image_url,
       academic_year: academicYears.find(item => String(item.academic_year_id) === String(formData.academic_year_id))?.year || "Unknown",
       category_name: categories.find(item => String(item.category_id) === String(formData.category_id))?.name || "Unknown",
       title: formData.title,
@@ -304,12 +306,12 @@ export default function DocumentEntry() {
   const selectStyle = (fieldValue) => ({
     width: "100%",
     border: "1.5px solid #d1d5db",
-    borderRadius: "8px",
+    borderRadius: "var(--radius-field)",
     padding: "9px 13px",
     fontSize: "13px",
-    fontFamily: "Inter, sans-serif",
+    fontFamily: "var(--font-body)",
     color: fieldValue ? "#111827" : "#9ca3af",
-    backgroundColor: "#fff",
+    backgroundColor: "var(--ui-field)",
     outline: "none",
     appearance: "none",
     cursor: "pointer",
@@ -345,7 +347,7 @@ export default function DocumentEntry() {
               >
                 <DocumentEntryHeader />
                 {!loadingDropdowns && activeView === "form" && (
-                  <ActionButton
+                  <ActionButton aria-busy={Boolean(isSubmitting)} variant="secondary"
                     onClick={handleRedo}
                     label="Redo"
                     icon={<RotateCcw size={13} aria-hidden="true" />}
@@ -354,7 +356,7 @@ export default function DocumentEntry() {
                     style={{
                       fontSize: "13px",
                       padding: "8px 14px",
-                      borderRadius: "8px",
+                      borderRadius: "var(--radius-chip)",
                       marginBottom: "20px",
                       cursor: isSubmitting ? "not-allowed" : "pointer",
                     }}
@@ -370,7 +372,7 @@ export default function DocumentEntry() {
                   <div className="registration-form-card"
                     style={{
                       border: "1.5px solid #e5e7eb",
-                      borderRadius: "12px",
+                      borderRadius: "var(--radius-card)",
                       padding: "28px 28px 20px",
                       marginBottom: "24px",
                     }}
@@ -583,12 +585,12 @@ export default function DocumentEntry() {
                         style={{
                           width: "100%",
                           border: "1.5px solid #d1d5db",
-                          borderRadius: "8px",
+                          borderRadius: "var(--radius-field)",
                           padding: "9px 13px",
                           fontSize: "13px",
-                          fontFamily: "Inter, sans-serif",
+                          fontFamily: "var(--font-body)",
                           color: "#111827",
-                          backgroundColor: "#fff",
+                          backgroundColor: "var(--ui-surface)",
                           outline: "none",
                         }}
                       />
@@ -603,7 +605,7 @@ export default function DocumentEntry() {
                           padding: "12px 16px",
                           backgroundColor: "#eef2fa",
                           border: "1px solid #d1d5db",
-                          borderRadius: "8px",
+                          borderRadius: "var(--radius-chip)",
                           marginBottom: "20px",
                         }}
                       >

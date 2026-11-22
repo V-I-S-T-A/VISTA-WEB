@@ -44,11 +44,11 @@ export default function UserManagementHeader() {
         title="User Management"
         subtitle="Manage institutional access, roles, and security permissions."
       >
-        <button
+        <button data-ui="primary"
           type="button"
           onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-1.5 rounded border border-gray-800 bg-[#ffe100] font-inter font-bold text-black transition-colors hover:bg-[#e6c900]"
-          style={{ fontSize: "12px", padding: "8px 14px", marginTop: "2px" }}
+          className="inline-flex items-center gap-1.5 border font-inter font-bold transition-colors"
+          style={{ marginTop: "2px" }}
         >
           <Plus
             style={{ width: "13px", height: "13px" }}

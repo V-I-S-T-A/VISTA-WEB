@@ -1,3 +1,5 @@
+import FormField from "../../../../components/FormField";
+import DialogLayer from "../../../../components/DialogLayer";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useEffect, useRef, useState } from 'react'
 import { X, Building2, ImagePlus, Trash2 } from 'lucide-react'
@@ -5,7 +7,7 @@ import { X, Building2, ImagePlus, Trash2 } from 'lucide-react'
 const FIELD_STYLES = {
     label: {
         display: 'block',
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: "var(--font-body)",
         fontSize: '12px',
         fontWeight: '600',
         color: '#374151',
@@ -14,12 +16,12 @@ const FIELD_STYLES = {
     input: {
         width: '100%',
         border: '1.5px solid #d1d5db',
-        borderRadius: '8px',
+        borderRadius: "var(--radius-field)",
         padding: '9px 13px',
         fontSize: '13px',
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: "var(--font-body)",
         color: '#111827',
-        backgroundColor: '#fff',
+        backgroundColor: "var(--ui-field)",
         outline: 'none',
         boxSizing: 'border-box',
         transition: 'border-color 0.15s',
@@ -31,18 +33,12 @@ const FIELD_STYLES = {
         fontSize: '11px',
         color: '#dc2626',
         marginTop: '3px',
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: "var(--font-body)",
     },
 }
 
-function Field({ label, error, children }) {
-    return (
-        <div>
-            <label style={FIELD_STYLES.label}>{label}</label>
-            {children}
-            {error && <p style={FIELD_STYLES.error}>{error}</p>}
-        </div>
-    )
+function Field({ label, error, children, htmlFor }) {
+  return <FormField label={label} error={error} htmlFor={htmlFor} labelStyle={FIELD_STYLES.label} errorStyle={FIELD_STYLES.error}>{children}</FormField>;
 }
 
 function FocusInput({ style, ...props }) {
@@ -77,7 +73,7 @@ function PhotoDropzone({ preview, error, onSelect, onRemove, disabled }) {
                         alignItems: 'center',
                         gap: '12px',
                         border: '1.5px solid #d1d5db',
-                        borderRadius: '8px',
+                        borderRadius: "var(--radius-chip)",
                         padding: '10px',
                     }}
                 >
@@ -87,38 +83,26 @@ function PhotoDropzone({ preview, error, onSelect, onRemove, disabled }) {
                         style={{
                             width: '56px',
                             height: '56px',
-                            borderRadius: '8px',
+                            borderRadius: "var(--radius-chip)",
                             objectFit: 'cover',
                             flexShrink: 0,
                             border: '1px solid #e5e7eb',
                         }}
                     />
                     <div style={{ flex: 1, minWidth: 0 }}>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                        <p style={{ fontFamily: "var(--font-body)", fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>
                             Photo selected
                         </p>
-                        <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6b7280', margin: '2px 0 0' }}>
+                        <p style={{ fontFamily: "var(--font-body)", fontSize: '11px', color: "var(--ui-muted)", margin: '2px 0 0' }}>
                             Click remove to choose a different photo.
                         </p>
                     </div>
-                    <button
+                    <button data-ui="destructive"
                         type="button"
                         onClick={onRemove}
                         disabled={disabled}
                         aria-label="Remove photo"
-                        style={{
-                            background: '#fee2e2',
-                            border: 'none',
-                            borderRadius: '7px',
-                            width: '30px',
-                            height: '30px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            cursor: disabled ? 'not-allowed' : 'pointer',
-                            color: '#dc2626',
-                            flexShrink: 0,
-                        }}
+                        style={{ width: '30px', height: '30px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: disabled ? 'not-allowed' : 'pointer', flexShrink: 0 }}
                     >
                         <Trash2 style={{ width: '14px', height: '14px' }} />
                     </button>
@@ -140,7 +124,7 @@ function PhotoDropzone({ preview, error, onSelect, onRemove, disabled }) {
                     }}
                     style={{
                         border: `1.5px dashed ${error ? '#dc2626' : dragOver ? '#1f5cae' : '#d1d5db'}`,
-                        borderRadius: '8px',
+                        borderRadius: "var(--radius-chip)",
                         padding: '18px',
                         display: 'flex',
                         flexDirection: 'column',
@@ -153,10 +137,10 @@ function PhotoDropzone({ preview, error, onSelect, onRemove, disabled }) {
                     }}
                 >
                     <ImagePlus style={{ width: '20px', height: '20px', color: '#9ca3af' }} />
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                    <p style={{ fontFamily: "var(--font-body)", fontSize: '12px', fontWeight: '600', color: '#374151', margin: 0 }}>
                         Click to upload or drag and drop
                     </p>
-                    <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#9ca3af', margin: 0 }}>
+                    <p style={{ fontFamily: "var(--font-body)", fontSize: '11px', color: '#9ca3af', margin: 0 }}>
                         PNG, JPG up to a few MB
                     </p>
                 </div>
@@ -193,14 +177,20 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
     const overlayRef = useRef(null)
     const firstInputRef = useRef(null)
 
-    useEffect(() => {
+    const [previousOpen, setPreviousOpen] = useState(null)
+    if (previousOpen !== isOpen) {
+        setPreviousOpen(isOpen)
         if (isOpen) {
             setForm(EMPTY_FORM)
             setErrors({})
             setPhoto(null)
             setPhotoPreview(null)
-            setTimeout(() => firstInputRef.current?.focus(), 50)
         }
+    }
+    useEffect(() => {
+        if (!isOpen) return
+        const timer = setTimeout(() => firstInputRef.current?.focus(), 50)
+        return () => clearTimeout(timer)
     }, [isOpen])
 
     // Revoke the local object URL on unmount / replacement to avoid leaking
@@ -231,11 +221,6 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
 
     useEffect(() => {
         if (!isOpen) return
-        function onKey(e) {
-            if (e.key === 'Escape') onClose()
-        }
-        document.addEventListener('keydown', onKey)
-        return () => document.removeEventListener('keydown', onKey)
     }, [isOpen, onClose])
 
     function set(field, value) {
@@ -275,7 +260,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
     if (!isOpen) return null
 
     return (
-        <div
+        <DialogLayer aria-labelledby="add-org-title" label={"Add organization"} onDismiss={onClose} dismissDisabled={saving || isLoading}
             ref={overlayRef}
             style={{
                 position: 'fixed',
@@ -288,26 +273,27 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                 padding: '16px',
             }}
         >
-            <div
+            <div className="vista-surface"
                 style={{
-                    background: '#fff',
-                    borderRadius: '14px',
+                    background: "var(--ui-surface)",
+                    borderRadius: "var(--radius-dialog)",
                     width: '100%',
                     maxWidth: '520px',
                     boxShadow: '0 20px 60px rgba(0,0,0,0.18)',
                     overflow: 'hidden',
                     display: 'flex',
                     flexDirection: 'column',
-                    maxHeight: '90vh',
+                    maxHeight: "min(90vh, calc(100dvh - 32px))",
+                  overflowY: "auto",
                 }}
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="add-org-title"
+
+
+
             >
                 {/* Header */}
-                <div
+                <div className="vista-modal-heading"
                     style={{
-                        background: '#22c55e', // Green for Add Org
+                        background: 'var(--ui-surface)', // Green for Add Org
                         padding: '18px 24px',
                         display: 'flex',
                         alignItems: 'center',
@@ -316,27 +302,15 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                     }}
                 >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                        <div
-                            style={{
-                                background: 'rgba(255,255,255,0.2)',
-                                borderRadius: '8px',
-                                width: '34px',
-                                height: '34px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                            }}
-                        >
-                            <Building2 style={{ width: '16px', height: '16px', color: '#fff' }} />
-                        </div>
+                        <span className="vista-plain-icon"><Building2 style={{ width: '16px', height: '16px', color: "var(--ui-navy)" }} /></span>
                         <div>
                             <h2
                                 id="add-org-title"
                                 style={{
-                                    fontFamily: 'Inter, sans-serif',
+                                    fontFamily: "var(--font-body)",
                                     fontSize: '16px',
                                     fontWeight: '700',
-                                    color: '#fff',
+                                    color: "var(--ui-navy)",
                                     margin: 0,
                                 }}
                             >
@@ -344,9 +318,9 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                             </h2>
                             <p
                                 style={{
-                                    fontFamily: 'Inter, sans-serif',
+                                    fontFamily: "var(--font-body)",
                                     fontSize: '12px',
-                                    color: 'rgba(255,255,255,0.85)',
+                                    color: "var(--ui-muted)",
                                     margin: 0,
                                 }}
                             >
@@ -354,21 +328,21 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                             </p>
                         </div>
                     </div>
-                    <button
+                    <button aria-busy={Boolean(saving || isLoading)} data-ui="icon"
                         type="button"
                         onClick={onClose}
                         disabled={saving || isLoading}
                         style={{
-                            background: 'rgba(255,255,255,0.2)',
+                            background: "var(--ui-selected)",
                             border: 'none',
-                            borderRadius: '7px',
+                            borderRadius: "var(--radius-control)",
                             width: '30px',
                             height: '30px',
                             cursor: saving || isLoading ? 'not-allowed' : 'pointer',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
-                            color: '#fff',
+                            color: "var(--ui-navy)",
                             opacity: saving || isLoading ? 0.5 : 1,
                         }}
                         aria-label="Close modal"
@@ -384,7 +358,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                         <div style={{
                             background: '#fee2e2',
                             border: '1px solid #fecaca',
-                            borderRadius: '8px',
+                            borderRadius: "var(--radius-chip)",
                             padding: '12px',
                             fontSize: '13px',
                             color: '#991b1b',
@@ -446,19 +420,19 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                             justifyContent: 'space-between',
                             background: '#f8f9fc',
                             border: '1.5px solid #e5e7eb',
-                            borderRadius: '8px',
+                            borderRadius: "var(--radius-chip)",
                             padding: '12px 14px',
                         }}
                     >
                         <div>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '13px', fontWeight: '600', color: '#374151', margin: 0 }}>
+                            <p style={{ fontFamily: "var(--font-body)", fontSize: '13px', fontWeight: '600', color: '#374151', margin: 0 }}>
                                 Organization Status
                             </p>
-                            <p style={{ fontFamily: 'Inter, sans-serif', fontSize: '11px', color: '#6b7280', margin: '2px 0 0' }}>
+                            <p style={{ fontFamily: "var(--font-body)", fontSize: '11px', color: "var(--ui-muted)", margin: '2px 0 0' }}>
                                 {form.isActive ? 'Organization is active and visible.' : 'Organization is inactive.'}
                             </p>
                         </div>
-                        <button
+                        <button aria-label="Account status" aria-busy={Boolean(saving || isLoading)} data-ui="toggle"
                             type="button"
                             role="switch"
                             aria-checked={form.isActive}
@@ -485,7 +459,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                                     width: '18px',
                                     height: '18px',
                                     borderRadius: '50%',
-                                    background: '#fff',
+                                    background: "var(--ui-surface)",
                                     transition: 'left 0.2s',
                                     boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
                                 }}
@@ -506,51 +480,25 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
                         background: '#f9fafb',
                     }}
                 >
-                    <button
+                    <button aria-busy={Boolean(saving || isLoading)} data-ui="secondary"
                         type="button"
                         onClick={onClose}
                         disabled={saving || isLoading}
-                        style={{
-                            fontFamily: 'Inter, sans-serif',
-                            fontSize: '13px',
-                            fontWeight: '600',
-                            color: '#374151',
-                            background: '#fff',
-                            border: '1.5px solid #d1d5db',
-                            borderRadius: '8px',
-                            padding: '8px 18px',
-                            cursor: saving || isLoading ? 'not-allowed' : 'pointer',
-                            transition: 'background 0.15s',
-                            opacity: saving || isLoading ? 0.5 : 1,
-                        }}
+                        style={{ cursor: saving || isLoading ? 'not-allowed' : 'pointer', opacity: saving || isLoading ? 0.5 : 1 }}
                     >
                         Cancel
                     </button>
-                    <button
+                    <button aria-busy={Boolean(saving || isLoading)} data-ui="primary"
                         type="button"
                         onClick={handleSave}
                         disabled={saving || isLoading}
-                        style={{
-                            fontFamily: 'Inter, sans-serif',
-                            fontSize: '13px',
-                            fontWeight: '700',
-                            color: '#fff',
-                            background: saving || isLoading ? '#16a34a' : '#22c55e',
-                            border: '1.5px solid #16a34a',
-                            borderRadius: '8px',
-                            padding: '8px 20px',
-                            cursor: saving || isLoading ? 'not-allowed' : 'pointer',
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            transition: 'background 0.15s',
-                        }}
+                        style={{ cursor: saving || isLoading ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', gap: '6px' }}
                     >
                         <Building2 style={{ width: '13px', height: '13px' }} />
                         {saving || isLoading ? 'Saving...' : 'Add Org'}
                     </button>
                 </div>
             </div>
-        </div>
+        </DialogLayer>
     )
 }

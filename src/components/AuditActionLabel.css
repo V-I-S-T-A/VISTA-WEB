@@ -1,0 +1,2 @@
+.audit-action-label { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-body); font-size: 12px; line-height: 1.5; font-weight: 600; background: transparent; }
+.audit-action-label > span { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; }

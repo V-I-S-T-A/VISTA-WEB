@@ -107,7 +107,7 @@ export default function VistaSelect({ children, value, onChange, disabled = fals
   }
 
   return <>
-    <button {...props} ref={trigger} id={id} type="button" disabled={disabled} role="combobox"
+    <button data-ui="toggle" {...props} ref={trigger} id={id} type="button" disabled={disabled} role="combobox"
       aria-label={label} aria-haspopup="listbox" aria-expanded={open} aria-controls={open ? listId : undefined}
       aria-activedescendant={open ? `${listId}-${activeIndex}` : undefined}
       className={`vista-select-trigger ${className}`} style={style}
@@ -124,7 +124,7 @@ export default function VistaSelect({ children, value, onChange, disabled = fals
     </button>
     {open && placement && createPortal(<div ref={panel} id={listId} role="listbox" aria-label={label || "Options"}
       className="vista-select-panel" style={placement}>
-      {options.map((option, index) => <button type="button" role="option" tabIndex={-1}
+      {options.map((option, index) => <button data-ui="toggle" type="button" role="option" tabIndex={-1}
         id={`${listId}-${index}`} key={`${option.value}-${index}`} disabled={option.disabled}
         aria-selected={index === selectedIndex} data-active={index === activeIndex}
         className="vista-select-option" onMouseEnter={() => setActiveIndex(index)}

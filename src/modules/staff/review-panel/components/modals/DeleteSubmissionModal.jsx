@@ -85,10 +85,10 @@ function DeleteSubmissionModalContent({
             style={{
               padding: "10px 12px",
               border: "1px solid #fecaca",
-              borderRadius: "8px",
+              borderRadius: "var(--radius-chip)",
               background: "#fef2f2",
               color: "#991b1b",
-              fontFamily: "Inter, sans-serif",
+              fontFamily: "var(--font-body)",
               fontSize: "13px",
               lineHeight: 1.45,
             }}
@@ -101,19 +101,19 @@ function DeleteSubmissionModalContent({
           style={{
             padding: "14px 16px",
             border: "1px solid #dbe5ef",
-            borderRadius: "10px",
+            borderRadius: "var(--radius-chip)",
             background: "#f7faff",
           }}
         >
           <p style={eyebrowStyle}>SUBMISSION</p>
-          <p style={{ ...bodyTextStyle, marginTop: "5px", fontWeight: 700, color: "#142d55" }}>
+          <p style={{ ...bodyTextStyle, marginTop: "5px", fontWeight: 700, color: "var(--ui-text)" }}>
             {title}
           </p>
           <p
             style={{
               ...bodyTextStyle,
               marginTop: "5px",
-              color: "#6b7280",
+              color: "var(--ui-muted)",
               fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
               fontSize: "11px",
               overflowWrap: "anywhere",
@@ -139,10 +139,10 @@ function DeleteSubmissionModalContent({
                     gap: "10px",
                     padding: "9px 12px",
                     border: `1px solid ${selected ? "#7da7d8" : "#d1d5db"}`,
-                    borderRadius: "8px",
+                    borderRadius: "var(--radius-chip)",
                     background: selected ? "#f0f6ff" : "#ffffff",
                     color: "#374151",
-                    fontFamily: "Inter, sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: "13px",
                     cursor: isDeleting ? "not-allowed" : "pointer",
                   }}
@@ -201,7 +201,7 @@ function DeleteSubmissionModalContent({
 const eyebrowStyle = {
   margin: 0,
   color: "#6b7280",
-  fontFamily: "Inter, sans-serif",
+  fontFamily: "var(--font-body)",
   fontSize: "11px",
   fontWeight: 700,
   letterSpacing: ".08em",
@@ -211,7 +211,7 @@ const eyebrowStyle = {
 const bodyTextStyle = {
   margin: 0,
   color: "#374151",
-  fontFamily: "Inter, sans-serif",
+  fontFamily: "var(--font-body)",
   fontSize: "13px",
   lineHeight: 1.45,
 };
@@ -220,7 +220,7 @@ const fieldLabelStyle = {
   display: "block",
   marginBottom: "6px",
   color: "#374151",
-  fontFamily: "Inter, sans-serif",
+  fontFamily: "var(--font-body)",
   fontSize: "12px",
   fontWeight: 600,
 };
@@ -231,10 +231,10 @@ const inputStyle = {
   width: "100%",
   padding: "9px 11px",
   border: "1px solid #cbd5e1",
-  borderRadius: "8px",
+  borderRadius: "var(--radius-field)",
   backgroundColor: "#ffffff",
   color: "#1f2937",
-  fontFamily: "Inter, sans-serif",
+  fontFamily: "var(--font-body)",
   fontSize: "13px",
   outlineColor: "#1f5cae",
 };

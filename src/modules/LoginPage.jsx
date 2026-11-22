@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { CircleAlert, Eye, EyeOff } from "lucide-react";
 import backgroundImage from "../assets/shared/vista_background.webp";
@@ -61,27 +61,19 @@ function getStoredPassword(email) {
 }
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [rememberedAccount] = useState(() => {
+    const email = localStorage.getItem(LAST_EMAIL_KEY);
+    const password = email ? getStoredPassword(email) : null;
+    return password !== null ? { email, password } : null;
+  });
+  const [email, setEmail] = useState(rememberedAccount?.email || "");
+  const [password, setPassword] = useState(rememberedAccount?.password || "");
   const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
+  const [remember, setRemember] = useState(Boolean(rememberedAccount));
   const [loginError, setLoginError] = useState("");
   const navigate = useNavigate();
   const location = useLocation();
   const loginMutation = useLogin();
-
-  // Load last remembered account on this device on mount
-  useEffect(() => {
-    const lastEmail = localStorage.getItem(LAST_EMAIL_KEY);
-    if (lastEmail) {
-      const savedPass = getStoredPassword(lastEmail);
-      if (savedPass !== null) {
-        setEmail(lastEmail);
-        setPassword(savedPass);
-        setRemember(true);
-      }
-    }
-  }, []);
 
   // Dynamically check if entered/selected email has remembered password on this device
   function handleEmailChange(newEmail) {
@@ -128,7 +120,7 @@ export default function LoginPage() {
   }
 
   return (
-      <main className="login-main">
+      <main id="main-content" className="login-main">
         <div
           className="login-hero"
           style={{ backgroundImage: `url(${backgroundImage})` }}
@@ -192,14 +184,14 @@ export default function LoginPage() {
                     autoComplete="current-password"
                     style={{ paddingRight: "42px" }}
                   />
-                  <button
+                  <button data-ui="icon"
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
                     className="login-password-toggle"
                     aria-label={
                       showPassword ? "Hide password" : "Show password"
                     }
-                    tabIndex={-1}
+                    aria-pressed={showPassword}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -215,8 +207,8 @@ export default function LoginPage() {
                 Remember me
               </label>
 
-              <button type="submit" className="login-submit">
-                SIGN IN
+              <button data-ui="primary" type="submit" className="login-submit">
+                Sign in
               </button>
             </form>
           </div>
