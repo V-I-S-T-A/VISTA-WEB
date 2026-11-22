@@ -45,6 +45,15 @@ test('draft card preserves review details, attachment preview and confirmation g
         assert.ok(card.width<=720 && card.height<500, `draft card stays compact: ${JSON.stringify(card)}`);
       }
       assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false, 'long filenames stay inside the viewport');
+      if (width === 360) await click('.submission-pass__details-toggle');
+      assert.equal(await evaluate(`document.querySelector('.submission-pass__contact-name').textContent`), 'Fictional Submitter');
+      assert.equal(await evaluate(`document.querySelector('.submission-pass__contact-email').textContent`), 'student@example.test', 'draft preview shows the selected submitter email');
+      assert.ok(await evaluate(`document.querySelector('.submission-pass__contact-email').getBoundingClientRect().height > 0`), 'email is visible in the contact details');
+      await click('#toggle-email');
+      assert.equal(await evaluate(`document.querySelector('.submission-pass__contact-email')`), null, 'missing email never displays an undefined or invented address');
+      assert.equal(await evaluate(`document.querySelector('.submission-pass__contact-text').textContent`), 'Fictional Submitter');
+      await click('#toggle-email');
+      if (width === 360) await click('.submission-pass__details-toggle');
       const colors = await evaluate(`[...document.querySelectorAll('.filter-btn,.export-btn')].map(e=>({bg:getComputedStyle(e).backgroundColor,ink:getComputedStyle(e).color,icon:getComputedStyle(e.querySelector('svg')).color}))`);
       for (const color of colors) assert.deepEqual(color, { bg: 'rgb(26, 89, 165)', ink: 'rgb(255, 255, 255)', icon: 'rgb(255, 255, 255)' });
       assert.equal(await evaluate(`getComputedStyle(document.querySelector('input[type=search]')).borderTopColor`), 'rgb(137, 155, 177)', 'search border is visible before focus');

@@ -92,10 +92,10 @@ export default function SubmissionPass({
               <p className="submission-pass__label">{preview ? "Submitted by" : "Submitter Contact"}</p>
               <div className="submission-pass__value submission-pass__contact-value">
                 <PassAvatar key={avatarUrl || "submitter"} src={avatarUrl} alt={`${submitterName || "Submitter"} profile`} loading={loading || submitterLoading} className="submission-pass__contact-avatar" />
-                <span className="submission-pass__contact-text">{field(preview ? submitterName || "Unknown" : submitterEmail ? <>
+                <span className="submission-pass__contact-text">{field(submitterEmail ? <>
                   <span className="submission-pass__contact-name">{submitterName || "Original submitter"}</span>
                   <span className="submission-pass__contact-email">{submitterEmail}</span>
-                </> : submitterName || submission.contactEmail, 180)}</span>
+                </> : preview ? submitterName || "Unknown" : submitterName || submission.contactEmail, 180)}</span>
               </div>
             </div>
           </div>
