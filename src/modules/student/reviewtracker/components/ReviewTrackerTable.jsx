@@ -326,7 +326,7 @@ export default function ReviewTrackerTable() {
                 {/* Category */}
                 <td data-label="Category" className="px-5 py-2.5">
                   <span
-                    className="inline-flex items-center justify-center rounded font-inter font-semibold bg-gray-100 text-gray-600 whitespace-nowrap"
+                    className="inline-flex items-center justify-center rounded-[var(--radius-compact)] font-inter font-semibold bg-[var(--ui-yellow)] text-[var(--ui-on-yellow)] whitespace-nowrap"
                     style={{ fontSize: "12px", padding: "4px 12px" }}
                   >
                     {submission.category_name || "N/A"}
