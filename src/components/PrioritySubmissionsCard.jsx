@@ -117,7 +117,7 @@ export default function PrioritySubmissionsCard({ role }) {
                   </div>
                 </td>
                 <td data-label="Category" style={{ padding: "10px 16px" }}>
-                  <span className="inline-flex items-center justify-center whitespace-nowrap rounded bg-gray-100 font-inter text-xs font-semibold text-gray-600" style={{ padding: "4px 12px" }}>
+                  <span className="inline-flex items-center justify-center whitespace-nowrap rounded-[var(--radius-compact)] bg-[var(--ui-yellow)] font-inter text-xs font-semibold text-[var(--ui-on-yellow)]" style={{ padding: "4px 12px" }}>
                     {submission.category_name || "N/A"}
                   </span>
                 </td>

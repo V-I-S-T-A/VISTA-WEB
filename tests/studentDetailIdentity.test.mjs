@@ -46,15 +46,13 @@ test('Student ticket, actual history replies and saved navigation identity', { s
     for (const width of [360, 768, 1366]) await t.test(`Student ticket and comment integration at ${width}px`, async () => {
       await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
       await reset(fixture);
-      await wait('!!document.querySelector(".student-submission-pass .submission-pass__card") && !!document.querySelector(".review-reply-thread")');
-      if (width <= 480) await click('.submission-pass__details-toggle');
-      const card = await evaluate(`(()=>{const e=document.querySelector('.student-submission-pass'),footer=e.querySelector('.submission-pass__attachments');return{text:e.innerText,width:e.getBoundingClientRect().width,seam:getComputedStyle(footer).borderTopStyle,links:[...e.querySelectorAll('a')].map(a=>a.href),overflow:document.documentElement.scrollWidth>innerWidth+1,header:getComputedStyle(document.querySelector('.submission-history-panel .detail-panel-heading')).backgroundColor,title:getComputedStyle(document.querySelector('.submission-history-panel h4')).color}})()`);
-      for (const text of ['My Submission', 'Fictional activity request', 'Example Student Organization', 'ID: #ABCDEF12', 'In-Campus', 'On Process', 'Student Activity Request Form (SARF)', 'Sample Student', 'student@example.test', 'Digital documents are restricted to OSA staff.']) assert.ok(card.text.includes(text), text);
-      const contact = await evaluate(`(()=>{const n=document.querySelector('.student-submission-pass .submission-pass__contact-name'),e=document.querySelector('.student-submission-pass .submission-pass__contact-email');return {name:n.textContent,email:e.textContent,below:e.getBoundingClientRect().top>=n.getBoundingClientRect().bottom-1}})()`);
+      await wait('!!document.querySelector(".student-submission-details") && !!document.querySelector(".review-reply-thread")');
+      const card = await evaluate(`(()=>{const e=document.querySelector('.student-detail-layout'),footer=e.querySelector('.submission-pass__attachments');return{text:e.innerText,seam:getComputedStyle(footer).borderTopStyle,links:[...e.querySelectorAll('a')].map(a=>a.href),overflow:document.documentElement.scrollWidth>innerWidth+1,header:getComputedStyle(document.querySelector('.submission-history-panel .detail-panel-heading')).backgroundColor,title:getComputedStyle(document.querySelector('.submission-history-panel h4')).color}})()`);
+      for (const text of ['My Submission', 'Fictional activity request', 'Example Student Organization', 'ABCDEF12-FICTIONAL', 'In-Campus', 'On Process', 'Student Activity Request Form (SARF)', 'Sample Student', 'student@example.test', 'Digital documents are restricted to OSA staff.']) assert.ok(card.text.includes(text), text);
+      const contact = await evaluate(`(()=>{const n=document.querySelector('.student-submission-details .submission-pass__contact-name'),e=document.querySelector('.student-submission-details .submission-pass__contact-email');return {name:n.textContent,email:e.textContent,below:e.getBoundingClientRect().top>=n.getBoundingClientRect().bottom-1}})()`);
       assert.deepEqual(contact, { name: 'Sample Student', email: 'student@example.test', below: true });
-      assert.ok(card.width <= 721);
       assert.equal(card.seam, 'none');
-      assert.ok(await evaluate(`!!document.querySelector('.submission-pass__face .submission-pass__attachments') && !document.querySelector('.submission-pass__wordmark')`));
+      assert.ok(await evaluate(`!!document.querySelector('.submission-details-panel .submission-pass__attachments')`));
       assert.deepEqual(card.links, [], 'no staff-only file or Drive link is exposed');
       assert.equal(card.overflow, false);
       assert.equal(card.header, 'rgb(26, 89, 165)');
@@ -107,9 +105,9 @@ test('Student ticket, actual history replies and saved navigation identity', { s
 
     await t.test('organization viewer keeps read-only ticket and conversation access', async () => {
       await reset(`${fixture}?viewer`);
-      await wait('!!document.querySelector(".student-submission-pass") && !!document.querySelector(".review-reply-thread button[data-ui=toggle]")');
-      assert.ok(await evaluate('document.querySelector(".student-submission-pass").innerText.includes("Organization Submission · View only")'));
-      assert.ok(await evaluate('document.querySelector(".student-submission-pass").innerText.includes("Actions remain limited to the original submitter")'));
+      await wait('!!document.querySelector(".student-detail-layout") && !!document.querySelector(".review-reply-thread button[data-ui=toggle]")');
+      assert.ok(await evaluate('document.querySelector(".student-detail-layout").innerText.includes("Organization Submission · View only")'));
+      assert.ok(await evaluate('document.querySelector(".student-detail-layout").innerText.includes("Actions remain limited to the original submitter")'));
       await click('.review-reply-thread button[data-ui=toggle]');
       await wait('document.querySelectorAll(".reply-thread-item").length >= 2');
       assert.equal(await evaluate('!!document.querySelector(".reply-thread-action,textarea,.submission-pass a")'), false);

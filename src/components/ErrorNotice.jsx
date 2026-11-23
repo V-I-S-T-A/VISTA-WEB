@@ -1,6 +1,6 @@
 import { AlertCircle } from "lucide-react";
 
-export default function ErrorNotice({ message, onRetry, retrying = false }) {
+export default function ErrorNotice({ message, onRetry, retrying = false, retryLabel = "Try again" }) {
   if (!message) return null;
   return (
     <div
@@ -44,7 +44,7 @@ export default function ErrorNotice({ message, onRetry, retrying = false }) {
           className="disabled:opacity-50"
           style={{ cursor: retrying ? "not-allowed" : "pointer", flexShrink: 0 }}
         >
-          {retrying ? "Retrying…" : "Try again"}
+          {retrying ? "Retrying…" : retryLabel}
         </button>
       )}
     </div>

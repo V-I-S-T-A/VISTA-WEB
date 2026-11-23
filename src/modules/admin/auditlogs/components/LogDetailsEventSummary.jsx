@@ -1,70 +1,32 @@
-import { Info } from "lucide-react";
+import AuditActionLabel from '../../../../components/AuditActionLabel';
+import { Info, User, Building2, FileText } from 'lucide-react';
+import defaultAvatar from '../../../../assets/shared/default_user.webp';
 
-export default function LogDetailsEventSummary({ log, actionDisplay }) {
-  return (
-    <div
-      style={{
-        backgroundColor: "var(--ui-surface)",
-        borderRadius: "4px",
-        border: "1px solid #e2e6ee",
-        overflow: "hidden",
-        marginBottom: "20px",
-      }}
-    >
-      {/* Blue header bar */}
-      <div
-        className="flex justify-between items-center"
-        style={{
-          backgroundColor: "#1A59A5",
-          padding: "12px 24px",
-        }}
-      >
-        <h4
-          className="font-inter font-bold uppercase tracking-wider"
-          style={{ fontSize: "13px", color: "var(--ui-surface)" }}
-        >
-          Event Summary
-        </h4>
-        <Info style={{ width: "16px", height: "16px", color: "var(--ui-surface)" }} />
-      </div>
-
-      <div className="flex gap-8" style={{ padding: "24px 28px" }}>
-        <div style={{ flex: 1 }}>
-          <p
-            className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "11px", marginBottom: "8px", color: "var(--ui-muted)" }}
-          >
-            Action Category
-          </p>
-          <div
-            className="inline-flex font-mono font-bold"
-            style={{
-              backgroundColor: "#edf2fb",
-              color: "#1A59A5",
-              padding: "10px 16px",
-              borderRadius: "var(--radius-chip)",
-              fontSize: "14px",
-            }}
-          >
-            {actionDisplay}
-          </div>
-        </div>
-        <div style={{ flex: 1 }}>
-          <p
-            className="font-inter font-bold uppercase tracking-wider"
-            style={{ fontSize: "11px", marginBottom: "8px", color: "var(--ui-muted)" }}
-          >
-            Reference ID
-          </p>
-          <p
-            className="font-inter font-bold text-[#142d55]"
-            style={{ fontSize: "16px", marginTop: "10px" }}
-          >
-            {log.object_repr ||
-              `REF-${log.table_name?.toUpperCase()}-${log.object_id || "000"}`}
-          </p>
-        </div>
-      </div>
+export default function LogDetailsEventSummary({ event }) {
+  const EntityIcon = event.type === 'User account' ? User : event.type === 'Organization' ? Building2 : FileText;
+  return <div className="admin-audit-overview">
+  <section className="admin-audit-card" aria-label="Event summary">
+    <header className="admin-audit-card__header admin-audit-card__header--brand"><h3>Event summary</h3><Info size={18} aria-hidden="true" /></header>
+    <div className="admin-audit-card__body">
+      <div className="admin-audit-event-heading"><h3>{event.title}</h3><AuditActionLabel action={event.action} /></div>
+      <p>{event.summary}</p>
+      <dl className="admin-audit-metadata">
+        <div><dt>Performed by</dt><dd>{event.actor}</dd></div>
+        <div><dt>Recorded at</dt><dd>{event.dateTime}</dd></div>
+      </dl>
     </div>
-  );
+  </section>
+  <section className="admin-audit-card" aria-label={event.entityLabel}>
+    <header className="admin-audit-card__header admin-audit-card__header--muted"><EntityIcon size={18} aria-hidden="true" /><h3>{event.entityLabel}</h3></header>
+    <div className="admin-audit-card__body">
+      <div className="admin-audit-entity">
+        {event.isAuth || event.type === 'User account'
+          ? <img src={event.entityImageUrl || defaultAvatar} alt="" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = defaultAvatar; }} className="h-10 w-10 shrink-0 rounded-full object-cover" />
+          : <EntityIcon size={22} aria-hidden="true" />}
+        <div><strong>{event.entityName}</strong>{event.entityEmail && <p>{event.entityEmail}</p>}</div>
+      </div>
+      <dl className="admin-audit-metadata"><div><dt>Record type</dt><dd>{event.type}</dd></div></dl>
+    </div>
+  </section>
+  </div>;
 }

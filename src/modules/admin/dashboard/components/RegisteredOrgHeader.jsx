@@ -1,9 +1,9 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Building2 } from "lucide-react";
+import { Building2 } from "lucide-react";
 import AddOrgModal from "../modals/AddOrgModal";
 import { useCreateOrganization } from "../../../../hooks/useOrganizations";
-import { PageHeader } from "../../../../components";
+import { BackButton, PageHeader } from "../../../../components";
 
 export default function RegisteredOrgHeader() {
   const navigate = useNavigate();
@@ -28,19 +28,7 @@ export default function RegisteredOrgHeader() {
         title="Organization Management"
         subtitle="Manage registered student organizations, view details, and configure institution settings."
       >
-        <button data-ui="navigation"
-          type="button"
-          onClick={() => navigate("/admin/dashboard")}
-          className="inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white font-inter font-bold text-gray-700 transition-colors hover:bg-gray-50"
-          style={{ fontSize: "12px", padding: "8px 14px", marginTop: "2px" }}
-        >
-          <ArrowLeft
-            style={{ width: "13px", height: "13px" }}
-            strokeWidth={2.5}
-            aria-hidden="true"
-          />
-          Dashboard
-        </button>
+        <BackButton onClick={() => navigate("/admin/dashboard")}>Dashboard</BackButton>
 
         <button data-ui="primary"
           type="button"

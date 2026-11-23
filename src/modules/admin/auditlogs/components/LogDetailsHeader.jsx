@@ -1,53 +1,11 @@
-export default function LogDetailsHeader({ onBack }) {
-  return (
-    <div style={{ marginBottom: "20px" }}>
-      <h2
-        className="font-inter font-bold text-[#0a1e3f]"
-        style={{ fontSize: "var(--type-title)", lineHeight: 1.2 }}
-      >
-        Audit Log History Details
-      </h2>
-      <p
-        className="font-inter text-[#0a1e3f] mt-1"
-        style={{ fontSize: "var(--type-body)" }}
-      >
-        System-wide transparency of activities.
-      </p>
+import { BackButton, PageHeader } from '../../../../components';
 
-      <div className="flex items-center gap-4 mt-5">
-        <button data-ui="navigation"
-          type="button"
-          onClick={onBack}
-          className="inline-flex items-center justify-center transition hover:brightness-110 active:scale-95"
-          style={{
-            borderRadius: "9999px",
-            backgroundColor: "#FFE452",
-            padding: "4px",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          <div
-            className="flex items-center gap-1.5 font-inter text-[#1a1a1a]"
-            style={{
-              fontSize: "14px",
-              padding: "4px 16px",
-              borderRadius: "9999px",
-              backgroundColor: "#FFF2A8",
-              fontWeight: 500,
-            }}
-          >
-            <span style={{ fontSize: "16px", lineHeight: 1 }}>›</span>
-            Back
-          </div>
-        </button>
-        <span
-          className="font-inter text-[#0a1e3f]"
-          style={{ fontSize: "16px", fontWeight: 500 }}
-        >
-          Audit log history details.
-        </span>
-      </div>
+export default function LogDetailsHeader({ onBack }) {
+  return <div>
+    <PageHeader title="Audit Log History Details" subtitle="Review the recorded activity, account or record involved, and available changes." />
+    <div className="flex flex-wrap items-center gap-4 mt-5">
+      <BackButton onClick={onBack} />
+      <span className="font-inter font-medium text-[#0a1e3f]" style={{ fontSize: '16px' }}>Audit log history details.</span>
     </div>
-  );
+  </div>;
 }

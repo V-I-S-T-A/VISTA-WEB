@@ -8,6 +8,7 @@ import "../../../../components/AdminDataTable.css";
 import "./UsersManagementTable.css";
 import { TABLE_PAGE_SIZE, pageNumbers as getPageNumbers } from "../../../../utils/tablePagination";
 import defaultUser from "../../../../assets/shared/default_user.webp";
+import { isUserActivityInactive } from "../../../../utils/userActivity";
 import EditUserModal from "../modals/EditUserModal";
 import ResendInvitationModal from "../modals/ResendInvitationModal";
 import { useUsers } from "../../../../hooks/useUsers";
@@ -25,6 +26,7 @@ import {
   FilterSelect,
   ExportButton,
   StatusBadge,
+  StatusModal,
 } from "../../../../components";
 
 const PAGE_SIZE = TABLE_PAGE_SIZE;
@@ -125,7 +127,7 @@ const UserRow = memo(function UserRow({
           : "Never"}
       </td>
       <td data-label="Status" className="px-5 py-2.5">
-        <StatusBadge isActive={user.is_active} />
+        <StatusBadge isActive={!isUserActivityInactive(user)} />
       </td>
       <td data-label="Actions" className="px-5 py-2.5">
         <div className="flex flex-nowrap items-center gap-2 whitespace-nowrap [&>button]:shrink-0">
@@ -226,6 +228,8 @@ export default function RecentSubmissionsTable() {
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState("");
   const [deleteError, setDeleteError] = useState("");
+  const [deleteUserId, setDeleteUserId] = useState(null);
+  const deleteInProgress = useRef(false);
 
   // Refs
   const debounceTimerRef = useRef(null);
@@ -242,7 +246,7 @@ export default function RecentSubmissionsTable() {
     pageSize: PAGE_SIZE,
     search: searchQuery.trim(),
     role: roleFilter === "All Roles" ? "" : roleFilter,
-    isActive: isActiveParam,
+    activityStatus: statusFilter === "All Status" ? "" : statusFilter.toLowerCase(),
   });
 
   // Setup mutations
@@ -376,14 +380,17 @@ export default function RecentSubmissionsTable() {
   // Delete handler
   const handleDeleteUser = useCallback(
     async (userId) => {
-      if (!confirm("Permanently delete this user? This cannot be undone."))
-        return;
+      if (!userId || deleteInProgress.current) return;
+      deleteInProgress.current = true;
       setDeleteError("");
       try {
         await deleteUserMutation.mutateAsync(userId);
         showToast("User account deleted.", "success");
+        setDeleteUserId(null);
       } catch (error) {
         setDeleteError(getApiErrorMessage(error, "Could not delete this account. Please try again."));
+      } finally {
+        deleteInProgress.current = false;
       }
     },
     [deleteUserMutation, showToast],
@@ -551,7 +558,7 @@ export default function RecentSubmissionsTable() {
                   key={user.user_id}
                   user={user}
                   onEdit={setEditUser}
-                  onDelete={handleDeleteUser}
+                  onDelete={(userId) => { setDeleteError(""); setDeleteUserId(userId); }}
                   onResend={(user) => { setInvitationError(""); setInvitationUser(user); }}
                   isResending={resendingUserId === user.user_id}
                   isUpdating={updateUserMutation.isPending}
@@ -572,6 +579,19 @@ export default function RecentSubmissionsTable() {
           onConfirm={() => handleResendInvitation(invitationUser)}
         />
       )}
+      <StatusModal
+        isOpen={deleteUserId !== null}
+        onClose={() => { if (!deleteInProgress.current) setDeleteUserId(null); }}
+        onConfirm={() => handleDeleteUser(deleteUserId)}
+        title="Delete user account?"
+        type="warning"
+        message={`Permanently delete ${users.find(user => user.user_id === deleteUserId)?.email || 'this user'}? This cannot be undone.`}
+        cancelText="Cancel"
+        confirmText={deleteUserMutation.isPending ? 'Deleting...' : 'Delete user'}
+        confirmVariant="danger"
+        confirmDisabled={deleteUserMutation.isPending}
+        closeDisabled={deleteUserMutation.isPending}
+      ><ErrorNotice message={deleteError} /></StatusModal>
       <EditUserModal
         isOpen={editUser !== null}
         onClose={handleCloseEditModal}

@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useStartDriveAuth } from "../../../../hooks/useDrive";
 
-export default function GoogleSignInCard() {
+export default function GoogleSignInCard({ focusSignIn = false }) {
   const startAuth = useStartDriveAuth();
   const [error, setError] = useState("");
 
@@ -60,6 +60,7 @@ export default function GoogleSignInCard() {
       </p>
 
       <button aria-busy={Boolean(startAuth.isPending)} data-ui="secondary"
+        autoFocus={focusSignIn}
         type="button"
         onClick={handleSignIn}
         disabled={startAuth.isPending}

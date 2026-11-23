@@ -150,8 +150,9 @@ export default function DetailsStatusHistory({ submissionId, onAccessLost }) {
                     <div className="flex items-center gap-3" style={{ marginTop: "10px" }}>
                       <img
                         src={log.changed_by_image_url || defaultAvatar}
+                        onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = defaultAvatar; }}
                         alt=""
-                        style={{ width: "36px", height: "36px", borderRadius: "var(--radius-chip)", objectFit: "cover", flexShrink: 0 }}
+                        style={{ width: "36px", height: "36px", borderRadius: "50%", objectFit: "cover", flexShrink: 0 }}
                       />
                       <div>
                         <p className="m-0 font-inter text-gray-500" style={{ fontSize: "11px" }}>Updated by</p>

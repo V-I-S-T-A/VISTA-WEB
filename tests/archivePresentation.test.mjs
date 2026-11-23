@@ -19,11 +19,10 @@ test('review attachments reflect persisted archive state without hiding files or
       if (scenario === 'loading') await pause(100); else await browser.wait(`!document.querySelector('[aria-label="Loading attached documents"]') && window.__fixtureReads?.some(url=>url.includes('/submissions/'))`);
       await pause(100);
       const state = await browser.evaluate(`({attached:!!document.querySelector('.submission-pass__attachments'),empty:document.body.innerText.includes('No files attached to this submission.'),current:document.body.innerText.includes('Current attachment.pdf'),archive:!!document.querySelector('.drive-archive-card'),failure:document.body.innerText.includes('Could not load the submission files.'),writes:window.__fixtureWrites})`);
-      assert.equal(state.attached, !['archived', 'linkless'].includes(scenario), `${scenario}: redundant panel visibility`);
-      if(state.attached) assert.equal(await browser.evaluate(`!!document.querySelector('.submission-pass__card .submission-pass__attachments')`), true, `${scenario}: attachments and their states remain inside the saved card`);
-      if(state.attached) assert.equal(await browser.evaluate(`!!document.querySelector('.submission-pass__face .submission-pass__attachments') && !document.querySelector('.submission-pass__wordmark')`),true,'saved attachments occupy the card face without a wordmark or separate footer');
+      assert.equal(state.attached, !['archived', 'linkless', 'loading'].includes(scenario), `${scenario}: attachment panels only render when their saved state is known`);
+      if(state.attached && scenario !== 'loading') assert.equal(await browser.evaluate(`!!document.querySelector('.submission-details-panel .submission-pass__attachments')`), true, `${scenario}: attachments and their states remain in the primary information panel`);
       if(scenario==='preview') {
-        assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('.submission-pass__attachment-preview')).color`),'rgb(243, 239, 255)','file link remains readable on purple');
+        assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('.submission-pass__attachment-preview')).color`),'rgb(30, 58, 104)','file link remains readable on the neutral field surface');
         await browser.evaluate(`document.querySelector('.submission-pass__attachment-preview').focus()`);
         await browser.send('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r'});
         await browser.send('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});

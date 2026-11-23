@@ -1,0 +1,8 @@
+export const auditEvents = [
+  { audit_id: 'audit-login', action: 'login', table_name: 'tbl_Users', changes: {}, user_id: 'sample-admin', performed_by: 'Sample Administrator', performed_by_email: 'admin@example.test', performed_by_org: 'System Administrator', performed_at: '2026-11-20T03:24:18Z' },
+  { audit_id: 'audit-update', action: 'update', table_name: 'tbl_Users', changes: { old: { first_name: 'Former', email: 'member@example.test', is_active: true, preferences: { theme: 'light' } }, new: { first_name: 'Current', email: 'member@example.test', is_active: false, preferences: { theme: 'dark' } } }, performed_by: 'Sample Administrator', performed_at: '2026-11-20T04:00:00Z' },
+  { audit_id: 'audit-delete', action: 'delete', table_name: 'tbl_Organizations', changes: { deleted: { org_id: 'deleted-org', name: 'Former Campus Society', is_active: false } }, performed_by: 'Sample Administrator', performed_at: '2026-11-20T04:30:00Z' },
+  { audit_id: 'audit-status', action: 'status_change', table_name: 'tbl_Submissions', changes: { record_id: 'sample-submission', old_status: 'under_review', new_status: 'approved' }, performed_by: 'Sample Staff', performed_at: '2026-11-20T05:00:00Z' },
+  { audit_id: 'audit-create', action: 'create', table_name: 'tbl_Submissions', changes: { new: { submission_id: 'sample-submission', title: 'Campus activity report', org_name: 'Campus Scholars' } }, performed_by: 'Sample Staff', performed_at: '2026-11-20T05:30:00Z' },
+  { audit_id: 'audit-missing', action: 'update', table_name: 'tbl_Organizations', changes: { record_id: 'unresolved-org' }, performed_by: 'Sample Administrator', performed_at: '2026-11-20T06:00:00Z' },
+];

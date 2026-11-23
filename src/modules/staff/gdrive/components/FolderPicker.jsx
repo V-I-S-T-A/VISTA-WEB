@@ -1,5 +1,6 @@
 import { PanelSkeleton } from "../../../../components/loading/Skeleton";
 import ErrorNotice from "../../../../components/ErrorNotice";
+import StatusModal from "../../../../components/StatusModal";
 import { useState } from "react";
 import { Search, FolderPlus, Folder, Loader2 } from "lucide-react";
 import {
@@ -8,11 +9,12 @@ import {
   useCreateDriveFolder,
 } from "../../../../hooks/useDrive";
 
-export default function FolderPicker({ onDone }) {
+export default function FolderPicker({ onDone, onReconnect }) {
   const [search, setSearch] = useState("");
   const [newFolderName, setNewFolderName] = useState("");
   const [mode, setMode] = useState("browse"); // browse | create
-  const { data, isLoading, isFetching, isError, refetch } = useDriveFolders(search);
+  const [reconnectOpen, setReconnectOpen] = useState(false);
+  const { data, isLoading, isFetching, isError } = useDriveFolders(search);
   const selectFolder = useSelectDriveFolder();
   const createFolder = useCreateDriveFolder();
 
@@ -145,7 +147,11 @@ export default function FolderPicker({ onDone }) {
           </div>
 
           {isError ? (
-            <ErrorNotice message="Could not load Google Drive folders. Check your connection and try again." onRetry={() => refetch()} retrying={isFetching} />
+            <ErrorNotice
+              message="Could not load Google Drive folders. Reconnect your Google account to continue."
+              onRetry={() => setReconnectOpen(true)}
+              retryLabel="Reconnect"
+            />
           ) : isLoading ? (
             <PanelSkeleton kind="folders" framed={false} label="Loading Drive folders" />
           ) : folders.length === 0 ? (
@@ -283,6 +289,19 @@ export default function FolderPicker({ onDone }) {
           Something went wrong. Please try again.
         </p>
       )}
+      <StatusModal
+        isOpen={reconnectOpen}
+        onClose={() => setReconnectOpen(false)}
+        title="Reconnect your account"
+        type="info"
+        message="Sign in with Google again to reconnect your Drive."
+        confirmText="Reconnect"
+        cancelText="Cancel"
+        onConfirm={() => {
+          setReconnectOpen(false);
+          onReconnect?.();
+        }}
+      />
     </div>
   );
 }

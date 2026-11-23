@@ -1,4 +1,3 @@
-import { ArrowLeft } from 'lucide-react';
 /**
  * BackButton
  *
@@ -11,11 +10,12 @@ import { ArrowLeft } from 'lucide-react';
  */
 export default function BackButton({ onClick, children = "Back" }) {
   return (
-    <button data-ui="secondary"
+    <button data-ui="navigation"
+      className="vista-back-button"
       type="button"
       onClick={onClick}
     >
-        <ArrowLeft size={16} aria-hidden="true" />
+        <span aria-hidden="true">›</span>
         {children}
     </button>
   );

@@ -1,5 +1,20 @@
 /* Semantic variants apply to shared and audited legacy controls alike. Layout
    (width, margin, alignment) remains owned by the calling screen. */
+:root button.vista-back-button {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  min-height: 40px; padding: 4px 14px;
+  border: 3px solid #ffe452; border-radius: 9999px;
+  background: #fff2a8; color: #1a1a1a;
+  font: 500 13px/20px var(--font-body); cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+}
+:root button.vista-back-button > span[aria-hidden="true"] { font-size: 16px; line-height: 20px; }
+:root button.vista-back-button:hover { background: #ffed8a; border-color: #ffdc32; }
+:root button.vista-back-button:active { background: #ffe971; }
+:root button.vista-back-button:focus-visible { outline: 3px solid var(--ui-blue); outline-offset: 3px; }
+@media (max-width: 768px) {
+  :root button.vista-back-button { min-height: 44px; }
+}
 :root button:is([data-ui="primary"],[data-ui="secondary"],[data-ui="destructive"]) {
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: var(--control-height); padding: 8px 16px;

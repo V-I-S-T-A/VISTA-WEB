@@ -1,5 +1,8 @@
 import "./SubmissionReviewDetails.css";
+import BackButton from "../../../../components/BackButton";
+import defaultAvatar from "../../../../assets/shared/default_user.webp";
 import SubmissionPass from "../../../../components/SubmissionPass";
+import SubmissionDetailsPanel from "../../../../components/SubmissionDetailsPanel";
 import VistaSelect from "../../../../components/VistaSelect";
 import { PanelSkeleton, Skeleton } from "../../../../components/loading/Skeleton";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
@@ -435,35 +438,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
     <div className="w-full">
       <div className="flex w-full flex-wrap items-center justify-between gap-3" style={{ paddingBottom: "20px" }}>
         <div className="flex items-center gap-3">
-          <button data-ui="navigation"
-            type="button"
-            onClick={onBack}
-            className="inline-flex items-center rounded-full transition hover:brightness-105 active:scale-95"
-            style={{
-              backgroundColor: "#FFE452",
-              padding: "3px",
-            }}
-          >
-          <span
-            className="inline-flex items-center rounded-full font-inter font-medium text-[#1a1a1a]"
-            style={{
-              backgroundColor: "#FFF2A8",
-              padding: "4px 14px",
-              fontSize: "13px",
-            }}
-          >
-            <span
-              style={{
-                fontSize: "16px",
-                lineHeight: "20px",
-                marginRight: "4px",
-              }}
-            >
-              ›
-            </span>
-            Back
-          </span>
-          </button>
+          <BackButton onClick={onBack} />
           <span className="font-inter font-medium text-gray-500" style={{ fontSize: "13.5px" }}>
             Review panel details.
           </span>
@@ -480,8 +455,8 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
       <div className="submission-review-bento">
         <div className="submission-review-column submission-review-column--details">
-          <section className="submission-pass" aria-labelledby="submission-pass-title">
-            <SubmissionPass
+          <section className="submission-primary" aria-labelledby="submission-pass-title">
+            <SubmissionDetailsPanel
               submission={displaySubmission}
               avatarUrl={submitter?.image_url}
               organizationAvatarUrl={submissionDetails?.org_image_url}
@@ -492,6 +467,9 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
               status={savedStatus}
               statusLabel={statusLabel}
               titleId="submission-pass-title"
+              academicYear={submissionDetails?.academic_year}
+              category={submissionDetails?.category_name}
+              description={submissionDetails?.description}
             >
               {showAttachmentPanel && <div className="submission-pass__attachments">
                 <p
@@ -552,7 +530,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                   </div>
                 )}
               </div>}
-            </SubmissionPass>
+            </SubmissionDetailsPanel>
           </section>      <div
             className="submission-review-history vista-surface w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm"
           >
@@ -593,12 +571,6 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
                     const oldStatus = getSubmissionPresentation(log.old_status).label;
                     const newStatus = getSubmissionPresentation(log.new_status).label;
                     const author = log.changed_by_name || "Unknown Staff";
-                    const initials = author
-                      .split(" ")
-                      .map((part) => part[0])
-                      .join("")
-                      .slice(0, 2)
-                      .toUpperCase();
 
                     return (
                       <li
@@ -665,16 +637,15 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
 
                           <div className="flex items-center gap-3" style={{ marginTop: "10px" }}>
                             <div
-                              className="flex-shrink-0 flex items-center justify-center overflow-hidden rounded-lg bg-[#eef1f9] font-inter font-bold text-[#1f5cae]"
+                              className="flex-shrink-0 flex items-center justify-center overflow-hidden rounded-full bg-[#eef1f9] font-inter font-bold text-[#1f5cae]"
                               style={{ width: "36px", height: "36px", fontSize: "12px" }}
                             >
-                              {log.changed_by_image_url ? (
                                 <img
-                                  src={log.changed_by_image_url}
+                                  src={log.changed_by_image_url || defaultAvatar}
                                   alt=""
+                                  onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = defaultAvatar; }}
                                   className="h-full w-full object-cover"
                                 />
-                              ) : initials}
                             </div>
                             <div>
                               <p className="m-0 font-inter text-gray-500" style={{ fontSize: "11px" }}>Updated by</p>
@@ -713,6 +684,7 @@ export default function SubmissionReviewDetails({ submission, onBack }) {
           </div>
         </div>
         <div className="submission-review-column submission-review-column--actions">
+          <section className="submission-pass" aria-label="Submission summary"><SubmissionPass compact submission={displaySubmission} organizationAvatarUrl={submissionDetails?.org_image_url} loading={isLoadingDetails} status={savedStatus} statusLabel={statusLabel} category={submissionDetails?.category_name} /></section>
           <div
             className="submission-review-decision vista-surface submission-detail-card w-full rounded-xl border border-gray-200 bg-white shadow-sm"
             style={{ padding: "24px" }}

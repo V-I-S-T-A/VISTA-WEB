@@ -365,7 +365,7 @@ export default function DocumentEntry() {
                 )}
               </div>
             </div>
-            <div className="workspace-illustrated-layout">
+            <div className={activeView === "form" ? "workspace-illustrated-layout" : undefined}>
               <div style={{ flex: "1 1 0%", minWidth: 0 }}>
                 <ErrorNotice message={error} />
                 <ErrorNotice message={dropdownError} onRetry={() => setDropdownRetry(c => c + 1)} retrying={loadingDropdowns} />
@@ -636,7 +636,7 @@ export default function DocumentEntry() {
                 )}
               </div>
 
-              <VerticalBanner />
+              {activeView === "form" && <VerticalBanner />}
             </div>
             <SystemScopeBanner />
           </div>

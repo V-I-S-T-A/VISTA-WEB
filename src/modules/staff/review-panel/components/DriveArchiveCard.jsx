@@ -1,6 +1,7 @@
 import { CheckCircle2, ExternalLink, FileText, Folder, UserRound } from "lucide-react";
 import "./DriveArchiveCard.css";
 import GoogleDriveLogo from "../../../../components/GoogleDriveLogo";
+import defaultAvatar from "../../../../assets/shared/default_user.webp";
 
 function PathStep({ name, index }) {
   const labels = ["Year", "Organization", "File Type"];
@@ -52,12 +53,8 @@ export default function DriveArchiveCard({ archives = [], handledBy = null }) {
       {!archives.length ? (
         <>
           <div className="drive-archive-card__root flex min-w-0 items-center gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3.5">
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-[#1f5cae]">
-              {handledBy?.changed_by_image_url ? (
-                <img src={handledBy.changed_by_image_url} alt="" className="h-full w-full rounded-lg object-cover" />
-              ) : (
-                <UserRound className="h-4 w-4" aria-hidden="true" />
-              )}
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-blue-100 text-[#1f5cae]">
+              <img src={handledBy?.changed_by_image_url || defaultAvatar} alt="" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = defaultAvatar; }} className="h-full w-full rounded-full object-cover" />
             </span>
             <div className="min-w-0">
               <p className="font-inter text-[10.5px] font-bold uppercase tracking-wide text-slate-500">

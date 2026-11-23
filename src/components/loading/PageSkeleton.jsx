@@ -7,6 +7,7 @@ import CampusScene from '../banners/CampusScene';
 import { useSidebar } from '../../hooks/useSidebar';
 import { LoadingRegion, Skeleton, SkeletonLines, StatsSkeleton, TableSkeleton, PanelSkeleton, AnalyticsSkeleton } from './Skeleton';
 import SubmissionPass from '../SubmissionPass';
+import SubmissionDetailsPanel from '../SubmissionDetailsPanel';
 import '../../modules/staff/review-panel/components/SubmissionReviewDetails.css';
 
 function HeadingSkeleton() {
@@ -23,13 +24,13 @@ export function LandingHeroSkeleton() {
 export function PageSkeletonContent({ kind, role }) {
   return <div className={`skeleton-stack${kind === 'profile' ? ' profile-page-body' : ''}`} data-skeleton-page={kind}>
     {kind === 'profile' ? <><CampusScene /><ProfileBannerLayout><PanelSkeleton kind="profile" label="Loading your profile" /></ProfileBannerLayout></>
-      : kind === 'student-dashboard' ? <><CampusScene /><StatsSkeleton count={4} variant="student" /><TableSkeleton columns={6} /></>
+      : kind === 'student-dashboard' ? <><StatsSkeleton count={4} variant="student" /><TableSkeleton columns={6} /></>
       : kind === 'staff-dashboard' ? <><StatsSkeleton count={4} /><AnalyticsSkeleton /><TableSkeleton columns={7} /><div className="skeleton-two-columns"><PanelSkeleton label="Loading institutional pulse" rows={2} /><PanelSkeleton label="Loading recent activity" rows={3} /></div></>
       : kind === 'admin-dashboard' ? <><HeadingSkeleton /><StatsSkeleton count={4} variant="admin" /><TableSkeleton columns={6} /></>
-      : kind === 'review-details' ? <><HeadingSkeleton /><Skeleton height={105} /><section className="submission-pass student-submission-pass"><SubmissionPass loading /></section><PanelSkeleton kind="timeline" label="Loading status history" rows={2} /></>
+      : kind === 'review-details' ? <><HeadingSkeleton /><Skeleton height={105} /><div className="submission-detail-layout student-detail-layout"><div className="submission-detail-layout__primary"><SubmissionDetailsPanel loading /><PanelSkeleton kind="timeline" label="Loading status history" rows={2} /></div><aside className="submission-pass"><SubmissionPass compact loading /></aside></div></>
       : kind === 'staff-review-details' ? <><HeadingSkeleton /><div className="submission-review-bento">
-        <div className="submission-review-column submission-review-column--details"><section className="submission-pass"><SubmissionPass loading /></section><PanelSkeleton kind="timeline" label="Loading review history" rows={2} /></div>
-        <div className="submission-review-column submission-review-column--actions"><PanelSkeleton kind="decision" label="Loading decision panel" /></div>
+        <div className="submission-review-column submission-review-column--details"><SubmissionDetailsPanel loading /><PanelSkeleton kind="timeline" label="Loading review history" rows={2} /></div>
+        <div className="submission-review-column submission-review-column--actions"><section className="submission-pass"><SubmissionPass compact loading /></section><PanelSkeleton kind="decision" label="Loading decision panel" /></div>
       </div></>
       : kind === 'registration' || kind === 'analysis' || kind === 'drive' ? <><HeadingSkeleton /><div className="workspace-illustrated-layout"><div className="skeleton-stack">
         {kind === 'drive' && <div className="skeleton-banner"><Skeleton width="55%" height={24} /><SkeletonLines count={2} /></div>}

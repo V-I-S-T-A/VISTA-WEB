@@ -1,3 +1,4 @@
+import "./AdminUI.css";
 import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import { useState } from "react";
 import {
@@ -58,7 +59,7 @@ export default function RegistrationConfig() {
     tabs.find((t) => t.id === activeTab)?.label || "Entries";
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="admin-workspace flex min-h-screen bg-white">
       {isOpen && (
         <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
       )}
@@ -102,6 +103,7 @@ export default function RegistrationConfig() {
                 return (
                   <button data-ui="toggle"
                     key={tab.id}
+                    aria-pressed={isActive}
                     onClick={() => setActiveTab(tab.id)}
                     className={`font-inter font-bold uppercase tracking-wider transition-colors flex items-center gap-2 ${
                       isActive

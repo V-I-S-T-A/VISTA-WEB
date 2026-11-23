@@ -6,7 +6,6 @@ import {
   SquarePen,
   Trash2,
   Loader2,
-  AlertCircle,
   X,
 } from "lucide-react";
 import defaultUser from "../../../../assets/shared/default_user.webp";
@@ -398,10 +397,7 @@ export default function RegisteredOrgTable() {
                   colSpan={6}
                   className="px-5 py-10 text-center font-inter text-sm text-red-500"
                 >
-                  <div className="flex items-center justify-center gap-2">
-                    <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                    Failed to load organizations. Please try again.
-                  </div>
+                  <ErrorNotice message="Failed to load organizations. Please try again." />
                 </td>
               </tr>
             )}
@@ -446,7 +442,7 @@ export default function RegisteredOrgTable() {
 
       {/* Delete Organization Modal matching project modal design */}
       {deleteConfirmOrg && (
-        <DialogLayer label={"Delete organization"} onDismiss={() => setDeleteConfirmOrg(null)} dismissDisabled={deleteOrgMutation.isPending}
+        <DialogLayer className="admin-dialog" label={"Delete organization"} onDismiss={() => setDeleteConfirmOrg(null)} dismissDisabled={deleteOrgMutation.isPending}
           style={{
             position: "fixed",
             inset: 0,
@@ -510,6 +506,7 @@ export default function RegisteredOrgTable() {
               </div>
 
               <button aria-busy={Boolean(deleteOrgMutation.isPending)} data-ui="icon"
+                aria-label="Close organization deletion"
                 type="button"
                 onClick={() => setDeleteConfirmOrg(null)}
                 disabled={deleteOrgMutation.isPending}

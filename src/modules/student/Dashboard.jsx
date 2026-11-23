@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "../../components/Header";
 import Sidebar from "../../components/Sidebar";
-import DashboardBanner from "./dashboard/components/DashboardBanner";
 import SubmissionSummaryCards from "./dashboard/components/SubmissionSummaryCards";
 import RecentSubmissionsTable from "./dashboard/components/RecentSubmissionsTable";
 import PrioritySubmissionsCard from "../../components/PrioritySubmissionsCard";
@@ -42,8 +41,6 @@ export default function Dashboard() {
           style={{ padding: "20px 24px" }}
         >
           <div className="page-content-stack w-full">
-            <DashboardBanner />
-
             <div className="dashboard-section" style={{ marginTop: "20px" }}>
               <SubmissionSummaryCards />
             </div>

@@ -45,11 +45,11 @@ test('loading layouts, organization/submitter identities and reloadable Staff ro
     await pause(60);
   };
   const revealContact = async () => {
-    if (await evaluate(`getComputedStyle(document.querySelector('.submission-pass__details-toggle')).display !== 'none'`)) await click('.submission-pass__details-toggle');
+    if (await evaluate(`!!document.querySelector('.submission-pass__details-toggle') && getComputedStyle(document.querySelector('.submission-pass__details-toggle')).display !== 'none'`)) await click('.submission-pass__details-toggle');
   };
   const assertIdentities = async () => {
     await wait(`!!document.querySelector('.submission-pass__contact-avatar img') && !document.querySelector('.submission-pass__contact-avatar .vista-skeleton') && !document.querySelector('.submission-pass__brand-mark .vista-skeleton')`);
-    const images = await evaluate(`(()=>{const org=document.querySelector('.submission-pass__identity .submission-pass__brand-mark img'),person=document.querySelector('.submission-pass__contact .submission-pass__contact-avatar img');return{org:org?.src,person:person?.src,orgAlt:org?.alt,personAlt:person?.alt,overflow:document.documentElement.scrollWidth>innerWidth+1}})()`);
+    const images = await evaluate(`(()=>{const org=document.querySelector('.submission-details-panel .submission-pass__brand-mark img'),person=document.querySelector('.submission-pass__contact .submission-pass__contact-avatar img');return{org:org?.src,person:person?.src,orgAlt:org?.alt,personAlt:person?.alt,overflow:document.documentElement.scrollWidth>innerWidth+1}})()`);
     assert.ok(images.org?.includes('data:image/svg+xml'));
     assert.ok(images.person?.includes('data:image/svg+xml'));
     assert.notEqual(images.org, images.person, 'organization and submitter use different image sources');
@@ -85,10 +85,10 @@ test('loading layouts, organization/submitter identities and reloadable Staff ro
       await send('Emulation.setDeviceMetricsOverride', { width, height: 1000, deviceScaleFactor: 1, mobile: false });
       await visit('/tests/fixtures/student-detail-identity.html?loading');
       await wait('!!window.studentIdentityFixture?.releaseDetails && !!document.querySelector(".submission-pass__card[aria-busy]")');
-      assert.equal(await evaluate(`!!document.querySelector('.skeleton-form')`), false, 'Student detail loader follows the card instead of a generic form');
+      assert.ok(await evaluate(`!!document.querySelector('.submission-details-panel[aria-busy=true]') && !document.querySelector('.submission-details-panel input')`), 'Student loader follows the read-only primary panel');
       await browser.screenshot(`${directory}/student-loading-${width}.png`, true);
       await evaluate('window.studentIdentityFixture.releaseDetails()');
-      await wait('!!document.querySelector(".student-submission-pass .submission-pass__details-toggle")');
+      await wait('!!document.querySelector(".student-submission-details .submission-pass__contact")');
       await revealContact();
       await assertIdentities();
       assert.equal(await evaluate('document.querySelectorAll(".submission-pass a").length'), 0);

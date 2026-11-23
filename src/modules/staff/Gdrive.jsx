@@ -23,6 +23,7 @@ export default function Gdrive() {
   const { data: connection, isLoading: isLoadingConnection, isError, refetch, isFetching } =
     useDriveConnection();
   const [pickingFolder, setPickingFolder] = useState(false);
+  const [reconnecting, setReconnecting] = useState(false);
   const { isOpen, open, close } = useSidebar();
 
   useEffect(() => {
@@ -80,10 +81,13 @@ export default function Gdrive() {
                     <PanelSkeleton kind="connection" label="Loading Google Drive connection" />
                   ) : isError ? (
                     <ErrorNotice message="Could not check your Google Drive connection." onRetry={() => refetch()} retrying={isFetching} />
-                  ) : !isConnected ? (
-                    <GoogleSignInCard />
+                  ) : !isConnected || reconnecting ? (
+                    <GoogleSignInCard focusSignIn={reconnecting} />
                   ) : !hasFolder || pickingFolder ? (
-                    <FolderPicker onDone={() => setPickingFolder(false)} />
+                    <FolderPicker
+                      onReconnect={() => setReconnecting(true)}
+                      onDone={() => setPickingFolder(false)}
+                    />
                   ) : (
                     <ConnectedStatusCard
                       connection={connection}
