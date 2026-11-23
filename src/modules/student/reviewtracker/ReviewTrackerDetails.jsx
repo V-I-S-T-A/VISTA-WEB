@@ -108,8 +108,13 @@ export default function ReviewTrackerDetails() {
           <div className="page-content-stack w-full">
             <DetailsHeader submission={submission} />
             <DetailsNotice status={submission.status} />
-            <DetailsSubmissionInfo submission={submission} isOwner={String(submission.submitted_by) === String(currentUser.user_id)} avatarUrl={String(submission.submitted_by) === String(currentUser.user_id) ? currentUser.image_url : undefined} />
-            <DetailsStatusHistory key={submission.submission_id} submissionId={submission.submission_id} onAccessLost={handleAccessLost} />
+            <div className="submission-detail-layout student-detail-layout">
+              <div className="submission-detail-layout__primary">
+                <DetailsSubmissionInfo submission={submission} isOwner={String(submission.submitted_by) === String(currentUser.user_id)} avatarUrl={String(submission.submitted_by) === String(currentUser.user_id) ? currentUser.image_url : undefined} />
+                <DetailsStatusHistory key={submission.submission_id} submissionId={submission.submission_id} onAccessLost={handleAccessLost} />
+              </div>
+              <aside aria-label="Submission summary"><DetailsSubmissionInfo submission={submission} isOwner={String(submission.submitted_by) === String(currentUser.user_id)} avatarUrl={String(submission.submitted_by) === String(currentUser.user_id) ? currentUser.image_url : undefined} compact /></aside>
+            </div>
             <SystemScopeBanner />
           </div>
         </main>

@@ -119,7 +119,7 @@ export default function ReviewReplyThread({ log, onAccessLost }) {
         <ol className="reply-list">
           {rows.map(reply => <li key={reply.reply_id} className="min-w-0 rounded-lg border border-[#dbe4f0] bg-[#f7f9fc] p-3">
             <div className="flex items-center gap-2">
-              <img src={reply.author_image_url || defaultAvatar} alt="" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = defaultAvatar; }} className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+              <img src={reply.author_image_url || defaultAvatar} alt="" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = defaultAvatar; }} className="h-8 w-8 shrink-0 rounded-full object-cover" />
               <div className="min-w-0"><p className="break-words font-semibold">{reply.author_name} <span className="font-normal capitalize text-gray-500">({reply.author_role || "Former user"})</span></p>
                 <time dateTime={reply.created_at} className="text-xs text-gray-500">{new Date(reply.created_at).toLocaleString()}</time>
               </div>

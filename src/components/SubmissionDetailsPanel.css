@@ -1,0 +1,34 @@
+.submission-details-panel { --submission-text: var(--ui-text); --submission-muted: var(--ui-muted); container-type: inline-size; min-width: 0; padding: var(--space-6); border: 1px solid var(--ui-border); border-radius: var(--radius-card); background: var(--ui-surface); color: var(--ui-text); box-shadow: var(--shadow-card); font-family: var(--font-body); }
+.submission-details-panel__heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--space-2); margin-bottom: var(--space-5); }
+.submission-details-panel__heading h2 { font-size: var(--type-heading); font-weight: 700; color: var(--ui-navy); }
+.submission-details-panel__heading > span { font-size: var(--type-meta); color: var(--ui-muted); }
+.submission-details-panel__fields { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: var(--space-5); }
+.submission-details-panel__field { min-width: 0; }
+.submission-details-panel__field--wide { grid-column: 1/-1; }
+.submission-details-panel__label { margin-bottom: var(--space-2); color: var(--ui-navy); font-size: var(--type-meta); font-weight: 600; text-transform: uppercase; letter-spacing: .035em; }
+.submission-details-panel__value { display: flex; align-items: center; min-height: var(--control-height); padding: var(--space-3); border: 1px solid var(--ui-border); border-radius: var(--radius-field); background: var(--ui-field); font-size: var(--type-body); line-height: 1.5; overflow-wrap: anywhere; white-space: pre-wrap; }
+.submission-details-panel__person { display: flex; align-items: center; gap: var(--space-2); min-width: 0; }
+.submission-details-panel__person > span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.submission-details-panel .submission-pass__brand-mark { width: 32px; height: 32px; flex-basis: 32px; }
+.submission-details-panel .submission-pass__contact-avatar { border-color: var(--ui-border); background: var(--ui-selected); }
+.submission-details-panel .submission-pass__contact-email { font-size: var(--type-meta); color: var(--ui-muted); }
+.submission-details-panel__support { margin-top: var(--space-5); min-width: 0; }
+.submission-details-panel .submission-pass__attachments { margin-top: 0; }
+.submission-details-panel .submission-pass__attachment-label { color: var(--ui-navy); text-transform: uppercase; letter-spacing: .035em; margin-bottom: var(--space-2); }
+.submission-details-panel .submission-pass__file-row { border-color: var(--ui-border); background: var(--ui-field); }
+.submission-details-panel .submission-pass__download { color: var(--ui-blue); border-color: var(--ui-control-border); background: var(--ui-surface); }
+:root .submission-details-panel button.registration-pass-attachment { background: var(--ui-field); color: var(--ui-blue); border-color: var(--ui-border); }
+:root .submission-details-panel button.registration-pass-attachment:hover:not(:disabled) { background: var(--ui-selected); border-color: var(--ui-blue); }
+.submission-detail-layout { display: grid; grid-template-columns: minmax(0,1.5fr) minmax(260px,.85fr); gap: var(--space-5); align-items: start; }
+.submission-detail-layout__primary { display: flex; flex-direction: column; gap: var(--space-5); min-width: 0; }
+.submission-detail-layout > aside { min-width: 0; }
+.ocr-results,.registration-pass-preview { max-width: none; }
+.registration-preview-header { margin-bottom: var(--space-4); }
+.registration-preview-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-4); min-width: 0; }
+.registration-preview-heading-copy { flex: 1 1 280px; min-width: 0; }
+.registration-preview-heading > .responsive-actions { margin-left: auto; flex-shrink: 0; }
+@media (max-width: 1100px) {
+  .submission-detail-layout { grid-template-columns: minmax(0,1fr); }
+  .student-detail-layout > aside { order: -1; }
+}
+@media (max-width: 600px) { .submission-details-panel { padding: var(--space-4); } .submission-details-panel__fields { grid-template-columns: minmax(0,1fr); gap: var(--space-4); } }

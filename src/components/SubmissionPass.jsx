@@ -5,7 +5,7 @@ import defaultUser from "../assets/shared/default_user.webp";
 import { Skeleton } from "./loading/Skeleton";
 import "./SubmissionPass.css";
 
-function PassAvatar({ src, alt, organization = false, loading = false, className }) {
+export function PassAvatar({ src, alt, organization = false, loading = false, className }) {
   const [pending, setPending] = useState(Boolean(src));
   const [failed, setFailed] = useState(false);
   const showImage = Boolean(src) && !failed;
@@ -30,6 +30,7 @@ export default function SubmissionPass({
   statusLabel,
   titleId,
   preview = false,
+  compact = false,
   academicYear,
   category,
   eyebrow,
@@ -42,13 +43,14 @@ export default function SubmissionPass({
   const [detailsExpanded, setDetailsExpanded] = useState(false);
   const field = (value, width = "75%", height = 14) => loading ? <Skeleton width={width} height={height} /> : value;
   return (
-    <div className="submission-pass__card" data-details-expanded={detailsExpanded} data-loading={loading} aria-busy={loading || undefined} aria-label={loading ? "Loading submission details" : undefined}>
+    <div className={`submission-pass__card${compact ? ' submission-pass__card--compact' : ''}`} data-details-expanded={detailsExpanded} data-loading={loading} aria-busy={loading || undefined} aria-label={loading ? "Loading submission details" : undefined}>
       {loading && <span role="status" className="sr-only">Loading submission details</span>}
       <div className="submission-pass__banner" aria-hidden="true">
         {loading ? <Skeleton height="100%" /> : <img src={ticketArtwork} alt="" />}
         <svg className="submission-pass__banner-curve" viewBox="0 0 600 48" preserveAspectRatio="none"><path d="M0 20 C150 -38 335 88 600 16 L600 48 L0 48Z" /></svg>
       </div>
       <div className="submission-pass__face">
+        {compact && <p className="submission-pass__compact-brand">VISTA</p>}
         <svg className="submission-pass__waves" viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true">
         <defs><linearGradient id={waveId} x1="0" y1="0" x2="1" y2="1"><stop stopColor="#9360ef" stopOpacity=".18" /><stop offset=".55" stopColor="#7342e4" stopOpacity=".7" /><stop offset="1" stopColor="#b389ff" stopOpacity=".18" /></linearGradient></defs>
         <path d="M0 145 C120 70 205 195 380 90 S535 0 600 24 L600 160 L0 160Z" fill={`url(#${waveId})`} stroke="#b99bf5" strokeOpacity=".5" />
@@ -60,7 +62,7 @@ export default function SubmissionPass({
             <div className="submission-pass__heading-line">
               <p className="submission-pass__eyebrow">{field(eyebrow || (preview ? "Submission Preview" : "Submission Details"), 95, 10)}</p>
               {loading ? <Skeleton width={75} height={10} /> : <span className="submission-pass__status" data-status={preview ? "draft" : status || "unknown"} aria-label={preview ? "Draft preview, not yet submitted" : `Latest saved status: ${statusLabel}`}><i aria-hidden="true" />{preview ? "Draft preview" : statusLabel}</span>}
-              {!loading && <button type="button" data-ui="tertiary" className="submission-pass__details-toggle" aria-expanded={detailsExpanded} aria-controls={detailsId} aria-label={detailsExpanded ? "Hide full submission details" : "Show full submission details"} onClick={() => setDetailsExpanded(value => !value)}>
+              {!loading && !compact && <button type="button" data-ui="tertiary" className="submission-pass__details-toggle" aria-expanded={detailsExpanded} aria-controls={detailsId} aria-label={detailsExpanded ? "Hide full submission details" : "Show full submission details"} onClick={() => setDetailsExpanded(value => !value)}>
                 Details <ChevronDown size={12} aria-hidden="true" />
               </button>}
             </div>
@@ -83,7 +85,7 @@ export default function SubmissionPass({
             <p className="submission-pass__label">{preview ? "Submission Date" : "Submitted"}</p>
             <p className="submission-pass__value">{field(submission.submittedDate, "65%")}</p>
           </div>
-          <div id={detailsId} className="submission-pass__secondary-details">
+          {!compact && <div id={detailsId} className="submission-pass__secondary-details">
             <div className="submission-pass__document-type">
               <p className="submission-pass__label">Document Type</p>
               <p className="submission-pass__value">{!loading && <FileText size={14} aria-hidden="true" />}<span>{field(submission.documentType, 180)}</span></p>
@@ -98,9 +100,9 @@ export default function SubmissionPass({
                 </> : preview ? submitterName || "Unknown" : submitterName || submission.contactEmail, 180)}</span>
               </div>
             </div>
-          </div>
+          </div>}
         </div>
-        {loading ? <div className="submission-pass__attachments submission-pass__attachments--loading"><Skeleton width={85} height={10} /><Skeleton height={42} style={{ marginTop: 8, borderRadius: 12 }} /></div> : children}
+        {loading ? !compact && <div className="submission-pass__attachments submission-pass__attachments--loading"><Skeleton width={85} height={10} /><Skeleton height={42} style={{ marginTop: 8, borderRadius: 12 }} /></div> : children}
       </div>
     </div>
   );

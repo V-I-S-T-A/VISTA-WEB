@@ -88,6 +88,7 @@ export default function DetailsStaffRemarks({ submissionId }) {
                 <div className="flex items-center gap-3">
                   <img
                     src={remark.changed_by_image_url || defaultAvatar}
+                    onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = defaultAvatar; }}
                     alt="Staff Avatar"
                     style={{
                       width: "36px",

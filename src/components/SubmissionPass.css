@@ -139,3 +139,22 @@
   .submission-pass__card[data-details-expanded="false"] .submission-pass__organization { display: none; }
   .submission-pass__details { margin-top: 6px; }
 }
+
+/* A secondary summary, with real compact proportions rather than scaling. */
+.submission-pass__card--compact { border-radius: var(--radius-card); max-width: 440px; width: 100%; }
+.submission-pass__compact-brand { margin: 0 0 var(--space-2); color: white; font-weight: 700; font-size: 12px; letter-spacing: .12em; }
+.submission-pass__card--compact .submission-pass__banner { height: 64px; }
+.submission-pass__card--compact .submission-pass__banner-curve { height: 24px; }
+.submission-pass__card--compact .submission-pass__face { padding: var(--space-4); }
+.submission-pass__card--compact .submission-pass__identity { gap: var(--space-2); }
+.submission-pass__card--compact .submission-pass__brand-mark { width: 32px; height: 32px; flex-basis: 32px; }
+.submission-pass__card--compact .submission-pass__chip { display: none; }
+.submission-pass__card--compact[data-details-expanded] .submission-pass__title { display: block; overflow: visible; font-size: 17px; line-height: 1.4; -webkit-line-clamp: unset; }
+.submission-pass__card--compact[data-details-expanded] .submission-pass__organization { display: flex; font-size: 11px; }
+.submission-pass__card--compact[data-details-expanded] .submission-pass__organization span { overflow: visible; white-space: normal; }
+.submission-pass__card--compact .submission-pass__details { margin-top: var(--space-3); gap: var(--space-3); }
+.submission-pass__card--compact .submission-pass__secondary-details { display: none; }
+.submission-pass__card--compact .submission-pass__number { font-size: 18px; letter-spacing: .02em; }
+.submission-pass__card--compact .submission-pass__value { font-size: 11px; }
+.submission-pass__card--compact[data-details-expanded] .submission-pass__eyebrow { display: block; }
+.submission-pass__card--compact[data-details-expanded] .submission-pass__category { display: inline-block; }

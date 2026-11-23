@@ -36,16 +36,16 @@ test('draft card preserves review details, attachment preview and confirmation g
       const text = await evaluate(`document.querySelector('.registration-pass-preview').textContent`);
       for (const value of ['Fictional Campus Scholars', 'Fictional Submitter', '2026–2027', 'Student Activity Request Form (SARF)', 'In-Campus', '(Today)', 'Fictional-student-activity-request-form-with-a-long-attachment-name.png', 'Draft preview']) assert.ok(text.includes(value), value);
       assert.ok(!text.includes('Reference ID') && !text.includes('Pending Structured Data'), 'drafts have no invented saved identity');
-      assert.equal(await evaluate(`!!document.querySelector('.submission-pass__card .registration-pass-attachment')`), true, 'attachment preview is inside the card');
+      assert.equal(await evaluate(`!!document.querySelector('.submission-details-panel .registration-pass-attachment')`), true, 'attachment preview is in the primary details panel');
+      assert.ok(await evaluate(`(()=>{const panel=document.querySelector('.submission-details-panel').getBoundingClientRect(),actions=document.querySelector('.registration-preview-header .responsive-actions').getBoundingClientRect();return actions.bottom<=panel.top&&Math.abs(actions.right-panel.right)<=1})()`), 'Redo and Approve sit above the details panel aligned to its right edge at every viewport');
       const ticket = await evaluate(`(()=>{const e=document.querySelector('.submission-pass__attachments'),s=getComputedStyle(e),cut=getComputedStyle(e,'::before');return{seam:s.borderTopStyle,background:s.backgroundColor,cutout:cut.content,cutoutSize:cut.width,ink:getComputedStyle(e.querySelector('button')).color}})()`);
-      assert.deepEqual(ticket,{seam:'none',background:'rgba(0, 0, 0, 0)',cutout:'none',cutoutSize:'auto',ink:'rgb(243, 239, 255)'},'Attachments use the card face without a separate ticket footer');
-      assert.ok(await evaluate(`!!document.querySelector('.submission-pass__face .submission-pass__attachments') && !document.querySelector('.submission-pass__wordmark')`), 'file occupies the former wordmark area');
+      assert.deepEqual(ticket,{seam:'none',background:'rgba(0, 0, 0, 0)',cutout:'none',cutoutSize:'auto',ink:'rgb(26, 89, 165)'},'Attachments use the readable neutral primary panel');
+      assert.equal(await evaluate(`document.querySelectorAll('.submission-details-panel :is(input,select,textarea,form,[contenteditable=true])').length`), 0, 'preview fields remain genuinely read-only');
       if(width===1366) {
         const card = await evaluate(`(()=>{const r=document.querySelector('.submission-pass__card').getBoundingClientRect();return{width:r.width,height:r.height}})()`);
         assert.ok(card.width<=720 && card.height<500, `draft card stays compact: ${JSON.stringify(card)}`);
       }
       assert.equal(await evaluate('document.documentElement.scrollWidth > innerWidth'), false, 'long filenames stay inside the viewport');
-      if (width === 360) await click('.submission-pass__details-toggle');
       assert.equal(await evaluate(`document.querySelector('.submission-pass__contact-name').textContent`), 'Fictional Submitter');
       assert.equal(await evaluate(`document.querySelector('.submission-pass__contact-email').textContent`), 'student@example.test', 'draft preview shows the selected submitter email');
       assert.ok(await evaluate(`document.querySelector('.submission-pass__contact-email').getBoundingClientRect().height > 0`), 'email is visible in the contact details');
@@ -53,7 +53,6 @@ test('draft card preserves review details, attachment preview and confirmation g
       assert.equal(await evaluate(`document.querySelector('.submission-pass__contact-email')`), null, 'missing email never displays an undefined or invented address');
       assert.equal(await evaluate(`document.querySelector('.submission-pass__contact-text').textContent`), 'Fictional Submitter');
       await click('#toggle-email');
-      if (width === 360) await click('.submission-pass__details-toggle');
       const colors = await evaluate(`[...document.querySelectorAll('.filter-btn,.export-btn')].map(e=>({bg:getComputedStyle(e).backgroundColor,ink:getComputedStyle(e).color,icon:getComputedStyle(e.querySelector('svg')).color}))`);
       for (const color of colors) assert.deepEqual(color, { bg: 'rgb(26, 89, 165)', ink: 'rgb(255, 255, 255)', icon: 'rgb(255, 255, 255)' });
       assert.equal(await evaluate(`getComputedStyle(document.querySelector('input[type=search]')).borderTopColor`), 'rgb(137, 155, 177)', 'search border is visible before focus');

@@ -26,7 +26,7 @@ function ReplyRow({ reply, onReply, active, composerId, disabled, children }) {
   return (
     <div className={`reply-thread-item flex items-start gap-3${reply.parent_reply ? " reply-thread-item--nested" : ""}`}>
       {reply.parent_reply && <CornerDownRight className="reply-thread-connector" size={16} aria-hidden="true" />}
-      <img src={reply.author_image_url || defaultAvatar} alt="" className="h-9 w-9 shrink-0 rounded-lg object-cover" />
+      <img src={reply.author_image_url || defaultAvatar} alt="" onError={event => { event.currentTarget.onerror = null; event.currentTarget.src = defaultAvatar; }} className="h-9 w-9 shrink-0 rounded-full object-cover" />
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-baseline gap-x-2">
           <span className="font-inter text-[13px] font-bold text-[#1f5cae]">{reply.author_name || "Former user"}</span>

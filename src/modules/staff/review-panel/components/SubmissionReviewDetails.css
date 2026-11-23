@@ -20,12 +20,13 @@
 
 @media (max-width: 1199px) {
   .submission-review-bento { grid-template-columns: minmax(0, 1fr); }
-  /* Stack the primary decision before history while retaining desktop columns. */
+  /* Lead with the summary card when stacked, retaining desktop columns. */
   .submission-review-bento > .submission-review-column { display: contents; }
-  .submission-review-column--details > :first-child { order: 1; }
-  .submission-review-column--actions > :first-child { order: 2; }
-  .submission-review-column--details > :nth-child(2) { order: 3; }
-  .submission-review-column--actions > :nth-child(2) { order: 4; }
+  .submission-review-column--details > :first-child { order: 2; }
+  .submission-review-column--actions > :first-child { order: 1; }
+  .submission-review-column--details > :nth-child(2) { order: 4; }
+  .submission-review-column--actions > :nth-child(2) { order: 3; }
+  .submission-review-column--actions > :nth-child(n+3) { order: 5; }
 }
 @media (max-width: 480px) {
   .submission-review-bento,.submission-review-column { gap: var(--space-4); }
