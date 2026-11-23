@@ -1,3 +1,4 @@
+import "../AdminUI.css";
 import { SystemScopeBanner } from "../../../components/banners/WorkspaceBanners";
 import { useSidebar } from "../../../hooks/useSidebar";
 import PageSkeleton from "../../../components/loading/PageSkeleton";
@@ -25,7 +26,7 @@ export default function RegisteredOrg() {
   if (isLoading) return <PageSkeleton />;
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="admin-workspace flex min-h-screen bg-white">
       {isOpen && <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />}
       <Sidebar role="admin" isOpen={isOpen} onClose={close} />
 

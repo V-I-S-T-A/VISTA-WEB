@@ -78,7 +78,7 @@ export default function Header({ layout = "public", profilePath, onMenuToggle })
 
         {profilePath ? (
           <div className="flex items-center gap-3">
-            {currentUser?.user_id && <NotificationCenter />}
+            {currentUser?.user_id && profileRole !== "admin" && <NotificationCenter />}
           <div className="relative" ref={dropdownRef}>
             <button data-ui="navigation"
               type="button"

@@ -1,3 +1,4 @@
+import "../../AdminUI.css";
 import DialogLayer from "../../../../components/DialogLayer";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { useState, useRef } from "react";
@@ -57,7 +58,7 @@ export default function DeleteConfirmModal({
   };
 
   return (
-    <DialogLayer label={"Confirm deletion"} onDismiss={onClose} dismissDisabled={isDeleting}
+    <DialogLayer className="admin-dialog" label={"Confirm deletion"} onDismiss={onClose} dismissDisabled={isDeleting}
       ref={overlayRef}
       style={{
         position: "fixed",
@@ -124,6 +125,7 @@ export default function DeleteConfirmModal({
             </div>
           </div>
           <button data-ui="icon"
+            aria-label="Close deletion confirmation"
             type="button"
             onClick={onClose}
             disabled={isDeleting}

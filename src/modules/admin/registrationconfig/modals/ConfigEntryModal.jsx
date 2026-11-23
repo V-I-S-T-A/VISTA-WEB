@@ -1,3 +1,4 @@
+import "../../AdminUI.css";
 import DialogLayer from "../../../../components/DialogLayer";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
 import { convertImageToWebP } from "../../../../utils/fileOptimizer";
@@ -272,7 +273,7 @@ export default function ConfigEntryModal({
   };
 
   return (
-    <DialogLayer label={"Registration configuration"} onDismiss={onClose} dismissDisabled={isSubmitting}
+    <DialogLayer className="admin-dialog" label={"Registration configuration"} onDismiss={onClose} dismissDisabled={isSubmitting}
       ref={overlayRef}
       style={{
         position: "fixed",
@@ -342,6 +343,7 @@ export default function ConfigEntryModal({
             </div>
           </div>
           <button aria-busy={Boolean(isSubmitting)} data-ui="icon"
+            aria-label="Close registration entry"
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
@@ -374,6 +376,7 @@ export default function ConfigEntryModal({
         >
           {error && (
             <div
+              role="alert"
               style={{
                 background: "#fee2e2",
                 border: "1px solid #fecaca",

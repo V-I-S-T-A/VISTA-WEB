@@ -1,3 +1,4 @@
+import "../../AdminUI.css";
 import FormField from "../../../../components/FormField";
 import DialogLayer from "../../../../components/DialogLayer";
 import { getApiErrorMessage } from "../../../../utils/apiErrorMessage";
@@ -15,7 +16,9 @@ const FIELD_STYLES = {
     },
     input: {
         width: '100%',
-        border: '1.5px solid #d1d5db',
+        borderWidth: '1px',
+        borderStyle: 'solid',
+        borderColor: 'var(--ui-control-border)',
         borderRadius: "var(--radius-field)",
         padding: '9px 13px',
         fontSize: '13px',
@@ -83,7 +86,7 @@ function PhotoDropzone({ preview, error, onSelect, onRemove, disabled }) {
                         style={{
                             width: '56px',
                             height: '56px',
-                            borderRadius: "var(--radius-chip)",
+                            borderRadius: "50%",
                             objectFit: 'cover',
                             flexShrink: 0,
                             border: '1px solid #e5e7eb',
@@ -260,7 +263,7 @@ export default function AddOrgModal({ isOpen, onClose, onSave, isLoading = false
     if (!isOpen) return null
 
     return (
-        <DialogLayer aria-labelledby="add-org-title" label={"Add organization"} onDismiss={onClose} dismissDisabled={saving || isLoading}
+        <DialogLayer className="admin-dialog" aria-labelledby="add-org-title" label={"Add organization"} onDismiss={onClose} dismissDisabled={saving || isLoading}
             ref={overlayRef}
             style={{
                 position: 'fixed',

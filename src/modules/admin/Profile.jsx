@@ -1,3 +1,4 @@
+import "./AdminUI.css";
 import { ProfileBannerLayout } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import Header from "../../components/Header";
@@ -26,7 +27,7 @@ export default function Profile() {
 
 
   return (
-    <div className="flex min-h-screen bg-white">
+    <div className="admin-workspace flex min-h-screen bg-white">
       {isOpen && (
         <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
       )}

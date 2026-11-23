@@ -21,7 +21,7 @@ const formatDate = value => value ? new Date(value).toLocaleString("en-US", {
 }) : "N/A";
 const csvCell = value => `"${String(value ?? "").replace(/"/g, '""')}"`;
 
-export default function AuditLogTable({ onViewLog, includeAuthActions = false }) {
+export default function AuditLogTable({ onViewLog, includeAuthActions = false, presentEvent }) {
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [action, setAction] = useState("All Actions");
@@ -139,6 +139,7 @@ export default function AuditLogTable({ onViewLog, includeAuthActions = false })
               : error ? <tr><td colSpan={4}><ErrorNotice message="Could not load audit logs. Please try again." onRetry={refetch} /></td></tr>
               : !logs.length ? <tr><td colSpan={4} className="p-10 text-center text-sm text-gray-500">No audit logs match your search.</td></tr>
               : logs.map(log => {
+                const event = presentEvent?.(log);
                 return <tr key={log.audit_id} className="h-16 border-b border-gray-100 last:border-b-0 hover:bg-[#f7f9ff]">
                   <td data-label="Timestamp" className="font-inter text-[13px] font-medium text-gray-700">{formatDate(log.performed_at)}</td>
                   <td data-label="User/Entity">
@@ -147,6 +148,7 @@ export default function AuditLogTable({ onViewLog, includeAuthActions = false })
                       <div className="min-w-0">
                         <p className="font-inter text-[15px] font-bold text-gray-900">{log.performed_by || "System"}</p>
                         <p className="font-inter text-[12px] text-gray-500">{log.performed_by_org || "System User"}</p>
+                        {event && <p className="admin-audit-summary">{event.isAuth ? event.summary : `${event.title} · ${event.type}`}</p>}
                       </div>
                     </div>
                   </td>

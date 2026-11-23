@@ -2,6 +2,8 @@ import apiClient from "../lib/axios";
 import { API_ENDPOINTS } from "../config/api";
 import { toRequestConfig } from "../utils/multipartFormData";
 import { fetchTablePage } from "../utils/tablePagination";
+import { fetchAllPages } from "../utils/fetchAllPages";
+import { userActivityPage } from "../utils/userActivity";
 
 /**
  * User Service
@@ -18,6 +20,7 @@ export const userService = {
     search = "",
     role = "",
     isActive = null,
+    activityStatus = "",
     excludeAdmin = false,
     signal,
   } = {}) {
@@ -30,6 +33,18 @@ export const userService = {
     if (role && role !== "All Roles") params.append("role", role);
     if (isActive !== null) params.append("is_active", isActive);
     if (excludeAdmin) params.append("exclude_admin", "true");
+
+    if (activityStatus === "active" || activityStatus === "inactive") {
+      // The existing API filters is_active as a login permission, not activity.
+      // Read every matching API page before applying the Web activity filter.
+      params.delete("page");
+      params.delete("page_size");
+      params.delete("is_active");
+      const users = await fetchAllPages(apiClient, API_ENDPOINTS.USERS.LIST, {
+        params: Object.fromEntries(params), signal,
+      });
+      return userActivityPage(users, { activityStatus, page, pageSize });
+    }
 
     return fetchTablePage(apiClient, API_ENDPOINTS.USERS.LIST, {
       params: Object.fromEntries(params), signal,

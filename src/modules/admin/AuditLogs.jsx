@@ -1,3 +1,4 @@
+import "./AdminUI.css";
 import { SystemScopeBanner } from "../../components/banners/WorkspaceBanners";
 import PageSkeleton from "../../components/loading/PageSkeleton";
 import Header from '../../components/Header'
@@ -25,7 +26,7 @@ export default function AuditLogs() {
     if (isLoading) return <PageSkeleton />;
 
     return (
-        <div className="flex min-h-screen bg-white">
+        <div className="admin-workspace flex min-h-screen bg-white">
             {isOpen && (
               <div className="sidebar-backdrop" onClick={close} aria-hidden="true" />
             )}

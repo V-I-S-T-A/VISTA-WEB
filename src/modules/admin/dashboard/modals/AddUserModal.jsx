@@ -1,3 +1,4 @@
+import "../../AdminUI.css";
 import FormField from "../../../../components/FormField";
 import DialogLayer from "../../../../components/DialogLayer";
 import VistaSelect from "../../../../components/VistaSelect";
@@ -19,7 +20,9 @@ const FIELD_STYLES = {
   },
   input: {
     width: "100%",
-    border: "1.5px solid #d1d5db",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--ui-control-border)",
     borderRadius: "var(--radius-field)",
     padding: "9px 13px",
     fontSize: "13px",
@@ -35,7 +38,9 @@ const FIELD_STYLES = {
   },
   select: {
     width: "100%",
-    border: "1.5px solid #d1d5db",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "var(--ui-control-border)",
     borderRadius: "var(--radius-field)",
     padding: "9px 13px",
     fontSize: "13px",
@@ -167,7 +172,7 @@ function AddUserForm({
   if (!isOpen) return null;
 
   return (
-    <DialogLayer aria-labelledby="add-user-title" label={"Add user"} onDismiss={onClose} dismissDisabled={saving || isLoading}
+    <DialogLayer className="admin-dialog" aria-labelledby="add-user-title" label={"Add user"} onDismiss={onClose} dismissDisabled={saving || isLoading}
       ref={overlayRef}
       style={{
         position: "fixed",

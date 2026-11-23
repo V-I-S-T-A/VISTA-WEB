@@ -11,10 +11,11 @@ export const useUsers = ({
   search = "",
   role = "",
   isActive = null,
+  activityStatus = "",
   excludeAdmin = false,
 } = {}) => {
   return useQuery({
-    queryKey: ["users", { page, pageSize, search, role, isActive, excludeAdmin }],
+    queryKey: ["users", { page, pageSize, search, role, isActive, activityStatus, excludeAdmin }],
     queryFn: ({ signal }) =>
       userService.getUsers({
         page,
@@ -22,6 +23,7 @@ export const useUsers = ({
         search,
         role,
         isActive,
+        activityStatus,
         excludeAdmin,
         signal,
       }),
