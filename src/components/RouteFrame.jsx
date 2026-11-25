@@ -4,7 +4,7 @@ import PageErrorBoundary from "./PageErrorBoundary";
 
 export default function RouteFrame({ children }) {
   const { pathname } = useLocation();
-  const surface = pathname === "/get-app" ? "app"
+  const surface = pathname === "/get-app" || pathname === "/user-manual" ? "app"
     : pathname === "/privacy-policy" || pathname === "/terms-of-service" ? "legal"
       : /^\/(admin|staff|student)\//.test(pathname) ? "dashboard" : "public";
 

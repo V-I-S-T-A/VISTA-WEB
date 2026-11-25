@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, BookOpen, ZoomIn } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, FileText, ZoomIn } from 'lucide-react';
 import { MOBILE_GUIDES } from '../../config/mobileGuide';
 import AttachmentImagePreview from '../AttachmentImagePreview';
 
@@ -40,6 +41,7 @@ export default function GetAppGuide() {
   return <>
     <div className="ga-feature-tabs ga-guide-role-tabs" role="tablist" aria-label="Choose your VISTA Mobile guide">
       {roles.map((role, position) => <button data-ui="navigation" key={role} ref={node => { tabs.current[position] = node; }} type="button" role="tab" id={`guide-tab-${role}`} aria-controls="guide-panel" aria-selected={audience === role} tabIndex={audience === role ? 0 : -1} onClick={() => chooseAudience(role)} onKeyDown={event => handleRoleKey(event, position)}><BookOpen size={17} aria-hidden="true" />{MOBILE_GUIDES[role].label} guide</button>)}
+      <Link data-ui="navigation" to="/user-manual" target="_blank" rel="noopener noreferrer" className="ga-manual-link"><FileText size={17} aria-hidden="true" />User manual<ArrowUpRight size={15} aria-hidden="true" /></Link>
     </div>
     <div id="guide-panel" className="ga-feature-stage ga-guide" role="tabpanel" aria-labelledby={`guide-tab-${audience}`}>
       <GuideScreenshot key={`${audience}-${step.id}`} step={step} index={index} count={guide.steps.length} />

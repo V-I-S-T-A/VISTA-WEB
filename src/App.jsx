@@ -5,6 +5,7 @@ import RouteFrame from "./components/RouteFrame";
 import { Routes, Route } from "react-router-dom";
 const LandingPage = lazy(() => import("./modules/LandingPage"));
 const GetApp = lazy(() => import("./modules/GetApp"));
+const UserManual = lazy(() => import("./modules/UserManual"));
 const LoginPage = lazy(() => import("./modules/LoginPage"));
 const PrivacyPolicy = lazy(() => import("./modules/LegalPages").then(module => ({ default: module.PrivacyPolicy })));
 const TermsOfService = lazy(() => import("./modules/LegalPages").then(module => ({ default: module.TermsOfService })));
@@ -44,6 +45,7 @@ function App() {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/terms-of-service" element={<TermsOfService />} />
         </Route>
+        <Route path="/user-manual" element={<Suspense fallback={<PageSkeleton />}><UserManual /></Suspense>} />
         <Route path="/admin/dashboard" element={<Suspense fallback={<PageSkeleton />}><AdminDashboard /></Suspense>} />
         <Route
           path="/admin/dashboard/registeredorg"
